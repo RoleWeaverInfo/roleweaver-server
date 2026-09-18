@@ -66,6 +66,20 @@ def main():
                     (Path(__file__).parent / "static/authoring.js").read_bytes(),
                     "application/javascript; charset=utf-8",
                 )
+            if parsed.path == "/rw_server_splash.png":
+                return self.respond(
+                    200,
+                    (
+                        Path(__file__).parent / "static/rw_server_splash.png"
+                    ).read_bytes(),
+                    "image/png",
+                )
+            if parsed.path == "/branding.js":
+                return self.respond(
+                    200,
+                    (Path(__file__).parent / "static/branding.js").read_bytes(),
+                    "application/javascript; charset=utf-8",
+                )
             if parsed.path == "/drafts.js":
                 return self.respond(
                     200,
