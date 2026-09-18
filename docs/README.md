@@ -64,3 +64,8 @@ Feature guides were carried forward from development. Paths describing an instal
 - [Customization](../demo/CUSTOMIZE.md)
 - [Playtest](../demo/PLAYTEST.md)
 - [LLM and Guardrails comparison](../demo/LLM_COMPARISON.md)
+
+## Separate distributions
+
+- [Existing-server setup](../START_ADDON.md)
+- [Distribution packaging](DISTRIBUTIONS.md)

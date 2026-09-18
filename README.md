@@ -4,14 +4,18 @@ An AI NPC companion for **Neverwinter Nights: Enhanced Edition** servers using N
 It runs alongside an existing server; it does not replace NWN or its module.
 
 This repository is the developer source baseline derived from the tested **0.26.7** build.
-The editable alpha demo is available: start with [START_DEMO.md](START_DEMO.md).
+Two separate alpha distributions are available:
+- **Try the editable demo:** [START_DEMO.md](START_DEMO.md).
+- **Connect your existing NWN/NWNX server:** [START_ADDON.md](START_ADDON.md). Your module stays where it is.
+
+See [distribution contents and release packaging](docs/DISTRIBUTIONS.md).
 NWN/NWNX/compiler dependencies are supplied separately.
 
 ## Start here
 
 - **Contribute code:** [Developer setup](docs/DEVELOPMENT.md), [architecture](docs/ARCHITECTURE.md), [contribution guide](CONTRIBUTING.md).
 - **Understand the game connection:** [bridge protocol and authority](docs/GAME_BRIDGE.md).
-- **Integrate an existing world:** [integration overview](docs/INTEGRATION.md). Test a copy of your world first; the guided alpha installer is still planned.
+- **Integrate an existing world:** [step-by-step add-on setup](START_ADDON.md). Test on staging before your live world.
 - **Find feature documentation:** [documentation index](docs/README.md).
 - **Plan the alpha:** [release checklist](docs/ALPHA_CHECKLIST.md).
 
@@ -57,6 +61,5 @@ packaging/             Example user-service unit
 examples/              Example world binding script
 ```
 
-Game installation files, user worlds, keys, player databases and compiled release bundles are not
-included. Source code is covered by the repository's [MIT license](LICENSE); see
+The demo includes an editable sample world. Game installation files, private player data and keys are not included. Source code is covered by the repository's [MIT license](LICENSE); see
 [third-party and asset notes](THIRD_PARTY_NOTICES.md) before distributing game assets.

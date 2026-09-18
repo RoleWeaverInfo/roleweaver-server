@@ -1,3 +1,5 @@
+> **Existing-server installation:** start with [START_ADDON.md](../START_ADDON.md) and its manual bridge hooks. Module-copy examples below are optional advanced workflows, not required for the existing-server distribution.
+
 # Adding Role Weaver to an established persistent world
 
 Role Weaver is a companion service plus an NWNX script bridge. It does not replace

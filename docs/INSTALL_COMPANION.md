@@ -1,3 +1,5 @@
+> **Existing-server installation:** start with [START_ADDON.md](../START_ADDON.md) and its manual bridge hooks. Module-copy examples below are optional advanced workflows, not required for the existing-server distribution.
+
 # Companion installation reference
 
 This source milestone is for developers. A guided server-owner package is planned; see the
