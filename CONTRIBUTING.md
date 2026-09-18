@@ -20,7 +20,7 @@ and the tests performed. Keep mechanical formatting and behavior changes disting
 ## Before submitting
 
 ```bash
-python -m black --check roleweaver tools tests
+python -m black --check roleweaver tools tests demo
 python -m unittest discover -s tests
 ```
 

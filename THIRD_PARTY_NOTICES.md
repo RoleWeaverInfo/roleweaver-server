@@ -9,5 +9,9 @@ not committed here. Dependency licenses remain with their respective projects.
 `assets/rw_shop.utm` has a source generator in `tools/build_shop_asset.py`.
 `assets/rw_base.utc` is an inherited development blueprint; its provenance must be reviewed before
 including it in the public alpha demo. The creature catalogue contains game-facing identifiers.
-No YourWorld.mod or DMFI module is included. The alpha asset review must document any required
-attributions/permissions before distributing a demo world.
+The demo now includes the supplied YourWorld.mod; review its module credits and any required
+attributions/permissions before public redistribution.
+
+The editable demo includes the project owner's supplied YourWorld.mod. This may contain original module
+handlers/assets (including DMFI integration). Its inclusion does not relicense third-party content under
+MIT. Preserve existing credits and review all module/asset permissions before wider public redistribution.

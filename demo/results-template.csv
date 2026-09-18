@@ -1,0 +1,1 @@
+run_id,case_id,provider,requested_model,actual_model,fallback_enabled,guardrails_settings,attempt,outcome,http_status,error_type,latency_ms,input_tokens,output_tokens,estimated_cost,naturalness_1_5,persona_1_5,grounding_1_5,relevance_1_5,action_pass_fail_na,notes_synthetic_only

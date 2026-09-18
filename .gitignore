@@ -24,3 +24,6 @@ tools/nwnsc
 update-backups/
 recovery-backups/
 dist/
+
+.demo/
+!demo/world/*.mod

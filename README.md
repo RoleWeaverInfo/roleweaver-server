@@ -4,7 +4,8 @@ An AI NPC companion for **Neverwinter Nights: Enhanced Edition** servers using N
 It runs alongside an existing server; it does not replace NWN or its module.
 
 This repository is the developer source baseline derived from the tested **0.26.7** build.
-It is preparation for an alpha release, not yet a self-contained demo distribution.
+The editable alpha demo is available: start with [START_DEMO.md](START_DEMO.md).
+NWN/NWNX/compiler dependencies are supplied separately.
 
 ## Start here
 

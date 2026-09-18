@@ -57,3 +57,10 @@ Feature guides were carried forward from development. Paths describing an instal
 
 - [Source refactor notes](REFACTOR_NOTES.md)
 - [Validation results](VALIDATION.md)
+
+## Editable demo
+
+- [Demo setup](../START_DEMO.md)
+- [Customization](../demo/CUSTOMIZE.md)
+- [Playtest](../demo/PLAYTEST.md)
+- [LLM and Guardrails comparison](../demo/LLM_COMPARISON.md)

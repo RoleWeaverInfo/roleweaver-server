@@ -1,0 +1,91 @@
+# Role Weaver editable demo — alpha 0.1.0
+
+This package runs a separate demo NWN server and Role Weaver dashboard on Linux. Ubuntu 24.04
+(or an Ubuntu VM on Windows) is the tested target. No Docker is required. It starts in offline mode;
+choose an LLM in the dashboard when ready. It does not use an existing world's data or API keys.
+
+## 1. Prepare dependencies once
+
+You need Python 3.12, Redis, an NWN:EE client to play, and a compatible Linux **dedicated server**,
+NWNX:EE plugins/headers, and the `nwnsc` compiler. The game runtime and NWNX binaries are not
+bundled. Follow [dependency setup](demo/DEPENDENCIES.md) to arrange these files.
+
+On Ubuntu:
+
+```bash
+sudo apt update
+sudo apt install python3-venv redis-server
+sudo systemctl start redis-server
+```
+
+## 2. Open a terminal in the extracted package
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+python -m pip install -r requirements-guardrails.txt
+```
+
+Use that same activated environment whenever starting the demo.
+
+## 3. Build your demo
+
+Replace the two example paths with your actual dependency locations:
+
+```bash
+python demo/demo.py setup --native "$HOME/nwn-demo-deps" --compiler "$HOME/bin/nwnsc" --guardrails
+```
+
+This prepares `.demo/rw_demo/`. It compiles a **copy** of `demo/world/YourWorld.mod`, adds the demo
+NPCs and creates fresh data. It does not change the source world. If a required file is missing, setup
+stops and names it. Setup does not start anything. Re-running setup never overwrites a prepared instance.
+
+## 4. Start
+
+```bash
+python demo/demo.py start
+```
+
+Keep the terminal open. Wait for NWN to finish loading, then open the dashboard at
+**http://127.0.0.1:8745**. In NWN Direct Connect use **127.0.0.1:5125** if the client is on the same Linux
+machine. From Windows to a VM, use **VM-IP:5125**. Use `hostname -I` in Ubuntu to find its IP.
+The demo is unlisted and accepts local characters; a player password is not set. The generated DM
+password is stored in `.demo/rw_demo/settings.json` (keep this file private).
+
+To open the VM dashboard from Windows, leave this SSH tunnel running, substituting your VM user/IP:
+
+```bash
+ssh -N -L 8745:127.0.0.1:8745 USER@VM-IP
+```
+
+Then open http://127.0.0.1:8745 in Windows. If a firewall is enabled, allow UDP 5125 only from your
+trusted client/network. Keep Redis and the dashboard private.
+
+## 5. Meet the NPCs
+
+Near the starting area: **Mira** the innkeeper, **Orren** the guard/merchant, and **Elara** the historian.
+Right-click an NPC and choose Talk To/Speak, or address them by name to begin. Stay close.
+They should appear in the dashboard and start in auto mode. Offline replies are explicitly marked.
+
+In **LLM Settings**, enter your provider/model and key, run the connection test, then save. LM Studio
+can be used instead of a cloud key. Models/quotas and inference speed depend on the provider or host.
+
+Orren's shop starts with a small weapon selection. Ask to see his wares, then check the merchant panel.
+The demo's lore describes a closed east bridge; this is story context, not a claim about map geometry.
+
+## 6. Stop or return later
+
+Press **Ctrl+C in the demo terminal**. This stops only the two processes started by this launcher.
+Later, activate `.venv` and run `python demo/demo.py start` again. Profiles, memories, keys and game
+campaign data stay in `.demo/rw_demo/`. This is a foreground demo runner, not a production service.
+
+## Optional testing and customization
+
+- [Quick playtest](demo/PLAYTEST.md)
+- [Guardrails and model comparison](demo/LLM_COMPARISON.md)
+- [Edit the world, NPCs and lore](demo/CUSTOMIZE.md)
+- [Report a problem](demo/REPORTING.md)
+
+If startup fails, read `.demo/rw_demo/game.log`, `dashboard.log` and `nwnx.log`. Never publish those
+files wholesale: they can contain player dialogue or local details. Logs are local troubleshooting
+files; automated redacted diagnostic export remains a separate planned feature.

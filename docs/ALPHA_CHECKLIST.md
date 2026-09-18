@@ -7,8 +7,8 @@ This is a release plan, not a claim that the demo/installer is ready.
 - [x] Developer setup, architecture, bridge and contribution documentation.
 - [x] Automated regression workflow without real API keys or game data.
 - [ ] Review demo module and every bundled asset's redistribution rights.
-- [ ] Build a small demo world with example NPCs, lore, merchant and approved actions.
-- [ ] Guided demo setup with dependency checks and clear start/stop commands.
+- [x] Package the supplied editable world with example NPCs, lore, merchant and approved greeting/shop actions.
+- [x] Demo setup with explicit dependency paths, validation and foreground start/stop instructions.
 - [ ] Guided existing-server integration preserving original event handlers.
 - [ ] Redacted rotating error logs and diagnostic-report export.
 - [ ] Clean Ubuntu installation test using only published instructions/artifacts.
