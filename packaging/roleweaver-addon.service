@@ -1,0 +1,14 @@
+[Unit]
+Description=Role Weaver companion service for an existing NWN world
+
+[Service]
+Type=simple
+WorkingDirectory=%h/RoleWeaver-Addon
+EnvironmentFile=-%h/RoleWeaver-Addon/provider.env
+ExecStart=/usr/bin/python3 -m roleweaver.web --config %h/RoleWeaver-Addon/config.json
+Restart=on-failure
+RestartSec=3
+UMask=0077
+
+[Install]
+WantedBy=default.target

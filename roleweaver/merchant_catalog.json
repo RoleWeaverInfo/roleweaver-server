@@ -1,0 +1,77 @@
+[
+  {
+    "id": "nw_wswdg001",
+    "name": "Dagger",
+    "category": "Weapons"
+  },
+  {
+    "id": "nw_wswss001",
+    "name": "Short sword",
+    "category": "Weapons"
+  },
+  {
+    "id": "nw_wswls001",
+    "name": "Longsword",
+    "category": "Weapons"
+  },
+  {
+    "id": "nw_wdbqs001",
+    "name": "Quarterstaff",
+    "category": "Weapons"
+  },
+  {
+    "id": "nw_wbwsh001",
+    "name": "Shortbow",
+    "category": "Weapons"
+  },
+  {
+    "id": "nw_waxbt001",
+    "name": "Battleaxe",
+    "category": "Weapons"
+  },
+  {
+    "id": "nw_waxhn001",
+    "name": "Handaxe",
+    "category": "Weapons"
+  },
+  {
+    "id": "nw_wblcl001",
+    "name": "Club",
+    "category": "Weapons"
+  },
+  {
+    "id": "nw_wblhw001",
+    "name": "Warhammer",
+    "category": "Weapons"
+  },
+  {
+    "id": "nw_wbwxl001",
+    "name": "Light crossbow",
+    "category": "Weapons"
+  },
+  {
+    "id": "nw_aarcl001",
+    "name": "Leather armour",
+    "category": "Armour"
+  },
+  {
+    "id": "nw_ashsw001",
+    "name": "Small shield",
+    "category": "Armour"
+  },
+  {
+    "id": "nw_it_mpotion001",
+    "name": "Potion of Cure Light Wounds",
+    "category": "Potions"
+  },
+  {
+    "id": "nw_it_mpotion002",
+    "name": "Potion of Cure Serious Wounds",
+    "category": "Potions"
+  },
+  {
+    "id": "nw_it_mpotion003",
+    "name": "Potion of Cure Critical Wounds",
+    "category": "Potions"
+  }
+]

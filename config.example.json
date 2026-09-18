@@ -1,0 +1,16 @@
+{
+  "provider": "offline",
+  "placement_owner": "world",
+  "base_url": "https://api.openai.com/v1",
+  "model": "",
+  "api_key_env": "ROLEWEAVER_API_KEY",
+  "redis_port": 6379,
+  "redis_prefix": "roleweaver:my_world",
+  "web_port": 8743,
+  "world_id": "my_world",
+  "world_name": "YourWorld test",
+  "recovery_backups": true,
+  "recovery_interval_seconds": 300,
+  "recovery_keep_recent": 12,
+  "recovery_keep_daily": 7
+}
