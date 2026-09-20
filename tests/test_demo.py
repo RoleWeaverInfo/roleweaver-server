@@ -12,6 +12,20 @@ spec.loader.exec_module(demo)
 
 
 class DemoTests(unittest.TestCase):
+    def test_dm_password_reset_preserves_other_settings(self):
+        with tempfile.TemporaryDirectory() as directory:
+            runtime = Path(directory)
+            settings = {
+                "dm_password": "previous-password",
+                "id": "custom_demo",
+                "game_port": 5127,
+                "native": "/existing/runtime",
+            }
+            demo.reset_dm_password(runtime, settings)
+            saved = json.loads((runtime / "settings.json").read_text())
+            self.assertEqual(saved, dict(settings, dm_password="roleweaver"))
+            self.assertEqual(settings["dm_password"], "previous-password")
+
     def test_connection_output_uses_configured_ports_and_tunnel(self):
         text = demo.connection_instructions(
             {"game_port": 5133, "web_port": 8759}, ["192.168.167.128"], "roleweaver"

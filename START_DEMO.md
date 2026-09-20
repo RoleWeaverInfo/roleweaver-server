@@ -48,8 +48,7 @@ The startup output lists the detected Ubuntu/VM game IP addresses, game port, lo
 Keep the terminal open. Wait for NWN to finish loading, then open the dashboard at
 **http://127.0.0.1:8745**. In NWN Direct Connect use **127.0.0.1:5125** if the client is on the same Linux
 machine. From Windows to a VM, use **VM-IP:5125**. Use `hostname -I` in Ubuntu to find its IP.
-The demo is unlisted and accepts local characters; a player password is not set. The generated DM
-password is stored in `.demo/rw_demo/settings.json` (keep this file private).
+The demo is unlisted and accepts local characters; a player password is not set. **New demos use DM password `roleweaver`** (all lowercase). The launcher supplies it using `-dmpassword`.
 
 To open the VM dashboard from Windows, leave this SSH tunnel running, substituting your VM user/IP:
 
@@ -59,6 +58,25 @@ ssh -N -L 8745:127.0.0.1:8745 USER@VM-IP
 
 Then open http://127.0.0.1:8745 in Windows. If a firewall is enabled, allow UDP 5125 only from your
 trusted client/network. Keep Redis and the dashboard private.
+
+### Connect as Dungeon Master
+
+1. Launch NWN:EE in **Dungeon Master client** mode. Use your launcher’s DM option, or add `-dmc` to the NWN client executable’s launch options/shortcut. Entering a DM password in an ordinary player connection does not switch it to DM mode.
+2. Direct Connect to the **same game IP and port** shown by the demo launcher (normally `UBUNTU-IP:5125`). There is no separate DM port. Do not use the dashboard port.
+3. Enter **roleweaver** as the DM password for a newly prepared demo.
+
+**Already ran setup with an older download?** Its random password is still saved. Updating the code does not overwrite your instance settings. Stop the demo with Ctrl+C, then run from the updated package folder containing your existing `.demo/rw_demo`:
+
+```bash
+.venv/bin/python demo/demo.py reset-dm-password
+.venv/bin/python demo/demo.py start
+```
+
+Use the same `--instance NAME` on both commands if you selected a different instance. The reset changes only the DM password; profiles, keys and memories remain intact.
+
+To choose a private password instead, stop the demo, edit `dm_password` in `.demo/rw_demo/settings.json`, save it and restart. Keep the other JSON fields unchanged. The known default is for private demo testing; change it before making the server publicly reachable.
+
+No extra NWNX or Role Weaver flag is needed for DM login in this demo. The DM spawn/persistence permissions control dashboard features, not authentication. If DM login is refused, confirm DM client mode, the game port, the saved password, and that the demo was restarted after changing it. An independently hosted world may also have its own DM admission restrictions.
 
 ## 5. Meet the NPCs
 

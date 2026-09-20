@@ -14,7 +14,6 @@ import math
 import os
 from pathlib import Path
 import re
-import secrets
 import shutil
 import signal
 import socket
@@ -25,6 +24,7 @@ import tempfile
 import time
 
 ROOT = Path(__file__).resolve().parents[1]
+DEFAULT_DM_PASSWORD = "roleweaver"
 sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / "tools"))
 from roleweaver.store import Store, DEFAULT_NPC
@@ -321,7 +321,7 @@ def prepare(runtime, args):
         game_port=args.game_port,
         web_port=args.web_port,
         redis_port=args.redis_port,
-        dm_password=secrets.token_urlsafe(12),
+        dm_password=DEFAULT_DM_PASSWORD,
     )
     if args.guardrails:
         from roleweaver.guardrails import ValidationEngine
@@ -440,6 +440,13 @@ def connection_instructions(settings, addresses, username):
     return "\n".join(lines)
 
 
+def reset_dm_password(runtime, settings):
+    """Explicit reset for a stopped demo; preserve every other instance setting."""
+    settings = dict(settings, dm_password=DEFAULT_DM_PASSWORD)
+    write_json(runtime / "settings.json", settings)
+    print("Demo DM password reset to roleweaver. Start the demo to apply it.")
+
+
 def launch(runtime, settings):
     check_validation_environment(runtime)
     dependencies(Path(settings["native"]), Path(settings["compiler"]))
@@ -523,7 +530,17 @@ def launch(runtime, settings):
                 ),
                 flush=True,
             )
-            print("DM password is in " + str(runtime / "settings.json"), flush=True)
+            if settings["dm_password"] == DEFAULT_DM_PASSWORD:
+                print(
+                    "DM login: use the NWN DM client (-dmc), the same game IP/port, and password: roleweaver",
+                    flush=True,
+                )
+            else:
+                print(
+                    "DM login: use the NWN DM client (-dmc) and the custom dm_password in "
+                    + str(runtime / "settings.json"),
+                    flush=True,
+                )
             print(
                 "Keep this terminal open. Ctrl+C stops this demo only. Logs are in "
                 + str(runtime),
@@ -552,7 +569,14 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
         "action",
-        choices=("setup", "start", "rebuild", "apply-content", "check-content"),
+        choices=(
+            "setup",
+            "start",
+            "rebuild",
+            "apply-content",
+            "check-content",
+            "reset-dm-password",
+        ),
     )
     parser.add_argument("--instance", default="rw_demo")
     parser.add_argument("--native", type=Path)
@@ -584,7 +608,9 @@ def main():
             prepare(runtime, args)
             return
         settings = read_json(runtime / "settings.json")
-        if args.action == "start":
+        if args.action == "reset-dm-password":
+            reset_dm_password(runtime, settings)
+        elif args.action == "start":
             signal.signal(
                 signal.SIGTERM, lambda *_: (_ for _ in ()).throw(KeyboardInterrupt())
             )
