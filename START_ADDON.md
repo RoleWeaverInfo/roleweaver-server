@@ -1,122 +1,87 @@
-# Role Weaver Server Add-on — alpha 0.1.0
+# Role Weaver Server Add-on — start here
 
-For an existing Linux NWN:EE server with NWNX:EE. This download contains no demo world.
-Your module stays where it is. Role Weaver runs as a separate companion and never starts or
-restarts NWN. Test on staging before production.
+This package adds Role Weaver to an NWN:EE/NWNX Linux server. Your module stays in your server's `modules` folder. The demo is a separate download.
 
-## 1. Prepare Python
+**Choose your starting point:**
 
-Extract to a permanent folder separate from the server. Open a terminal there:
+- **My NWN/NWNX server already works:** follow steps 1–6 below.
+- **I need to create a server first:** follow [New server setup](addon/NEW_SERVER.md), then return here.
+- **I only want to play the supplied investigation:** use the Demo download and its START_HERE.md. The optional YourWorld_Fixed example is already hooked; do not import the generic bridge over it.
 
-```bash
-python3 -m venv .venv
-source .venv/bin/activate
-python -m pip install -r requirements-guardrails.txt
-```
+## 1. Extract the add-on and open its folder
 
-Ubuntu 24.04/Python 3.12 is the tested baseline. Keep this environment available: the generated
-service uses it. Install your distribution's python3-venv package if necessary.
+Extract `RoleWeaver-Server-Addon-Alpha-0.1.0.tar.gz` on Ubuntu. Open the extracted folder in Files, right-click empty space and choose **Open in Terminal**. All commands below run in this folder. Keep the folder after installing.
 
-## 2. Check prerequisites and choose a world identity
+Your existing server, module, HAKs and launcher stay where they are.
 
-The examples use `my_world`, Redis prefix `roleweaver:my_world`, and dashboard port `8743`.
-Use the same values throughout. The world ID is a namespace, not a module filename or area tag.
+## 2. Edit one settings file
 
-Required NWNX plugins: Core, Chat, Events, Redis, Creature and Player, with matching headers and
-a compatible dedicated server build. Preserve your existing launcher/plugin configuration.
-Do not set NWNX_CORE_SKIP_ALL: it could disable your other plugins.
+Open **addon/setup.json** in a text editor. Save it after editing:
 
-The Python bridge currently supports unauthenticated Redis on localhost with a configurable port.
-Do not weaken an existing authenticated/remote Redis service. Review
-[compatibility notes](addon/COMPATIBILITY.md) if your setup differs, especially if other systems
-already use NWNX Redis.
+| Field | What to enter |
+| --- | --- |
+| `world_id` | A short identifier, such as `my_world`. Lowercase letters, digits and underscores; start with a letter. This is NOT the module filename. |
+| `redis_prefix` | A unique prefix, such as `roleweaver:my_world`. Use the same value for this world's bridge and companion. |
+| `dashboard_port` | An unused TCP port; example `8743`. |
+| `redis_port` | The local Redis port; normally `6379`. |
+| `nwnx_headers` | The Ubuntu folder containing `nwnx_core.nss`, from the NWScript.zip matching your installed NWNX build. Example `~/nwnx/nwscripts`. |
+| `output` | A new folder for the import files. Leave `builds/my_world-import-01` for your first build; use `-02` for another. |
 
-```bash
-python tools/install_companion.py check --world-id my_world --redis-port 6379
-```
+Keep JSON double quotes and commas. Do not put API keys or passwords in this file.
 
-Resolve errors first. This check cannot prove native plugin compatibility.
+## 3. Prepare Python and check Redis
 
-## 3. Install the companion only
+For a fresh Ubuntu installation, first run:
 
 ```bash
-python tools/install_companion.py install --world-id my_world --port 8743 --redis-port 6379 --redis-prefix roleweaver:my_world
+sudo apt install python3-venv redis-server
 ```
 
-Default target: `~/.local/share/roleweaver/my_world/`. Existing configuration is preserved on upgrades.
-Run the exact service commands printed by the installer. They start Role Weaver, not NWN.
-
-Open http://127.0.0.1:8743 on the server. For remote access, run this on your computer:
+Ensure your local Redis service is running. Then run these two commands, one at a time:
 
 ```bash
-ssh -N -L 8743:127.0.0.1:8743 USER@SERVER
+bash addon/setup.sh environment
+bash addon/setup.sh check
 ```
 
-Then open the same URL locally. Keep the dashboard and Redis private. Leave the provider offline
-until game integration works. A disconnected bridge is expected at this stage.
+The first creates the Python environment and installs dependencies. The second checks the companion prerequisites. Each later command uses that environment automatically. Redis must be local and compatible with the [transport requirements](addon/COMPATIBILITY.md); keep an established server's Redis configuration intact.
 
-To enable the optional local Guardrails AI adapter, set `"guardrails_ai": true` in the installed
-config.json and restart only the companion. Its Python environment must have the requirements from
-Step 1 installed. Provider-backed policy reviews are configured separately in the dashboard.
-
-## 4. Prepare bridge files without touching your module
-
-Choose one build method. Replace the example paths with existing locations on your server:
+## 4. Create the Aurora import file
 
 ```bash
-python tools/prepare_addon.py \
-  --world-id my_world \
-  --redis-prefix roleweaver:my_world \
-  --runtime /YOUR/EXISTING/NWN/RUNTIME \
-  --includes /YOUR/EXISTING/NWNX/HEADERS \
-  --compiler /YOUR/EXISTING/nwnsc \
-  --output builds/my_world-bridge-01
+bash addon/setup.sh prepare
 ```
 
-Runtime means the folder containing NWN data/*.key and data/*.bif. Includes means the folder of
-matching nwnx_*.nss headers. These inputs are read in place; no special folder layout or module copy
-is required inside Role Weaver.
+It prints the path to **RoleWeaver-Import.erf** and **INSTALL.md**. This step does not change or stop your server.
 
-Alternatively, prepare source for your world's normal build pipeline:
+The ERF contains the Role Weaver script sources, creature/store blueprints, two editable event templates, and all required NWNX headers including their dependencies. It uses YOUR matching NWNX headers, so you do not need to find and copy individual include files.
+
+Follow [Edit your module in Aurora](addon/AURORA.md). That guide explains importing, compiling, assigning events, preserving existing scripts, and copying the finished module back to Linux.
+
+## 5. Install the companion
 
 ```bash
-python tools/prepare_addon.py --world-id my_world --redis-prefix roleweaver:my_world --source-only --output builds/my_world-bridge-01
+bash addon/setup.sh install
 ```
 
-Compile scripts/ with your existing toolchain. Choose a new output directory for subsequent builds.
+This installs and starts the Role Weaver companion, not NWN. It preserves existing configuration and data. If the installer reports an active existing installation, see [Updating](addon/OPERATIONS.md) instead of stopping a service belonging to another world.
 
-## 5. Integrate into the existing world
+Open **http://127.0.0.1:8743** in Ubuntu (use your configured dashboard port). For Windows access, see [Dashboard access](addon/OPERATIONS.md#dashboard-from-windows).
 
-Open **builds/my_world-bridge-01/INSTALL.md**. Follow its instructions to:
+If you enabled DM spawning in the module, also enable `allow_dm_spawn` and optionally `allow_persistent_spawn` in the installed config. [The Aurora guide](addon/AURORA.md#optional-dm-spawning) shows both sides.
 
-1. Call rw_init after your existing module initialization.
-2. Add exactly one chat adapter after your own moderation/privacy decisions.
-3. Bind one existing test NPC, leaving your spawn system in charge.
+## 6. Start the edited game module and test
 
-Install compiled resources through your normal module/override workflow. Compile your modified
-existing handlers and restart the staging NWN server through your usual maintenance procedure.
-The preparer does not install game files or replace event handlers. Check rw_* resource collisions
-across module, HAKs and override folders before installation.
+Start NWN with your existing launcher and the edited module. Check its log: **Core, Chat, Events, Redis, Creature and Player** must load. `NWNX_CHAT_SKIP=n` means Chat is enabled. A working game connection alone does not prove NWNX loaded.
 
-## 6. Verify and test one NPC
+In the dashboard, create a profile with stable ID `test_guard`. Log in as DM, stand near a creature and say `!rw bind test_guard CREATURE_TAG`, replacing CREATURE_TAG with that creature's actual Tag from Aurora. Select Resume in the dashboard. Reconnect as a player and use Talk To near it. You should receive an offline test response. Configure your provider in LLM Settings when the bridge works.
 
-```bash
-python tools/check_addon.py --port 8743
-```
+For permanent world-owned NPCs, use your world's normal spawn/load path as described in [advanced integration](addon/INTEGRATION.md). A one-time DM binding does not modify the saved module.
 
-Dashboard, Redis, conversation bridge and action protocol should report OK after initialization.
-Zero NPCs is normal before binding. Create the profile ID used in your binding hook, resume it in
-the dashboard, and talk as a player. New bindings start paused.
+## Keep these guides handy
 
-After offline conversation and DM takeover work, configure an LLM in the dashboard. Follow
-[acceptance tests](addon/ACCEPTANCE_TESTS.md) before production use. The checker makes no LLM request.
-
-## Stop, restart and rollback
-
-```bash
-systemctl --user stop roleweaver-my_world
-systemctl --user restart roleweaver-my_world
-```
-
-These affect only the companion. See [rollback](addon/ROLLBACK.md) for game-hook removal.
-The demo is a different download; never run its setup against an established world.
+- [Aurora: import, event scripts, compile and deploy](addon/AURORA.md)
+- [Restart, update, dashboard access and troubleshooting](addon/OPERATIONS.md)
+- [Established-world integration details](addon/INTEGRATION.md)
+- [Playtest checklist](addon/ACCEPTANCE_TESTS.md)
+- [Rollback](addon/ROLLBACK.md)

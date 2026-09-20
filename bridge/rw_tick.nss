@@ -172,7 +172,17 @@ void main()
                 if(RWS(cmd,"price_stamp")!="" && RWS(cmd,"price_stamp")!=RWShopPriceStamp(npc,listener))
                     {SendMessageToPC(listener,"Shop prices changed while the merchant was answering. Please ask again.");speech="";}
                 if (GetIsObjectValid(listener) && RWCanHear(listener, npc, RWHearingRange()) && RWS(cmd,"conversation_revision") == GetLocalString(m,"rw_talk_revision") && GetStringLength(speech) > 0 && GetStringLength(speech) <= 1000)
+                {
                     ok = NWNX_Chat_SendMessage(NWNX_CHAT_CHANNEL_PLAYER_TALK, speech, npc);
+                    // Commit a story proposal only after its reviewed speech reached the game.
+                    string hook=GetLocalString(m,"rw_story_reply_hook");
+                    if(ok && hook!="" && RWS(cmd,"story_action")!="")
+                    {
+                        SetLocalString(npc,"rw_story_reply",JsonDump(cmd));
+                        ExecuteScript(hook,npc);
+                        DeleteLocalString(npc,"rw_story_reply");
+                    }
+                }
             }
         }
         json ack = RWBase("ack", npc);

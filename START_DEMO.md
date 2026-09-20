@@ -33,17 +33,17 @@ Use that same activated environment whenever starting the demo.
 Replace the two example paths with your actual dependency locations:
 
 ```bash
-python demo/demo.py setup --native "$HOME/nwn-demo-deps" --compiler "$HOME/bin/nwnsc" --guardrails
+.venv/bin/python demo/demo.py setup --native "$HOME/nwn-demo-deps" --compiler "$HOME/bin/nwnsc" --guardrails
 ```
 
-This prepares `.demo/rw_demo/`. It compiles a **copy** of `demo/world/YourWorld.mod`, adds the demo
+This prepares `.demo/rw_demo/`. It compiles a **copy** of `demo/world/YourWorld_Fixed.mod`, adds the demo
 NPCs and creates fresh data. It does not change the source world. If a required file is missing, setup
 stops and names it. Setup does not start anything. Re-running setup never overwrites a prepared instance.
 
 ## 4. Start
 
 ```bash
-python demo/demo.py start
+.venv/bin/python demo/demo.py start
 ```
 
 Keep the terminal open. Wait for NWN to finish loading, then open the dashboard at
@@ -63,20 +63,22 @@ trusted client/network. Keep Redis and the dashboard private.
 
 ## 5. Meet the NPCs
 
-Near the starting area: **Mira** the innkeeper, **Orren** the guard/merchant, and **Elara** the historian.
+Explore Crown Hall in the Kingdom of Role Weaver. Meet **Captain Beran**, **Kevin** the innkeeper, the **Merchant**, **Aldren** the wizard, **Sister Meriel**, and **Quartermaster Holt**. Ask the guard about your investigation and an audience with the King. Read or examine the noticeboard for activities.
 Right-click an NPC and choose Talk To/Speak, or address them by name to begin. Stay close.
 They should appear in the dashboard and start in auto mode. Offline replies are explicitly marked.
 
 In **LLM Settings**, enter your provider/model and key, run the connection test, then save. LM Studio
 can be used instead of a cloud key. Models/quotas and inference speed depend on the provider or host.
 
-Orren's shop starts with a small weapon selection. Ask to see his wares, then check the merchant panel.
-The demo's lore describes a closed east bridge; this is story context, not a claim about map geometry.
+The Merchant's shop starts with a small weapon selection. Ask to see the stock or haggle.
+Ask NPCs to lead you to the visitor table, merchant stall, wizard study, shrine or royal dais.
+Collect witness accounts about the caravan attack, then present your conclusion to the King.
+The investigation resets each login; NPC memories of previous conversations remain.
 
 ## 6. Stop or return later
 
 Press **Ctrl+C in the demo terminal**. This stops only the two processes started by this launcher.
-Later, activate `.venv` and run `python demo/demo.py start` again. Profiles, memories, keys and game
+Later, open a terminal in the package folder and run `.venv/bin/python demo/demo.py start` again. Profiles, memories, keys and game
 campaign data stay in `.demo/rw_demo/`. This is a foreground demo runner, not a production service.
 
 ## Optional testing and customization
@@ -89,3 +91,7 @@ campaign data stay in `.demo/rw_demo/`. This is a foreground demo runner, not a 
 If startup fails, read `.demo/rw_demo/game.log`, `dashboard.log` and `nwnx.log`. Never publish those
 files wholesale: they can contain player dialogue or local details. Logs are local troubleshooting
 files; automated redacted diagnostic export remains a separate planned feature.
+
+## If every message is blocked
+
+If Guardrails reports **unavailable**, this is an installation/environment problem, not a sensitivity setting. Start with `.venv/bin/python demo/demo.py start` so the launcher uses the environment where you installed Guardrails. Do not rebuild or delete your demo data. If needed, repair that environment with `.venv/bin/python -m pip install -r requirements-guardrails.txt`.

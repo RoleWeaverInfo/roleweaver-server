@@ -38,6 +38,8 @@ def main():
         for path in (base / "bridge").glob("*.nss"):
             if path.stem in (
                 "rw_inc",
+                "rw_core",
+                "rw_shopcore",
                 "rw_init",
                 "rw_chat",
                 "rw_chat_inc",

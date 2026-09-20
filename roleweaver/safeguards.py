@@ -1,5 +1,6 @@
 """Owner-configurable dialogue policy and local privacy masking."""
 
+from . import story
 import copy
 import json
 import math
@@ -137,6 +138,7 @@ def trusted_sources(profile, memories):
         "authorized_lore": profile.get("access_lore", []),
         "dm_memories": [m["text"] for m in memories],
         "live_shop": profile.get("merchant", {}),
+        "live_story": story.facts(profile.get("story")),
     }
 
 

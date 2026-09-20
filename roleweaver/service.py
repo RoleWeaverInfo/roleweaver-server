@@ -8,7 +8,16 @@ import secrets
 import threading
 import time
 
-from . import provider, backup, guardrails, safeguards, conversation, actions, merchants
+from . import (
+    provider,
+    backup,
+    guardrails,
+    safeguards,
+    conversation,
+    actions,
+    merchants,
+    story,
+)
 from .action_service import ActionService
 from .services.dialogue import DialogueService
 from .services.npcs import NPCService
@@ -457,6 +466,11 @@ class Service(DialogueService, NPCService, WorldService, ActionService):
             speech_id = self.store.message(npc, player, "player", speech)
             profile = dict(self.store.get(npc), world_lore=self.store.world_lore())
             profile["access_lore"] = self.store.lore_for(profile)
+            profile["story"] = story.context(event.get("story"))
+            if profile["story"].get("visit"):
+                profile["story_first_message"] = self.store.story_visit_start(
+                    npc, player, profile["story"]["visit"], speech_id
+                )
             if (
                 state["mode"] != "auto"
                 or npc in self.busy

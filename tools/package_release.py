@@ -56,7 +56,13 @@ def package(output, kind="demo"):
             if p.name
             not in ("test_demo.py", "test_distributions.py", "package_demo.py")
         ]
-    forbidden = {"provider.env", "llm-settings.json", "identity_salt", "settings.json"}
+    forbidden = {
+        "provider.env",
+        "llm-settings.json",
+        "identity_salt",
+        "settings.json",
+        "new-server.env",
+    }
     if any(
         p.name in forbidden or (kind == "addon" and p.suffix == ".mod") for p in paths
     ):
@@ -64,6 +70,13 @@ def package(output, kind="demo"):
             "Private runtime or unexpected module file detected in package input"
         )
     contents = {p.relative_to(ROOT).as_posix(): p.read_bytes() for p in paths}
+    if kind == "addon":
+        contents["addon/example-world/YourWorld_Fixed.mod"] = (
+            ROOT / "demo/world/YourWorld_Fixed.mod"
+        ).read_bytes()
+        contents["addon/example-world/content.json"] = (
+            ROOT / "demo/content.json"
+        ).read_bytes()
     contents["START_HERE.md"] = contents[guide]
     contents["README.md"] = (
         f"# {NAMES[kind]}\n\nStart with [START_HERE.md](START_HERE.md).\n\n"

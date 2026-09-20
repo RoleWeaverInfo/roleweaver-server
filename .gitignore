@@ -27,3 +27,6 @@ dist/
 
 .demo/
 !demo/world/*.mod
+
+# Private new-server launcher settings (contains DM password)
+addon/new-server.env

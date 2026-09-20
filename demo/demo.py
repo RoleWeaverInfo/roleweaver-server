@@ -26,9 +26,10 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / "tools"))
 from roleweaver.store import Store, DEFAULT_NPC
-from roleweaver import actions
+from roleweaver import actions, conversation, safeguards, merchants
 from roleweaver.lore_documents import validate_documents
 from build_addon import build
+from demo.investigation.runtime import build_investigation
 
 
 def read_json(path):
@@ -53,6 +54,13 @@ def content(path):
             r"[A-Za-z0-9_]{1,32}", value[key]
         ):
             raise ValueError("Invalid " + key)
+    for key, validator in (
+        ("conversation", conversation.settings),
+        ("safeguards", safeguards.settings),
+        ("merchant_configs", merchants.configs),
+    ):
+        if key in value:
+            value[key] = validator(value[key])
     ids = set()
     for npc in value["npcs"]:
         actions.identifier(npc["id"])
@@ -71,11 +79,12 @@ def content(path):
         # Names are embedded in a native source string; keep this demo input unambiguous.
         if any(c in npc["name"] for c in ('"', "\\")):
             raise ValueError("NPC display names cannot contain quotes or backslashes")
-        for key in ("x", "y"):
+        for key in ("x", "y", "z", "facing"):
+            npc.setdefault(key, 0.0)
             if (
                 type(npc.get(key)) not in (int, float)
                 or not math.isfinite(npc[key])
-                or not 0 <= npc[key] <= 100000
+                or not (-100000 if key == "z" else 0) <= npc[key] <= 100000
             ):
                 raise ValueError("Invalid NPC coordinate")
         if type(npc.get("shop")) is not bool:
@@ -96,14 +105,29 @@ def seed_script(value):
         '    if(!GetIsObjectValid(area)) { WriteTimestampedLogEntry("RW_DEMO: area tag not found"); return; }',
     ]
     for i, n in enumerate(value["npcs"]):
+        if not n.get("spawn", True):
+            continue
+        creature = {
+            k: int(n[k])
+            for k in ("appearance", "race", "gender", "npc_class", "level")
+            if k in n
+        }
+        location = f'Location(area,Vector({n["x"]:.3f},{n["y"]:.3f},{n.get("z", 0.0):.3f}),{n.get("facing", 0.0):.3f})'
+        if len(creature) == 5:
+            payload = json.dumps(creature, separators=(",", ":")).replace('"', '\\"')
+            create = f'RWCreateCreature(JsonParse("{payload}"),{location})'
+        else:
+            create = (
+                f'CreateObject(OBJECT_TYPE_CREATURE,"{value["blueprint"]}",{location})'
+            )
         rows += [
-            f'    object n{i}=CreateObject(OBJECT_TYPE_CREATURE,"{value["blueprint"]}",Location(area,Vector({n["x"]:.3f},{n["y"]:.3f},0.0),0.0));',
+            f'    object n{i}=RWFind("{n["id"]}"); if(!GetIsObjectValid(n{i})) n{i}={create};',
             f'    if(GetIsObjectValid(n{i})) {{ SetName(n{i},"{n["name"]}"); SetLocalString(n{i},"rw_profile","{n["id"]}"); ExecuteScript("rw_bind",n{i}); RWMode(n{i},"auto"); }}',
         ]
     return "\n".join(rows + ["}", ""])
 
 
-def seed_database(path, value):
+def seed_database(path, value, world="rw_demo"):
     """Upsert supplied profiles/lore; never erase conversations or removed profiles."""
     path.parent.mkdir(parents=True, exist_ok=True)
     store = Store(path)
@@ -112,7 +136,7 @@ def seed_database(path, value):
         for npc in value["npcs"]:
             profile = dict(
                 DEFAULT_NPC,
-                **{k: v for k, v in npc.items() if k in DEFAULT_NPC},
+                **{k: v for k, v in npc.items() if k in DEFAULT_NPC and k != "mode"},
                 mode="auto",
             )
             store.save(profile)
@@ -124,12 +148,28 @@ def seed_database(path, value):
             )
         for doc in value["world_documents"]:
             store.save_world_document(doc)
+        for doc in value.get("access_lore", []):
+            store.save_access_lore(doc)
         row = store.db.execute(
             "SELECT value FROM backup_settings WHERE key='controlled_actions'"
         ).fetchone()
         config = actions.settings(json.loads(row[0]) if row else None)
         config["npcs"].update(policies)
+        supplied = actions.settings(value.get("controlled_actions"))
+        config["npcs"].update(supplied["npcs"])
+        for key, destination in supplied["destinations"].items():
+            config["destinations"][key] = dict(destination, world=world)
         with store.db:
+            for key, validator in (
+                ("conversation", conversation.settings),
+                ("safeguards", safeguards.settings),
+                ("merchant_configs", merchants.configs),
+            ):
+                if key in value:
+                    store.db.execute(
+                        "INSERT OR REPLACE INTO backup_settings VALUES (?,?)",
+                        (key, json.dumps(validator(value[key]))),
+                    )
             store.db.execute(
                 "INSERT OR REPLACE INTO backup_settings VALUES (?,?)",
                 ("controlled_actions", json.dumps(config)),
@@ -188,41 +228,52 @@ def compile_world(runtime, settings):
         link.symlink_to(compiler)
     bundle = runtime / "builds" / str(time.time_ns())
     bundle.parent.mkdir(exist_ok=True)
-    build(
-        Path(settings["module"]),
-        bundle,
-        native,
-        settings["id"],
-        settings["prefix"],
-        "world",
-        "module",
-    )
-    (bundle / "bridge/rw_demoseed.nss").write_text(seed_script(value))
-    load = bundle / "bridge/rw_load.nss"
-    load.write_text(
-        load.read_text().replace(
-            '    ExecuteScript("rw_init", GetModule());',
-            '    ExecuteScript("rw_init", GetModule());\n    ExecuteScript("rw_demoseed", GetModule());',
+    if value.get("scenario") == "investigation":
+        build_investigation(
+            Path(settings["module"]),
+            bundle,
+            native,
+            compiler,
+            settings["id"],
+            settings["prefix"],
+            seed_script(value),
         )
-    )
-    for name in ("rw_load", "rw_demoseed"):
-        subprocess.run(
-            [
-                str(compiler),
-                "-n",
-                str(native / "runtime"),
-                "-i",
-                str(native / "nwscripts") + ";" + str(bundle / "bridge"),
-                str(bundle / "bridge" / (name + ".nss")),
-            ],
-            check=True,
-            timeout=30,
-            capture_output=True,
+    else:
+        build(
+            Path(settings["module"]),
+            bundle,
+            native,
+            settings["id"],
+            settings["prefix"],
+            "world",
+            "module",
         )
-        shutil.move(
-            str(bundle / "bridge" / (name + ".ncs")),
-            bundle / "compiled" / (name + ".ncs"),
+        (bundle / "bridge/rw_demoseed.nss").write_text(seed_script(value))
+        load = bundle / "bridge/rw_load.nss"
+        load.write_text(
+            load.read_text().replace(
+                '    ExecuteScript("rw_init", GetModule());',
+                '    ExecuteScript("rw_init", GetModule());\n    ExecuteScript("rw_demoseed", GetModule());',
+            )
         )
+        for name in ("rw_load", "rw_demoseed"):
+            subprocess.run(
+                [
+                    str(compiler),
+                    "-n",
+                    str(native / "runtime"),
+                    "-i",
+                    str(native / "nwscripts") + ";" + str(bundle / "bridge"),
+                    str(bundle / "bridge" / (name + ".nss")),
+                ],
+                check=True,
+                timeout=30,
+                capture_output=True,
+            )
+            shutil.move(
+                str(bundle / "bridge" / (name + ".ncs")),
+                bundle / "compiled" / (name + ".ncs"),
+            )
     # Both compilation steps succeed before touching the instance's active game files.
     userdata = runtime / "userdata"
     if (userdata / "modules").exists():
@@ -232,7 +283,7 @@ def compile_world(runtime, settings):
     (userdata / "modules").mkdir(parents=True, exist_ok=True)
     shutil.copy2(
         bundle / "module" / Path(settings["module"]).name,
-        userdata / "modules/RoleWeaver_Demo.mod",
+        userdata / "modules/YourWorld_Fixed.mod",
     )
     shutil.copytree(bundle / "compiled", userdata / "override", dirs_exist_ok=True)
     write_json(
@@ -279,7 +330,7 @@ def prepare(runtime, args):
                 "Install requirements-guardrails.txt into this Python environment first"
             )
     value = compile_world(runtime, settings)
-    seed_database(runtime / "data/roleweaver.sqlite3", value)
+    seed_database(runtime / "data/roleweaver.sqlite3", value, settings["id"])
     config = read_json(ROOT / "config.example.json")
     config.update(
         world_id=settings["id"],
@@ -296,14 +347,47 @@ def prepare(runtime, args):
     print("Prepared. Run: python demo/demo.py start --instance " + args.instance)
 
 
-def launch(runtime, settings):
-    dependencies(Path(settings["native"]), Path(settings["compiler"]))
+def check_validation_environment(runtime):
+    """Fail before starting NWN when enabled validation cannot run in this Python."""
+    config = json.loads((runtime / "config.json").read_text(encoding="utf-8"))
+    if config.get("guardrails_ai", False):
+        from roleweaver.guardrails import ValidationEngine
+
+        if not ValidationEngine(True).status()["active"]:
+            raise ValueError(
+                "Guardrails AI is enabled but unavailable in this Python: "
+                + sys.executable
+                + ". From the package folder, run .venv/bin/python -m pip install "
+                "-r requirements-guardrails.txt, then .venv/bin/python demo/demo.py start "
+                "(keep your --instance option if used). No demo processes were started."
+            )
+
+
+def check_ports(settings):
+    """Match the dashboard's bind behavior, including recently closed connections."""
     for port, kind in (
         (settings["game_port"], socket.SOCK_DGRAM),
         (settings["web_port"], socket.SOCK_STREAM),
     ):
         with socket.socket(socket.AF_INET, kind) as sock:
-            sock.bind(("0.0.0.0", port))
+            host = "0.0.0.0"
+            if kind == socket.SOCK_STREAM:
+                host = "127.0.0.1"
+                sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+            try:
+                sock.bind((host, port))
+            except OSError as error:
+                label = "dashboard TCP" if kind == socket.SOCK_STREAM else "game UDP"
+                raise ValueError(
+                    f"Cannot use demo {label} port {port}: {error}. "
+                    "Check whether another instance is running."
+                ) from error
+
+
+def launch(runtime, settings):
+    check_validation_environment(runtime)
+    dependencies(Path(settings["native"]), Path(settings["compiler"]))
+    check_ports(settings)
     with socket.create_connection(
         ("127.0.0.1", settings["redis_port"]), timeout=3
     ) as sock:
@@ -330,7 +414,7 @@ def launch(runtime, settings):
         "-userdirectory",
         str(runtime / "userdata"),
         "-module",
-        "RoleWeaver_Demo",
+        "YourWorld_Fixed",
         "-port",
         str(settings["game_port"]),
         "-publicserver",
@@ -416,7 +500,7 @@ def main():
     parser.add_argument("--native", type=Path)
     parser.add_argument("--compiler", type=Path)
     parser.add_argument(
-        "--module", type=Path, default=ROOT / "demo/world/YourWorld.mod"
+        "--module", type=Path, default=ROOT / "demo/world/YourWorld_Fixed.mod"
     )
     parser.add_argument("--content", type=Path, default=ROOT / "demo/content.json")
     parser.add_argument("--game-port", type=int, default=5125)
@@ -461,7 +545,7 @@ def main():
                 sqlite3.connect(saved) as out,
             ):
                 db.backup(out)
-            seed_database(runtime / "data/roleweaver.sqlite3", value)
+            seed_database(runtime / "data/roleweaver.sqlite3", value, settings["id"])
             print(
                 "Applied profile/lore templates. Saved database backup: " + str(saved)
             )

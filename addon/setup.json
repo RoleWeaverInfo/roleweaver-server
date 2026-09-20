@@ -1,0 +1,8 @@
+{
+  "world_id": "my_world",
+  "redis_prefix": "roleweaver:my_world",
+  "dashboard_port": 8743,
+  "redis_port": 6379,
+  "nwnx_headers": "~/nwnx/nwscripts",
+  "output": "builds/my_world-import-01"
+}

@@ -1,0 +1,4 @@
+# Customs, disagreements and faith
+
+The kingdom's emblem is a silver shuttle above a blue river: many separate threads make a strong cloth. Neighbours hang a short coloured ribbon by their door during the autumn Mending Fair to acknowledge someone who helped them that year. The fair is a seasonal custom, not a currently running event. A ribbon is an expression of thanks, not a quest item. Keeping one's word matters; admitting an honest mistake is generally respected.
+The shared shrine welcomes peaceful worship. Meriel teaches care for the injured and truthful witness; Aldren favours careful inquiry. Both are valued, and magic and faith need not be rivals. Townsfolk debate road tolls, supply priorities and whether the Crown spends too much on ceremony. Such disagreements do not establish guilt in the caravan case. Visitors need not worship a particular deity, accept a title, or disclose a real-world identity to receive courteous treatment.

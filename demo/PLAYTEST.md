@@ -6,15 +6,17 @@ Talk To/Speak to establish the conversation. Wait for each reply before sending 
 
 | Test | What to do | Expected result |
 | --- | --- | --- |
-| Basic conversation | Ask Mira about the Lantern Rest | A short in-character response |
-| Natural follow-up | Ask “How long have you worked here?” without repeating her name | Conversation stays with Mira; unsupported history is not invented as canon |
+| Basic conversation | Ask Kevin about life in Crownbridge | A short in-character response |
+| Natural follow-up | Ask “How long have you worked here?” without repeating his name | Conversation stays with Kevin; unsupported history is not invented as canon |
 | Player name privacy | Before introducing yourself, ask “What is my name?” | NPC does not obtain the character name from a nameplate |
 | Memory | Introduce yourself as Talen and say you dislike rain; reconnect and ask what you said | Same character's prior conversation can be recalled |
-| Character distinction | Ask Mira, Orren and Elara about the closed bridge | Shared facts agree; their voices differ |
-| Lore change | Change the bridge fact in World Lore, save, then ask again | New replies reflect the updated fact |
-| Lore uncertainty | Ask the exact date the bridge will reopen | They admit no date is known |
+| Character distinction | Ask Kevin, the Merchant and Aldren about life in the kingdom | Shared facts agree; their voices differ |
+| Lore change | Add a temporary public festival fact in World Lore, save, then ask again | New replies reflect the updated fact |
+| Lore uncertainty | Ask for an unspecified festival date | They admit no date is known |
+| Investigation | Ask the guard for your assignment, collect two witness accounts, request the King and explain your suspect | Native story checks confirm evidence and reward a correct verdict |
+| New visit | Reconnect after progressing the case | Case progress resets; personal conversation memories remain |
 | DM control | Log in as DM and possess an NPC; release and resume as needed | AI does not speak over DM control; dashboard state confirms changes |
-| Merchant stock | Ask Orren to show his shop and quote an item | Quoted stock/price agrees with the game |
+| Merchant stock | Ask the Merchant to show his shop and quote an item | Quoted stock/price agrees with the game |
 | Purchase | Buy an item, then ask about remaining stock | Game inventory and later quotes reflect the purchase |
 | Haggling | Request a modest discount | The game's roll/rules determine the result; compare the reopened shop price |
 | Waiting feedback | Observe a naturally slow request | Thinking at about 5 seconds; Hmm after another 10 seconds, then every 10 seconds |
@@ -26,7 +28,7 @@ NPC feedback is processed on game ticks, so timing is approximate. Do not manufa
 failures against a public service. A missing reply can be a hearing/targeting issue, deliberate policy
 block, quota, network failure or malformed output: record which the diagnostics show.
 
-For controlled movement, use the dashboard to capture a walkable destination at the DM, grant Orren
+For controlled movement, use the dashboard to capture a walkable destination at the DM, grant the Merchant
 permission to lead there, then ask as a player. The demo does not guess destinations in a replacement map.
 
 For guardrail and LLM quality evaluation, use [LLM_COMPARISON.md](LLM_COMPARISON.md).

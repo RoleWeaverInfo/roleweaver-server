@@ -1,3 +1,4 @@
+#include "rw_inc"
 // Fixed game-side allowlist. No model-supplied scripts, targets or animation numbers.
 int RWActionUniqueArea(object area)
 {

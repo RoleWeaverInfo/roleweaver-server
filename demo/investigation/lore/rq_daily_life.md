@@ -1,0 +1,4 @@
+# Work, homes and everyday life
+
+Crownbridge wakes to bread ovens, handcarts and the river bell. Rain is frequent, winters are damp and the best evenings smell of woodsmoke and baking. Homes above workshops are common. Farmers bring grain, onions, apples and wool to market; river crews carry timber and flour. Imported medicines, metalwork and books make reliable caravans essential.
+People drink apple cordial, small beer or herb tea, eat barley stew and oat bread, and argue about tolls, weather and whose roof leaks worst. Hospitality is a point of pride, but wages and rents can be tight. Repairing a neighbour's gate matters more than grand speeches. Apprentices learn by doing, and families often mix several trades. Work stops late on market days. At supper, neighbours exchange stories, mend clothing and play Nine Stones, a local board game with no implemented game rules in this demo. These details are roleplay, not purchasable stock or automatic services.

@@ -1,17 +1,11 @@
 # Demo alpha validation
 
-Built from Role Weaver runtime 0.26.7 and the modular source baseline.
+Updated September 19, 2026 from runtime 0.26.7.
 
-- Automated unit tests cover content validation, native-source injection rejection, duplicate IDs,
-  non-finite coordinates, non-destructive template reapplication, existing-instance refusal,
-  native dependency checks, instance locking and compile-failure preservation.
-- On the existing Ubuntu test VM, the archived source compiled YourWorld and all bridge/demo scripts
-  using that machine's compatible dedicated server, NWNX plugins/headers and compiler.
-- An isolated demo on UDP 5126 / dashboard 8746 registered Mira, Orren and Elara in auto mode.
-  The action bridge and merchant panel reported ready, with one merchant.
-- Stop, rebuild, content import (with database backup) and restart were exercised successfully.
-- The foreground runner stopped its own game and dashboard; the established test services were unchanged.
+- 238 application tests pass (10 platform/optional-dependency skips on Windows).
+- Ubuntu compiled the edited YourWorld_Fixed investigation and its demo spawn script for the separate rw_demo namespace.
+- Both main (UDP 5121/dashboard 8743) and demo (UDP 5125/dashboard 8745) registered all six starting NPCs in auto mode. The King is summoned by the story.
+- Source module bytes are identical in both distribution archives and the main server. The demo build preserves non-script resources while rebinding its runtime namespace.
+- Main-server conversation messages were retained during deployment. Demo rebuild and content reapplication preserve existing memories and create backups.
 
-This is not a clean-machine dependency installation test or a completed player/DM playtest of the new
-archive. Follow PLAYTEST.md before promoting the archive beyond alpha. Model/Guardrails comparison
-results are intentionally left for testers; no model ranking or universal safety guarantee is claimed.
+This is not a clean-machine installation test or a completed player/DM playtest of the edited layout. Follow PLAYTEST.md to check navigation, investigation, merchant behavior and model/Guardrails quality before publishing.

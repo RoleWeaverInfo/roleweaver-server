@@ -1,6 +1,6 @@
 # Alpha release checklist
 
-This is a release plan, not a claim that the demo/installer is ready.
+Alpha validation record. Unchecked items remain limitations of this prerelease.
 
 - [x] Separate source repository with existing MIT license preserved.
 - [x] Domain-oriented service modules and consistently formatted Python source.
@@ -9,11 +9,10 @@ This is a release plan, not a claim that the demo/installer is ready.
 - [ ] Review demo module and every bundled asset's redistribution rights.
 - [x] Package the supplied editable world with example NPCs, lore, merchant and approved greeting/shop actions.
 - [x] Demo setup with explicit dependency paths, validation and foreground start/stop instructions.
-- [ ] Guided existing-server integration preserving original event handlers.
+- [x] Guided existing-server integration, editable setup files and generated Aurora import resources.
 - [ ] Redacted rotating error logs and diagnostic-report export.
 - [ ] Clean Ubuntu installation test using only published instructions/artifacts.
 - [ ] Test upgrade and rollback on a copy of an existing world.
 - [ ] Publish versioned prerelease archives, checksums, known limitations and support instructions.
 
-The currently running test installation remains separate from this refactor until it has been
-explicitly installed and playtested. Source CI does not validate native runtime compatibility.
+The investigation was deployed and playtested on the project Ubuntu VM. Generated add-on scripts compiled with that installation's matching NWNX headers. Clean-machine installation and manual Aurora import of the new ERF still need testing. Source CI does not validate native runtime compatibility.

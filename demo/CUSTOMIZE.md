@@ -4,7 +4,7 @@ All authoring inputs are editable files. The generated instance is separate from
 
 | File or folder | What you edit |
 | --- | --- |
-| `demo/world/YourWorld.mod` | Source world in the NWN toolset |
+| `demo/world/YourWorld_Fixed.mod` | Source world in the NWN toolset |
 | `demo/content.json` | NPC IDs, profiles, positions, public lore and shop permissions |
 | `demo/PLAYTEST.md` | Gameplay scenarios |
 | `demo/LLM_COMPARISON.md` | LLM test protocol and expected behavior |
@@ -79,3 +79,11 @@ The archive and checksum appear in `dist/`. Rebuild after modifying the source w
 The packager excludes `.demo`, local configuration, keys, databases, compiler links and native runtime.
 An archive manifest records the SHA-256 of every packaged input. Check module/custom-asset redistribution
 permissions before publicly distributing your revised world.
+
+## Investigation module
+
+The supplied world already includes Role Weaver and investigation hooks. Keep `scenario: "investigation"` in `demo/content.json`; setup recompiles those scripts for the demo namespace while retaining your area edits. The four placed witnesses have `spawn: false`; the King is summoned by the story. Only the innkeeper and merchant use the additional demo spawn entries. After moving landmarks in Aurora, update the coordinates in `controlled_actions.destinations` and the two spawned NPC entries in `demo/content.json`, then stop, rebuild and apply-content. Back up `.demo/rw_demo` before applying content because it replaces supplied authoring profiles and lore, while retaining memories.
+
+## Saved dashboard setup
+
+The supplied content.json includes the saved NPC profiles, lore/access settings, approved destinations, innkeeper/merchant spawn positions and facing, conversation/hearing controls, safeguard settings and merchant haggle rules captured on September 20, 2026. Setup applies these to a fresh instance. apply-content imports these authoring settings into an existing stopped demo after backing up its database; it preserves player memories. Provider credentials and player histories are not included. The optional example-world content in the add-on archive is the same snapshot.

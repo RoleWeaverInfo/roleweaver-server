@@ -3,10 +3,19 @@
 An AI NPC companion for **Neverwinter Nights: Enhanced Edition** servers using NWNX:EE.
 It runs alongside an existing server; it does not replace NWN or its module.
 
-This repository is the developer source baseline derived from the tested **0.26.7** build.
-Two separate alpha distributions are available:
-- **Try the editable demo:** [START_DEMO.md](START_DEMO.md).
-- **Connect your existing NWN/NWNX server:** [START_ADDON.md](START_ADDON.md). Your module stays where it is.
+## Alpha demo download
+
+[Download Demo Alpha 0.1.0](https://github.com/RoleWeaverInfo/roleweaver-server/releases/tag/v0.1.0-alpha.1)
+
+Explore the Kingdom of Role Weaver, meet its inhabitants, shop and haggle, and solve a caravan investigation through conversation. Personal NPC memories persist between visits; the investigation resets each login.
+
+- **Play the demo:** download `RoleWeaver-Demo-Alpha-0.1.0.tar.gz`, extract it on Linux and open its START_HERE.md. [Read the demo guide](START_DEMO.md).
+- **Integrate your own server:** the source includes a separate add-on installer, editable setup files and an Aurora import generator. Follow [START_ADDON.md](START_ADDON.md) on a staging world first.
+- **Help test:** try the [playtest checklist](demo/PLAYTEST.md) and [conversation/guardrail model comparisons](demo/LLM_COMPARISON.md). Report results in [Issues](https://github.com/RoleWeaverInfo/roleweaver-server/issues), including the model, settings and reproduction steps, without private data or keys.
+
+Ubuntu 24.04 is the tested server environment. Players use the normal NWN:EE client. Generated dialogue requires a configured provider or local model; provider charges and limits may apply.
+
+The application derives from runtime **0.26.7**; **Alpha 0.1.0** identifies the distribution. See the [release notes](docs/releases/alpha-0.1.0.md) for known limitations.
 
 See [distribution contents and release packaging](docs/DISTRIBUTIONS.md).
 NWN/NWNX/compiler dependencies are supplied separately.

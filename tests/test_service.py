@@ -115,6 +115,69 @@ class ServerTests(unittest.TestCase):
         )
         self.assertEqual(self.app.store.transcript("mira", "p"), [])
 
+    def test_story_proposal_travels_with_reviewed_speech(self):
+        self.app.config["provider"] = "openai-compatible"
+        event = self.chat()
+        event["story"] = dict(
+            protocol=1,
+            token="test:one",
+            actions=[
+                dict(id="story:clue_2", description="Reveal the signed route order.")
+            ],
+        )
+        with patch(
+            "roleweaver.provider.reply",
+            return_value='{"speech":"The order bore Holt’s signature.","action":"story:clue_2"}',
+        ):
+            self.app.event(event)
+            self.drain()
+        command = self.speech_commands()[-1]
+        self.assertEqual(command["story_action"], "story:clue_2")
+        self.assertEqual(command["story_token"], "test:one")
+        self.assertEqual(command["action_choice"], "")
+
+    def test_output_rejection_cannot_commit_story(self):
+        self.app.config["provider"] = "openai-compatible"
+        event = self.chat()
+        event["story"] = dict(
+            protocol=1,
+            token="test:one",
+            actions=[
+                dict(id="story:clue_2", description="Reveal the signed route order.")
+            ],
+        )
+        with (
+            patch(
+                "roleweaver.provider.reply",
+                return_value='{"speech":"The signed order.","action":"story:clue_2"}',
+            ),
+            patch.object(
+                self.app, "review_dialogue", side_effect=["allow", "fallback"]
+            ),
+        ):
+            self.app.event(event)
+            self.drain()
+        self.assertEqual(self.speech_commands()[-1]["story_action"], "")
+
+    def test_invented_story_action_fails_without_commit(self):
+        self.app.config["provider"] = "openai-compatible"
+        event = self.chat()
+        event["story"] = dict(
+            protocol=1,
+            token="test:one",
+            actions=[
+                dict(id="story:clue_2", description="Reveal the signed route order.")
+            ],
+        )
+        with patch(
+            "roleweaver.provider.reply",
+            return_value='{"speech":"Gold!","action":"story:verdict_10"}',
+        ):
+            self.app.event(event)
+            self.drain()
+        self.assertTrue(self.speech_commands()[-1]["transient"])
+        self.assertNotIn("story_action", self.speech_commands()[-1])
+
     def test_duplicate_profile_is_independent_and_paused(self):
         original = self.app.store.get("mira")
         original["guidance"] = "A temporary instruction"

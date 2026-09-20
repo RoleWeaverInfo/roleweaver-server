@@ -5,7 +5,7 @@ They do not own separate worker pools or database connections.
 """
 
 import time
-from .. import provider, guardrails, safeguards, actions, merchants
+from .. import provider, guardrails, safeguards, actions, merchants, story
 
 
 class DialogueService:
@@ -74,7 +74,11 @@ class DialogueService:
             price_stamp = ""
             with self.lock:
                 request_config = dict(self.config)
-                available_actions = self.action_choices(npc)
+                story_context = story.context(profile.get("story"))
+                profile = dict(profile, story=story_context)
+                available_actions = self.action_choices(npc) + story_context.get(
+                    "actions", []
+                )
                 policy = safeguards.settings(self.safeguard_policy)
                 if self.action_config["npcs"].get(npc, {}).get("shop"):
                     shop = self.shop_context(npc)
@@ -105,6 +109,7 @@ class DialogueService:
                 display_name,
                 self.name_privacy_cutoff,
             )
+            history = story.mark_history(history, profile.get("story_first_message"))
             if speech is None:
                 speech = next(
                     (r["text"] for r in reversed(history) if r["speaker"] == "player"),
@@ -232,7 +237,13 @@ class DialogueService:
                     text=text,
                     player=player,
                     listener=listener,
-                    action_choice=action_choice,
+                    action_choice=(
+                        "" if action_choice.startswith("story:") else action_choice
+                    ),
+                    story_action=(
+                        action_choice if action_choice.startswith("story:") else ""
+                    ),
+                    story_token=story_context.get("token", ""),
                     action_generation=generation,
                     price_stamp=price_stamp,
                 )

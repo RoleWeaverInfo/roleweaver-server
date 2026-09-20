@@ -104,6 +104,8 @@ def audit(module, scripts=()):
     hits = sorted(name for name, data in blobs if b"RegisterChatScript" in data)
     reserved = set(ENTRY_SCRIPTS) | {
         "rw_inc",
+        "rw_core",
+        "rw_shopcore",
         "rw_settings",
         "rw_chat_inc",
         "rw_playerchat",
@@ -160,6 +162,8 @@ def build(module, output, native, world, prefix, owner, chat, scripts=()):
     for name in (
         *ENTRY_SCRIPTS,
         "rw_inc",
+        "rw_core",
+        "rw_shopcore",
         "rw_chat_inc",
         "rw_creature",
         "rw_talk_inc",

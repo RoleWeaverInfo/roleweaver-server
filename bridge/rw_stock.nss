@@ -1,3 +1,4 @@
+#include "rw_shopcore"
 // Administrative stock commands are separate from model-controlled actions.
 int RWStockAllowed(string ref) { return ref=="nw_wswdg001" || ref=="nw_wswss001" || ref=="nw_wswls001" || ref=="nw_wdbqs001" || ref=="nw_wbwsh001" || ref=="nw_waxbt001" || ref=="nw_waxhn001" || ref=="nw_wblcl001" || ref=="nw_wblhw001" || ref=="nw_wbwxl001" || ref=="nw_aarcl001" || ref=="nw_ashsw001" || ref=="nw_it_mpotion001" || ref=="nw_it_mpotion002" || ref=="nw_it_mpotion003"; }
 void RWStockAck(object npc,string request,int ok)

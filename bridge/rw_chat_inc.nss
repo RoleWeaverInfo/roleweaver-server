@@ -175,5 +175,20 @@ void RWHandleChat(object speaker, string text, int channel, int moduleEvent)
     payload = JsonObjectSet(payload, "text", JsonString(text));
     payload = JsonObjectSet(payload, "speech_format", JsonInt(1));
     if(GetLocalInt(npc,"rw_merchant_enabled")){RWEmit(RWShopSnapshot(npc));payload=JsonObjectSet(payload,"merchant_quote",RWShopQuote(npc,speaker));}
+    // Optional module-owned story context. Player text never selects a script.
+    string storyHook = GetLocalString(m,"rw_story_context_hook");
+    if (storyHook != "")
+    {
+        SetLocalObject(m,"rw_story_pc",speaker);
+        SetLocalObject(m,"rw_story_npc",npc);
+        SetLocalString(m,"rw_story_event",RWS(payload,"event_id"));
+        DeleteLocalString(m,"rw_story_context");
+        ExecuteScript(storyHook,m);
+        string context = GetLocalString(m,"rw_story_context");
+        if(context!="") payload=JsonObjectSet(payload,"story",JsonParse(context));
+        DeleteLocalString(m,"rw_story_context");
+        DeleteLocalObject(m,"rw_story_pc");DeleteLocalObject(m,"rw_story_npc");
+        DeleteLocalString(m,"rw_story_event");
+    }
     RWEmit(payload);
 }

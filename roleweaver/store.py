@@ -47,6 +47,8 @@ class Store:
           player TEXT NOT NULL, text TEXT NOT NULL, created REAL NOT NULL);
         CREATE TABLE IF NOT EXISTS messages (id INTEGER PRIMARY KEY, npc TEXT NOT NULL,
           player TEXT NOT NULL, speaker TEXT NOT NULL, text TEXT NOT NULL, created REAL NOT NULL);
+        CREATE TABLE IF NOT EXISTS story_visits (npc TEXT NOT NULL, player TEXT NOT NULL,
+          visit TEXT NOT NULL, first_message INTEGER NOT NULL, PRIMARY KEY(npc,player));
         CREATE TABLE IF NOT EXISTS seen (id TEXT PRIMARY KEY, created REAL NOT NULL);
         CREATE TABLE IF NOT EXISTS placements (world TEXT NOT NULL, npc TEXT NOT NULL,
           placement TEXT NOT NULL, updated REAL NOT NULL, PRIMARY KEY(world,npc));
@@ -183,6 +185,21 @@ class Store:
                 (npc, npc),
             )
             return cursor.lastrowid
+
+    def story_visit_start(self, npc, player, visit, message_id):
+        """Mark a new native login without erasing the character's conversations."""
+        with self.lock, self.db:
+            row = self.db.execute(
+                "SELECT visit,first_message FROM story_visits WHERE npc=? AND player=?",
+                (npc, player),
+            ).fetchone()
+            if row and row[0] == visit:
+                return row[1]
+            self.db.execute(
+                "INSERT OR REPLACE INTO story_visits VALUES (?,?,?,?)",
+                (npc, player, visit, message_id),
+            )
+            return message_id
 
     def transcript(self, npc, player=None, limit=40):
         with self.lock:

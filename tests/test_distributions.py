@@ -31,8 +31,19 @@ class DistributionTests(unittest.TestCase):
                 )
                 self.assertIn("START_HERE.md", entries)
                 self.assertIn("roleweaver/static/rw_server_splash.png", entries)
+                module_path = (
+                    "demo/world/YourWorld_Fixed.mod"
+                    if kind == "demo"
+                    else "addon/example-world/YourWorld_Fixed.mod"
+                )
                 self.assertEqual(
-                    any(n.endswith(".mod") for n in entries), kind == "demo"
+                    entries[module_path],
+                    (
+                        package_release.ROOT / "demo/world/YourWorld_Fixed.mod"
+                    ).read_bytes(),
+                )
+                self.assertEqual(
+                    [n for n in entries if n.endswith(".mod")], [module_path]
                 )
                 self.assertEqual(
                     any(n.startswith("demo/") for n in entries), kind == "demo"
