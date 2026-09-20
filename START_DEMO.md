@@ -8,15 +8,12 @@ choose an LLM in the dashboard when ready. It does not use an existing world's d
 
 You need Python 3.12, Redis, an NWN:EE client to play, and a compatible Linux **dedicated server**,
 NWNX:EE plugins/headers, and the `nwnsc` compiler. The game runtime and NWNX binaries are not
-bundled. Follow [dependency setup](demo/DEPENDENCIES.md) to arrange these files.
+bundled. **First follow [the step-by-step dependency guide](demo/DEPENDENCIES.md):**
 
-On Ubuntu:
+- **New installation:** section A downloads/installs the dedicated server, matching NWNX plugins/headers, Redis and compiler. Then section C creates the folder links.
+- **Already installed:** section B identifies your existing folders, and section C links them into the layout the demo expects. You do not need to move or reinstall them.
 
-```bash
-sudo apt update
-sudo apt install python3-venv redis-server
-sudo systemctl start redis-server
-```
+Section D returns you to this package folder and runs setup. If you finish that section, continue here at **Step 4**. Otherwise continue below once dependency checks pass.
 
 ## 2. Open a terminal in the extracted package
 
@@ -30,7 +27,7 @@ Use that same activated environment whenever starting the demo.
 
 ## 3. Build your demo
 
-Replace the two example paths with your actual dependency locations:
+The dependency guide creates `~/nwn-demo-deps` containing links named `runtime`, `plugins` and `nwscripts`. **Do not point --native directly at ~/nwserver or ~/nwnx.** Keep the command below if you followed the standard layout; change only --compiler if your compiler lives elsewhere:
 
 ```bash
 .venv/bin/python demo/demo.py setup --native "$HOME/nwn-demo-deps" --compiler "$HOME/bin/nwnsc" --guardrails
@@ -45,6 +42,8 @@ stops and names it. Setup does not start anything. Re-running setup never overwr
 ```bash
 .venv/bin/python demo/demo.py start
 ```
+
+The startup output lists the detected Ubuntu/VM game IP addresses, game port, local dashboard URL, and an SSH tunnel command for Windows. With multiple network interfaces, choose the Ubuntu address reachable from your client.
 
 Keep the terminal open. Wait for NWN to finish loading, then open the dashboard at
 **http://127.0.0.1:8745**. In NWN Direct Connect use **127.0.0.1:5125** if the client is on the same Linux

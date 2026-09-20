@@ -5,6 +5,8 @@ The foreground runner owns only the two child processes it launches.
 """
 
 import argparse
+import getpass
+import ipaddress
 import contextlib
 import hashlib
 import json
@@ -384,6 +386,60 @@ def check_ports(settings):
                 ) from error
 
 
+def host_ipv4_addresses():
+    """List assigned addresses without contacting an external network service."""
+    try:
+        result = subprocess.run(
+            ["ip", "-j", "-4", "address", "show", "up"],
+            capture_output=True,
+            text=True,
+            check=True,
+            timeout=2,
+        )
+        addresses = set()
+        for interface in json.loads(result.stdout):
+            for entry in interface.get("addr_info", []):
+                if entry.get("scope") != "global":
+                    continue
+                address = ipaddress.IPv4Address(entry["local"])
+                if (
+                    not address.is_loopback
+                    and not address.is_link_local
+                    and not address.is_unspecified
+                ):
+                    addresses.add(str(address))
+        return sorted(addresses)
+    except (OSError, subprocess.SubprocessError, ValueError, KeyError, TypeError):
+        return []
+
+
+def connection_instructions(settings, addresses, username):
+    game, web = settings["game_port"], settings["web_port"]
+    lines = [
+        "Starting the demo. Wait for the module and dashboard to finish loading.",
+        "NWN Direct Connect:",
+        f"  On this Ubuntu computer: 127.0.0.1:{game}",
+    ]
+    if addresses:
+        lines += [f"  From another computer: {address}:{game}" for address in addresses]
+        lines.append(
+            "  Use the Ubuntu/VM address reachable from your client; VPN/container addresses may not be reachable."
+        )
+    else:
+        lines.append(
+            f"  From another computer: UBUNTU-IP:{game} (run hostname -I in Ubuntu to find its IP)"
+        )
+    lines += [
+        "Dashboard:",
+        f"  In Ubuntu: http://127.0.0.1:{web}",
+        "  From Windows/another computer, run this SSH tunnel there and leave it open:",
+        f"    ssh -N -L {web}:127.0.0.1:{web} {username}@{addresses[0] if len(addresses) == 1 else 'UBUNTU-IP'}",
+        f"  Then open http://127.0.0.1:{web} on that computer.",
+        "  SSH must be enabled in Ubuntu. The dashboard listens only on localhost.",
+    ]
+    return "\n".join(lines)
+
+
 def launch(runtime, settings):
     check_validation_environment(runtime)
     dependencies(Path(settings["native"]), Path(settings["compiler"]))
@@ -462,7 +518,9 @@ def launch(runtime, settings):
                 )
             )
             print(
-                f"Starting game on UDP {settings['game_port']}; dashboard http://127.0.0.1:{settings['web_port']}",
+                connection_instructions(
+                    settings, host_ipv4_addresses(), getpass.getuser()
+                ),
                 flush=True,
             )
             print("DM password is in " + str(runtime / "settings.json"), flush=True)

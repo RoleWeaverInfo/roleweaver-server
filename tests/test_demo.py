@@ -12,6 +12,41 @@ spec.loader.exec_module(demo)
 
 
 class DemoTests(unittest.TestCase):
+    def test_connection_output_uses_configured_ports_and_tunnel(self):
+        text = demo.connection_instructions(
+            {"game_port": 5133, "web_port": 8759}, ["192.168.167.128"], "roleweaver"
+        )
+        self.assertIn("192.168.167.128:5133", text)
+        self.assertIn("127.0.0.1:5133", text)
+        self.assertIn("http://127.0.0.1:8759", text)
+        self.assertIn("ssh -N -L 8759:127.0.0.1:8759 roleweaver@192.168.167.128", text)
+        self.assertNotIn("http://192.168.167.128", text)
+
+    def test_connection_output_missing_or_multiple_addresses(self):
+        settings = {"game_port": 5125, "web_port": 8745}
+        self.assertIn("hostname -I", demo.connection_instructions(settings, [], "user"))
+        text = demo.connection_instructions(
+            settings, ["10.0.0.2", "192.168.1.2"], "user"
+        )
+        self.assertIn("10.0.0.2:5125", text)
+        self.assertIn("192.168.1.2:5125", text)
+        self.assertIn("user@UBUNTU-IP", text)
+
+    def test_address_detection_filters_and_handles_missing_ip_command(self):
+        data = [
+            {
+                "addr_info": [
+                    {"scope": "host", "local": "127.0.0.1"},
+                    {"scope": "global", "local": "192.168.1.2"},
+                ]
+            }
+        ]
+        with patch.object(demo.subprocess, "run") as run:
+            run.return_value.stdout = json.dumps(data)
+            self.assertEqual(demo.host_ipv4_addresses(), ["192.168.1.2"])
+            run.side_effect = FileNotFoundError()
+            self.assertEqual(demo.host_ipv4_addresses(), [])
+
     @unittest.skipUnless(__import__("sys").platform == "linux", "Linux socket behavior")
     def test_port_check_allows_closed_connections_but_rejects_listener(self):
         import socket
