@@ -76,6 +76,15 @@ class DialogueService:
                 request_config = dict(self.config)
                 story_context = story.context(profile.get("story"))
                 profile = dict(profile, story=story_context)
+                state = self.states.get(npc, {})
+                profile["surroundings"] = (
+                    state.get("surroundings", [])
+                    if time.monotonic() - state.get("seen", 0) < 4
+                    else []
+                )
+                profile["duty"] = (
+                    self.action_config["npcs"].get(npc, {}).get("patrol", {})
+                )
                 available_actions = self.action_choices(npc) + story_context.get(
                     "actions", []
                 )

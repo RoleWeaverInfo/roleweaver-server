@@ -32,9 +32,43 @@ json RWBase(string kind, object npc)
     return v;
 }
 
+// Perception is bounded and deliberately excludes player names, inventory and secrets.
+int RWHasConversation(object npc)
+{
+    object pc=GetFirstPC();
+    while(GetIsObjectValid(pc))
+    {
+        if(RWCurrentTalk(pc)==npc) return TRUE;
+        pc=GetNextPC();
+    }
+    return FALSE;
+}
+json RWSurroundings(object npc)
+{
+    json rows=JsonArray();
+    int i;
+    for(i=1;i<=24;i++)
+    {
+        object o=GetNearestObject(OBJECT_TYPE_CREATURE | OBJECT_TYPE_DOOR | OBJECT_TYPE_PLACEABLE,npc,i);
+        if(!GetIsObjectValid(o) || GetDistanceBetween(npc,o)>12.0) break;
+        if(o!=npc && GetArea(o)==GetArea(npc) && !GetIsDM(o) && !GetIsDMPossessed(o)
+            && LineOfSightObject(npc,o) && (GetObjectType(o)!=OBJECT_TYPE_CREATURE || GetObjectSeen(o,npc)))
+        {
+            json row=JsonObject();
+            row=JsonObjectSet(row,"kind",JsonString(GetObjectType(o)==OBJECT_TYPE_DOOR ? "door" : (GetObjectType(o)==OBJECT_TYPE_CREATURE ? "character" : "placeable")));
+            row=JsonObjectSet(row,"label",JsonString(GetIsPC(o) ? "Unidentified player" : GetStringLeft(GetName(o),80)));
+            row=JsonObjectSet(row,"distance",JsonFloat(GetDistanceBetween(npc,o)));
+            rows=JsonArrayInsert(rows,row);
+        }
+    }
+    return rows;
+}
 void RWState(object npc)
 {
     json v = RWBase("state", npc);
+    v=JsonObjectSet(v,"awareness_protocol",JsonInt(1));
+    v=JsonObjectSet(v,"conversation_active",JsonInt(RWHasConversation(npc)));
+    v=JsonObjectSet(v,"surroundings",RWSurroundings(npc));
     v = JsonObjectSet(v, "object", JsonString(ObjectToString(npc)));
     v = JsonObjectSet(v, "mode", JsonString(GetLocalString(npc, "rw_mode")));
     v = JsonObjectSet(v, "source", JsonString(GetLocalString(npc, "rw_source")));

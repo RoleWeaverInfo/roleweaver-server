@@ -266,6 +266,8 @@ def main():
                         result = app.merchant_example()
                     elif self.path == "/api/action-policy":
                         result = app.save_action_policy(body["npc"], body["policy"])
+                    elif self.path == "/api/patrol":
+                        result = app.save_patrol(body["npc"], body["patrol"])
                     elif self.path == "/api/action-capture":
                         result = app.capture_destination(
                             body["id"], body["name"], body["dm"]

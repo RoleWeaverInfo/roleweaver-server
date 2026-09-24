@@ -5,12 +5,14 @@ import secrets
 import time
 from . import actions, merchants
 from .merchant_admin import MerchantAdmin
+from .patrol import PatrolService
 
 
-class ActionService(MerchantAdmin):
+class ActionService(PatrolService, MerchantAdmin):
     def init_actions(self):
         self.action_config = actions.settings(self.setting("controlled_actions", None))
         self.action_jobs = {}
+        self.patrol_runtime = {}
         self.action_last = {}
         self.action_notice = ""
         self.shop_states = {}
@@ -47,6 +49,7 @@ class ActionService(MerchantAdmin):
                 jobs=jobs,
                 ready=ready,
                 notice=self.action_notice,
+                patrols=self.patrol_runtime,
                 gestures=list(actions.GESTURES),
                 shops={
                     k: dict(v, stale=time.monotonic() - v.get("seen", 0) > 8)
@@ -60,6 +63,9 @@ class ActionService(MerchantAdmin):
 
     def save_action_policy(self, npc, value):
         self.store.get(npc)
+        old_duty = self.action_config["npcs"].get(npc, {}).get("patrol")
+        if old_duty is not None:
+            value = dict(value, patrol=old_duty)
         p = actions.policy(value, self.action_config["destinations"])
         if p == self.action_config["npcs"].get(npc, actions.DEFAULT_POLICY):
             return self.action_status()
@@ -186,7 +192,7 @@ class ActionService(MerchantAdmin):
             available = [a for a in available if a["id"].startswith("shop:")]
         return available
 
-    def run_action(self, npc, choice, listener="", generation=None):
+    def run_action(self, npc, choice, listener="", generation=None, patrol=False):
         if generation is not None and generation != self.generations.get(npc, 0):
             return
         available = self.action_choices(npc)
@@ -196,6 +202,7 @@ class ActionService(MerchantAdmin):
             )
         kind, target = choice.split(":", 1)
         fields = dict(
+            patrol=int(patrol),
             action=kind,
             target=target,
             world=self.config["world_id"],
@@ -222,6 +229,7 @@ class ActionService(MerchantAdmin):
         return self.action_status()
 
     def stop_action(self, npc):
+        self.patrol_runtime.setdefault(npc, {})["halted"] = True
         self.generations[npc] = self.generations.get(npc, 0) + 1
         request = self.command(npc, "controlled_stop")
         return dict(request=request)

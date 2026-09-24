@@ -17,6 +17,8 @@ void RWActionTick(object npc)
 {
     if (GetLocalString(npc,"rw_action_status") != "running" && GetLocalString(npc,"rw_action_status") != "waiting for player") return;
     int tick=GetLocalInt(GetModule(),"rw_tick");
+    if(GetLocalInt(npc,"rw_action_patrol") && RWHasConversation(npc))
+    { RWActionEnd(npc,"interrupted"); return; }
     if (GetIsDMPossessed(npc) || GetIsDead(npc) || GetIsInCombat(npc) || GetLocalString(npc,"rw_mode")!="auto"
         || GetLocalInt(npc,"rw_action_epoch")!=GetLocalInt(npc,"rw_epoch"))
         RWActionEnd(npc,"interrupted");
@@ -52,6 +54,7 @@ int RWStartAction(object npc,json cmd)
 {
     object m=GetModule(); int tick=GetLocalInt(m,"rw_tick");
     string kind=RWS(cmd,"action");
+    if(RWI(cmd,"patrol") && (kind!="walk" || RWHasConversation(npc))) return FALSE;
     if (RWS(cmd,"world")!=RWWorld() || GetLocalString(npc,"rw_mode")!="auto" || GetIsDMPossessed(npc) || GetIsDead(npc) || GetIsInCombat(npc)
         || GetLocalString(npc,"rw_action_status")=="running" || GetLocalString(npc,"rw_action_status")=="waiting for player" || (kind!="shop" && tick<GetLocalInt(npc,"rw_action_next"))
         || GetStringLength(RWS(cmd,"request"))!=24 || RWS(cmd,"request")==GetLocalString(npc,"rw_action_request")) return FALSE;
@@ -95,6 +98,7 @@ int RWStartAction(object npc,json cmd)
         SetLocalObject(npc,"rw_action_player",pc);
     }
     SetLocalString(npc,"rw_action_request",RWS(cmd,"request"));
+    SetLocalInt(npc,"rw_action_patrol",RWI(cmd,"patrol"));
     SetLocalString(npc,"rw_action_status","running");
     SetLocalString(npc,"rw_action_kind",kind);
     SetLocalInt(npc,"rw_action_epoch",GetLocalInt(npc,"rw_epoch"));

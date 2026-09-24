@@ -3,6 +3,7 @@
 import json
 import math
 import re
+from . import patrol
 
 GESTURES = ("greet", "bow", "salute")
 DEFAULT_POLICY = dict(
@@ -51,6 +52,9 @@ def destination(value):
 
 
 def policy(value, destinations):
+    duty = value.get("patrol") if isinstance(value, dict) else None
+    if isinstance(value, dict):
+        value = {k: v for k, v in value.items() if k != "patrol"}
     if (
         not isinstance(value, dict)
         or set(value) != set(DEFAULT_POLICY)
@@ -75,7 +79,10 @@ def policy(value, destinations):
         or type(value["shop"]) is not bool
     ):
         raise ValueError("Choose a saved home and a valid shop permission")
-    return {k: list(v) if isinstance(v, list) else v for k, v in value.items()}
+    result = {k: list(v) if isinstance(v, list) else v for k, v in value.items()}
+    if duty is not None:
+        result["patrol"] = patrol.validate(duty, result["destinations"])
+    return result
 
 
 def migrate_policy(value):

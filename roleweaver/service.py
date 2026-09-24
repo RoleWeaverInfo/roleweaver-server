@@ -294,6 +294,8 @@ class Service(DialogueService, NPCService, WorldService, ActionService):
                 self.states[npc]["combat"] = event.get("combat", 0)
                 self.action_state(npc, event)
                 self.sync_merchant(npc, event)
+                self.states[npc]["surroundings"] = event.get("surroundings", [])
+                self.patrol_tick(npc, event)
                 last_session = self.control_sessions.get(npc)
                 restoring = next(
                     (
