@@ -43,7 +43,7 @@ def check(args):
         errors.append("Redis is not reachable on 127.0.0.1:" + str(args.redis_port))
     if args.native:
         native = args.native.resolve()
-        for name in ("Core", "Chat", "Events", "Redis", "Creature", "Player"):
+        for name in ("Core", "Chat", "Events", "Redis", "Creature", "Player", "Item"):
             if not (native / "plugins" / ("NWNX_" + name + ".so")).is_file():
                 errors.append("Missing NWNX plugin: " + name)
         if not (native / "runtime").is_dir():

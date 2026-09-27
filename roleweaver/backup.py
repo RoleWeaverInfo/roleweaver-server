@@ -7,7 +7,7 @@ import time
 import secrets
 from .store import DEFAULT_NPC
 from .authoring import BUILD_DEFAULTS, creature_build, faction_ids, validate_lore
-from . import safeguards, conversation, actions, merchants
+from . import safeguards, conversation, actions, merchants, encounters
 from .lore_documents import validate_documents, combined
 
 LIMIT = 32 * 1024 * 1024
@@ -17,7 +17,7 @@ def validate(data):
     if (
         not isinstance(data, dict)
         or data.get("format") != "roleweaver-backup"
-        or data.get("version") not in (1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11)
+        or data.get("version") not in (1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12)
     ):
         raise ValueError("Unsupported Role Weaver backup")
 
@@ -88,6 +88,19 @@ def validate(data):
             raise ValueError("Action permissions reference unknown NPC")
     if data["version"] >= 10 and "merchant_configs" not in data:
         raise ValueError("Missing merchant settings")
+    if data["version"] >= 12 and "encounters" not in data:
+        raise ValueError("Missing encounter definitions")
+    result["encounters"] = encounters.settings(data.get("encounters"))
+    definitions = list(result["encounters"]["templates"].values()) + [
+        r["template"]
+        for r in result["encounters"]["runs"].values()
+        if r["status"] in encounters.LIVE
+    ]
+    destinations = result.get("controlled_actions", {}).get("destinations", {})
+    if any(a["npc"] not in ids for d in definitions for a in d["actors"]):
+        raise ValueError("Encounter references unknown NPC")
+    if any(d["location"] and d["location"] not in destinations for d in definitions):
+        raise ValueError("Encounter references unknown location")
     result["merchant_configs"] = merchants.configs(data.get("merchant_configs"))
     if not set(result["merchant_configs"]).issubset(ids):
         raise ValueError("Merchant settings reference unknown NPC")
@@ -188,7 +201,16 @@ def export(store, salt):
         ).fetchone()
         return dict(
             format="roleweaver-backup",
-            version=11,
+            version=12,
+            encounters=encounters.settings(
+                json.loads(row[0])
+                if (
+                    row := store.db.execute(
+                        "SELECT value FROM backup_settings WHERE key='encounters'"
+                    ).fetchone()
+                )
+                else None
+            ),
             merchant_configs=merchants.configs(
                 json.loads(merchant_row[0]) if merchant_row else None
             ),
@@ -216,6 +238,10 @@ def export(store, salt):
 
 def replace(store, data):
     with store.lock, store.db:
+        store.db.execute(
+            "INSERT OR REPLACE INTO backup_settings VALUES ('encounters',?)",
+            (json.dumps(encounters.settings(data.get("encounters"))),),
+        )
         configs = {
             p["id"]: dict(
                 rules=data.get("merchant_configs", {})

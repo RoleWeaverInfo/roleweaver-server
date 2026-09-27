@@ -92,6 +92,12 @@ def main():
                     (Path(__file__).parent / "static/safeguards.js").read_bytes(),
                     "application/javascript; charset=utf-8",
                 )
+            if parsed.path == "/perception.js":
+                return self.respond(
+                    200,
+                    (Path(__file__).parent / "static/perception.js").read_bytes(),
+                    "application/javascript; charset=utf-8",
+                )
             if parsed.path == "/insights.js":
                 return self.respond(
                     200,
@@ -130,6 +136,22 @@ def main():
                 )
             if parsed.path == "/api/actions":
                 return self.respond(200, app.action_status())
+            if parsed.path == "/api/live-encounters":
+                return self.respond(200, app.live_status())
+            if parsed.path == "/live-encounters.js":
+                return self.respond(
+                    200,
+                    (Path(__file__).parent / "static/live-encounters.js").read_bytes(),
+                    "application/javascript; charset=utf-8",
+                )
+            if parsed.path == "/api/encounters":
+                return self.respond(200, app.encounter_status())
+            if parsed.path == "/encounters.js":
+                return self.respond(
+                    200,
+                    (Path(__file__).parent / "static/encounters.js").read_bytes(),
+                    "application/javascript; charset=utf-8",
+                )
             if parsed.path == "/conversation.js":
                 return self.respond(
                     200,
@@ -207,6 +229,10 @@ def main():
                 ):
                     raise ValueError("Invalid request length")
                 body = json.loads(self.rfile.read(length))
+                if self.path == "/api/live-assistant":
+                    return self.respond(200, app.assist_live(body))
+                if self.path == "/api/encounter-assistant":
+                    return self.respond(200, app.persistent_assistant(body))
                 if self.path in ("/api/llm-test", "/api/llm-models"):
                     return self.respond(
                         200, app.probe_llm(body, self.path.endswith("models"))
@@ -268,6 +294,45 @@ def main():
                         result = app.save_action_policy(body["npc"], body["policy"])
                     elif self.path == "/api/patrol":
                         result = app.save_patrol(body["npc"], body["patrol"])
+                    elif self.path == "/api/live-capture":
+                        result = app.capture_live(body["dm"])
+                    elif self.path == "/api/live-preview":
+                        result = app.preview_live(body)
+                    elif self.path == "/api/live-place":
+                        result = app.place_live(body["preview"], body["dm"])
+                    elif self.path == "/api/live-control":
+                        result = app.control_live(body["id"], body["operation"])
+                    elif self.path == "/api/live-director":
+                        result = app.director_control(body)
+                    elif self.path == "/api/encounter-director":
+                        result = app.persistent_director_control(body)
+                    elif self.path == "/api/live-checks":
+                        result = app.save_social_checks(body)
+                    elif self.path == "/api/encounter-save":
+                        result = app.save_encounter(
+                            body["definition"], body["revision"]
+                        )
+                    elif self.path == "/api/encounter-delete":
+                        result = app.delete_encounter(body["id"], body["revision"])
+                    elif self.path == "/api/encounter-control":
+                        result = app.control_encounter(
+                            body["id"],
+                            body["operation"],
+                            body["revision"],
+                            body.get("stage", ""),
+                            body.get("outcome", ""),
+                        )
+                    elif self.path == "/api/encounter-spawn":
+                        result = app.spawn_encounter_cast(
+                            body["id"], body["dm"], body["revision"]
+                        )
+                    elif self.path == "/api/encounter-retreat":
+                        result = app.retreat_encounter_actor(
+                            body["id"],
+                            body["npc"],
+                            body["destination"],
+                            body["revision"],
+                        )
                     elif self.path == "/api/action-capture":
                         result = app.capture_destination(
                             body["id"], body["name"], body["dm"]

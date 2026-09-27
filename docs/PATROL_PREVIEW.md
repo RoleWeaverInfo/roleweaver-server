@@ -1,8 +1,42 @@
 # Patrol and awareness development preview
 
 This first increment adds deterministic patrol duties and limited visual context.
-It does not yet add NPC-to-NPC conversations, autonomous encounters, doors or item
-interactions. The published alpha remains unchanged.
+Optional two-turn NPC check-ins are now supported. Autonomous encounters, doors
+and item interactions remain future work. The published alpha remains unchanged.
+
+## Optional NPC check-ins
+
+In Patrol duty, add one line for each stop that should trigger a conversation:
+
+```text
+patrol_merchant=merchant_one
+patrol_wizard=rq_wizard
+patrol_cleric=rq_cleric
+patrol_holt=rq_holt
+```
+
+Use your own saved stop IDs and target NPC profile IDs. Each stop must be on the
+route. Both NPCs must be idle in AUTO, visible to each other and within six metres.
+An unavailable target is skipped; the guard does not chase it. Keep check-ins blank
+to disable them. Save the patrol after editing. Default pair cooldown is five
+minutes (configurable from 60 to 3600 seconds); attempts also consume cooldown.
+
+The guard asks one short question and the target replies once. Both turns pass
+through input/output safeguards and each requires game acknowledgement. Confirmed
+speech is kept in each NPC's conversation history under an `npc:` identity. Received
+lines are attributed unverified reports, not authoritative lore. The latest six
+reports may inform later dialogue; older pair history remains bounded by normal
+conversation retention. Private player transcripts are not sent to the other NPC.
+
+Check-ins share the global request budget, allow only one background generation
+at a time, and have a 90-second overall timeout. They consume up to two generation
+requests plus enabled review requests; Usage records generation as `npc_checkin`.
+Player conversation, possession, combat, distance, or Stop cancels the exchange.
+Patrol continues after its normal wait. Cooldowns survive companion restarts.
+
+Test one stop first: hear a question and reply, confirm patrol resumes, then repeat
+while speaking to either NPC or possessing it. Try a paused or distant target and
+a blocked/failed provider response: there should be no repeated or delayed speech.
 
 ## Configure a guard
 

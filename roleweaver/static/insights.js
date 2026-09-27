@@ -38,6 +38,7 @@
       const host=$('ki-content');host.replaceChildren();
       host.append(el('h3',d.name+' — profile and personal knowledge'));
       for(const [key,value] of Object.entries(d.profile))source(host,key[0].toUpperCase()+key.slice(1),value,'Saved NPC profile. Edit in NPCs.');
+      if(d.encounter && Object.keys(d.encounter).length){host.append(el('h3','Current encounter'));for(const [key,value] of Object.entries(d.encounter))source(host,key,typeof value==='object'?JSON.stringify(value,null,2):value,'Only this actor’s current encounter context. Edit in Encounters.');}
       host.append(el('h3','World documents'));
       for(const doc of d.documents)source(host,doc.title+' · '+(doc.available?'Included':'Excluded'),doc.text,doc.reason+' · Edit in World Lore.');
       if(!d.documents.length)host.append(el('p','No world documents.'));

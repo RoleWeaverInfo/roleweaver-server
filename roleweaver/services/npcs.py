@@ -41,6 +41,14 @@ class NPCService:
 
     def delete_npc(self, npc):
         with self.lock:
+            if any(
+                a["npc"] == npc
+                for d in self.encounters["templates"].values()
+                for a in d["actors"]
+            ) or self.encounter_for(npc):
+                raise ValueError(
+                    "Remove this NPC from encounter definitions and finish live encounters before deleting it"
+                )
             self.store.get(npc)
             self.generations[npc] = self.generations.get(npc, 0) + 1
             if npc in self.states:
@@ -141,6 +149,10 @@ class NPCService:
             state = self.states.get(npc)
             if not state or time.monotonic() - state["seen"] >= 3:
                 raise ValueError("Creature is not connected")
+            if state.get("live_owner"):
+                raise ValueError(
+                    "Use Live Encounters to manage this scene-owned creature"
+                )
             if state.get("source") not in ("dm_temporary", "dm_persistent"):
                 raise ValueError("World-managed creatures are protected")
             if state.get("possessed"):

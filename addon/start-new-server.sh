@@ -20,10 +20,10 @@ export LD_PRELOAD="$NWNX_PLUGINS/NWNX_Core.so"
 export LD_LIBRARY_PATH="$NWNX_PLUGINS${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
 export NWNX_CORE_SKIP_ALL=1
 export NWNX_CHAT_SKIP=n NWNX_EVENTS_SKIP=n NWNX_REDIS_SKIP=n
-export NWNX_CREATURE_SKIP=n NWNX_PLAYER_SKIP=n
+export NWNX_CREATURE_SKIP=n NWNX_PLAYER_SKIP=n NWNX_ITEM_SKIP=n
 export NWNX_REDIS_HOST=127.0.0.1 NWNX_REDIS_PORT="$REDIS_PORT"
 mkdir -p "$WORLD_DIRECTORY/override" "$WORLD_DIRECTORY/hak" "$WORLD_DIRECTORY/tlk"
 cd "$NWN_RUNTIME/bin/linux-x86"
 exec ./nwserver-linux -userdirectory "$WORLD_DIRECTORY" -module "$MODULE_NAME" \
   -port "$GAME_PORT" -publicserver 0 -servername "$SERVER_NAME" \
-  -servervault 0 -maxclients 8 -dmpassword "$DM_PASSWORD" -interactive
+  -servervault 0 -maxclients 8 -reloadwhenempty 0 -dmpassword "$DM_PASSWORD" -interactive

@@ -17,11 +17,18 @@ from . import (
     actions,
     merchants,
     story,
+    perception,
+    nearby,
 )
 from .action_service import ActionService
 from .services.dialogue import DialogueService
 from .services.npcs import NPCService
 from .services.world import WorldService
+from .encounters import EncounterService
+from .live_encounters import LiveEncounterService
+from .live_director import LiveDirectorService
+from .persistent_director import PersistentDirectorService
+from .social_service import SocialCheckService
 from . import __version__
 from .recovery import RecoveryBackups
 from .redis_wire import Redis
@@ -31,7 +38,17 @@ from .llm_settings import Settings
 from .knowledge import inspect_knowledge
 
 
-class Service(DialogueService, NPCService, WorldService, ActionService):
+class Service(
+    DialogueService,
+    NPCService,
+    WorldService,
+    ActionService,
+    EncounterService,
+    LiveEncounterService,
+    LiveDirectorService,
+    PersistentDirectorService,
+    SocialCheckService,
+):
     """Own runtime state and dispatch game events to domain service methods.
 
     Domain mixins deliberately use this same instance: separate copies would
@@ -94,6 +111,10 @@ class Service(DialogueService, NPCService, WorldService, ActionService):
         self.conversation_hello = {}
         self.conversation_sent = 0
         self.init_actions()
+        self.init_encounters()
+        self.init_live_encounters()
+        self.init_director()
+        self.init_social_checks()
         self.diagnostics = {}
         self.operations = {}
         self.restore_attempts = {}
@@ -148,9 +169,12 @@ class Service(DialogueService, NPCService, WorldService, ActionService):
                 else:
                     time.sleep(0.05)
                 self.thinking_tick()
+                self.director_tick()
                 with self.lock:
                     for k, v in list(self.pending.items()):
                         if time.monotonic() - v["time"] >= 30:
+                            if v["kind"] == "encounter_end":
+                                self.director_command_result(v, False)
                             if v["kind"] in ("move_dm", "despawn", "persistence"):
                                 self.operations[v["npc"]] = dict(
                                     status="failed",
@@ -169,6 +193,7 @@ class Service(DialogueService, NPCService, WorldService, ActionService):
             states = {
                 k: dict(
                     v,
+                    perception=perception.snapshot(v),
                     connected=time.monotonic() - v["seen"] < 4,
                     thinking=k in self.busy,
                     pending_control=any(
@@ -223,6 +248,10 @@ class Service(DialogueService, NPCService, WorldService, ActionService):
             return
         kind = event.get("kind")
         npc = event.get("npc", "")
+        if kind == "payment_result":
+            with self.lock:
+                self.payment_event(event)
+            return
         if kind == "merchant_stock":
             with self.lock:
                 self.merchant_event(event)
@@ -235,14 +264,50 @@ class Service(DialogueService, NPCService, WorldService, ActionService):
                 self.dms[event["dm"]] = {
                     k: event[k] for k in ("name", "token", "session", "tick")
                 }
+                self.dms[event["dm"]].update(
+                    {
+                        k: event[k]
+                        for k in (
+                            "live_protocol",
+                            "area_object",
+                            "area",
+                            "area_tag",
+                            "area_name",
+                            "x",
+                            "y",
+                            "z",
+                            "facing",
+                        )
+                        if k in event
+                    }
+                )
                 self.dms[event["dm"]]["seen"] = time.monotonic()
             return
+        if kind == "social_result":
+            with self.lock:
+                self.social_result(event)
+            return
+        if kind == "director_observation":
+            with self.lock:
+                self.director_observe(event)
+            return
+        if kind == "encounter_event":
+            with self.lock:
+                if not self.live_game_event(event):
+                    self.encounter_game_event(event)
+            return
         if kind == "hello":
+            with self.lock:
+                self.tick_live(event)
+                self.encounter_session(event)
+                self.sync_encounter_reactions(event)
             self.sync_conversation(event)
             self.world_session = event.get("session", "")
             self.restore(event)
             return
         if kind == "placement":
+            if self.live_for(npc):
+                return
             if self.placement_restore_hold.get(event.get("world")) == event.get(
                 "session"
             ):
@@ -278,6 +343,8 @@ class Service(DialogueService, NPCService, WorldService, ActionService):
                         for k in (
                             "source",
                             "area",
+                            "area_resref",
+                            "area_tag",
                             "x",
                             "y",
                             "dead",
@@ -291,11 +358,50 @@ class Service(DialogueService, NPCService, WorldService, ActionService):
                     }
                 )
                 self.states[npc]["seen"] = time.monotonic()
+                self.states[npc]["combat_phase"] = event.get("combat_phase", "")
+                self.reconcile_encounter_combat(npc, event)
                 self.states[npc]["combat"] = event.get("combat", 0)
+                self.states[npc]["live_owner"] = event.get("live_owner", "")
+                self.states[npc]["encounter_protocol"] = event.get(
+                    "encounter_protocol", 0
+                )
                 self.action_state(npc, event)
                 self.sync_merchant(npc, event)
-                self.states[npc]["surroundings"] = event.get("surroundings", [])
+                self.states[npc]["surroundings"] = perception.observations(
+                    event.get("surroundings", []),
+                    area_wide=event.get("perception_protocol") == 3,
+                )
+                self.states[npc]["nearby_targets"] = nearby.targets(
+                    event.get("surroundings", []),
+                    area_wide=event.get("perception_protocol") == 3,
+                )
+                for field in (
+                    "nearby_protocol",
+                    "perception_protocol",
+                    "perception_truncated",
+                    "inventory_protocol",
+                    "inventory_revision",
+                    "inventory",
+                    "perception_tick",
+                    "self_condition",
+                    "nearby_npcs",
+                    "conversation_active",
+                    "checkins_protocol",
+                    "retreat_protocol",
+                ):
+                    self.states[npc][field] = event.get(field)
+                self.sync_inventory(npc, event)
+                for field in (
+                    "interaction_protocol",
+                    "interaction_revision",
+                    "npc_combat_target",
+                ):
+                    self.states[npc][field] = event.get(field)
+                self.sync_interactions(npc, event)
+                self.visit_tick(npc)
+                self.checkin_tick()
                 self.patrol_tick(npc, event)
+                self.village_tick(npc, event)
                 last_session = self.control_sessions.get(npc)
                 restoring = next(
                     (
@@ -321,6 +427,7 @@ class Service(DialogueService, NPCService, WorldService, ActionService):
                 if (
                     profile
                     and startup
+                    and not event.get("live_owner")
                     and self.startup_auto
                     and not self.restoring
                     and event["session"] != self.suppressed_session
@@ -337,12 +444,18 @@ class Service(DialogueService, NPCService, WorldService, ActionService):
         if kind == "ack":
             with self.lock:
                 pending = self.pending.pop(event.get("request"), None)
-                if pending and pending["kind"] == "merchant_stock_edit":
+                if pending and pending["kind"] in ("live_spawn", "live_cleanup"):
+                    self.live_ack(pending, event)
+                elif pending and pending["kind"] == "checkin_say":
+                    self.checkin_ack(pending, event)
+                elif pending and pending["kind"] == "merchant_stock_edit":
                     self.merchant_ack(pending, event)
                 elif pending and pending["kind"] in (
                     "controlled_action",
                     "controlled_stop",
                     "merchant_setup",
+                    "payment_offer",
+                    "npc_attack",
                 ):
                     self.action_ack(pending, event)
                 elif pending and pending["kind"] in (
@@ -392,6 +505,11 @@ class Service(DialogueService, NPCService, WorldService, ActionService):
                         )
                 elif pending and pending["kind"] == "delete" and event.get("ok") == 1:
                     self.finish_delete(pending["npc"])
+                elif pending and pending["kind"] == "social_roll":
+                    if event.get("ok") != 1:
+                        self.social_rejected(pending)
+                elif pending and pending["kind"] == "encounter_end":
+                    self.director_command_result(pending, event.get("ok") == 1)
                 elif pending and pending["kind"] == "say" and event.get("ok") == 1:
                     if not pending.get("transient"):
                         self.store.message(
@@ -449,6 +567,7 @@ class Service(DialogueService, NPCService, WorldService, ActionService):
                 return
             if not self.store.once(str(event["event_id"])):
                 return
+            self.cancel_checkin(npc, "Player conversation takes priority")
             player = hashlib.sha256((self.salt + event["player"]).encode()).hexdigest()[
                 :24
             ]
@@ -468,6 +587,11 @@ class Service(DialogueService, NPCService, WorldService, ActionService):
             speech_id = self.store.message(npc, player, "player", speech)
             profile = dict(self.store.get(npc), world_lore=self.store.world_lore())
             profile["access_lore"] = self.store.lore_for(profile)
+            profile["_combat_turn"] = dict(
+                event_id=event.get("event_id", ""),
+                attack_ready=event.get("combat_attack_ready") == 1,
+            )
+            self.director_chat(npc, player, event)
             profile["story"] = story.context(event.get("story"))
             if profile["story"].get("visit"):
                 profile["story_first_message"] = self.store.story_visit_start(
@@ -475,6 +599,8 @@ class Service(DialogueService, NPCService, WorldService, ActionService):
                 )
             if (
                 state["mode"] != "auto"
+                or state.get("combat")
+                or state.get("dead")
                 or npc in self.busy
                 or time.monotonic() - self.last_reply.get(npc, 0) < 2
             ):

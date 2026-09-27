@@ -1,5 +1,7 @@
 #include "rw_inc"
-// Fixed game-side allowlist. No model-supplied scripts, targets or animation numbers.
+#include "rw_nearby"
+#include "rw_inventory"
+// Fixed game-side allowlist. Dynamic targets must resolve through the observer map.
 int RWActionUniqueArea(object area)
 {
     int matches=0; object a=GetFirstArea();
@@ -10,19 +12,26 @@ void RWActionEnd(object npc, string status)
 {
     if (GetLocalString(npc,"rw_action_status") != "running" && GetLocalString(npc,"rw_action_status") != "waiting for player") return;
     SetLocalString(npc,"rw_action_status",status);
-    if (!GetIsDMPossessed(npc)) AssignCommand(npc,ClearAllActions(TRUE));
+    if (!GetIsDMPossessed(npc) && !(status=="completed" && GetLocalString(npc,"rw_action_kind")=="sit")) AssignCommand(npc,ClearAllActions(TRUE));
     if (status == "completed") RWPlacement(npc);
 }
 void RWActionTick(object npc)
 {
     if (GetLocalString(npc,"rw_action_status") != "running" && GetLocalString(npc,"rw_action_status") != "waiting for player") return;
     int tick=GetLocalInt(GetModule(),"rw_tick");
-    if(GetLocalInt(npc,"rw_action_patrol") && RWHasConversation(npc))
+    if((GetLocalInt(npc,"rw_action_patrol") || GetLocalInt(npc,"rw_action_village")) && RWHasConversation(npc))
     { RWActionEnd(npc,"interrupted"); return; }
-    if (GetIsDMPossessed(npc) || GetIsDead(npc) || GetIsInCombat(npc) || GetLocalString(npc,"rw_mode")!="auto"
+    if(GetLocalInt(npc,"rw_action_village") && (GetArea(npc)!=GetAreaFromLocation(GetLocalLocation(npc,"rw_village_home"))
+        || GetDistanceBetweenLocations(GetLocation(npc),GetLocalLocation(npc,"rw_village_home"))>IntToFloat(GetLocalInt(npc,"rw_village_radius"))+1.0))
+    {RWActionEnd(npc,"village boundary reached");return;}
+    if (GetIsDMPossessed(npc) || GetIsDead(npc) || (GetIsInCombat(npc) && GetLocalString(npc,"rw_action_kind")!="retreat") || GetLocalString(npc,"rw_mode")!="auto"
         || GetLocalInt(npc,"rw_action_epoch")!=GetLocalInt(npc,"rw_epoch"))
         RWActionEnd(npc,"interrupted");
-    else if (GetLocalString(npc,"rw_action_kind")=="walk" || GetLocalString(npc,"rw_action_kind")=="home" || GetLocalString(npc,"rw_action_kind")=="lead")
+    else if(RWInvKind(GetLocalString(npc,"rw_action_kind")))
+    { string outcome=RWInvTaskTick(npc); if(outcome!="")RWActionEnd(npc,outcome); }
+    else if(RWNearbyKind(GetLocalString(npc,"rw_action_kind")))
+    { string outcome=RWNearbyTick(npc); if(outcome!="")RWActionEnd(npc,outcome); }
+    else if (GetLocalString(npc,"rw_action_kind")=="village" || GetLocalString(npc,"rw_action_kind")=="retreat" || GetLocalString(npc,"rw_action_kind")=="walk" || GetLocalString(npc,"rw_action_kind")=="home" || GetLocalString(npc,"rw_action_kind")=="lead")
     {
         location dest=GetLocalLocation(npc,"rw_action_destination");
         if(GetLocalString(npc,"rw_action_kind")=="lead")
@@ -55,15 +64,54 @@ int RWStartAction(object npc,json cmd)
     object m=GetModule(); int tick=GetLocalInt(m,"rw_tick");
     string kind=RWS(cmd,"action");
     if(RWI(cmd,"patrol") && (kind!="walk" || RWHasConversation(npc))) return FALSE;
-    if (RWS(cmd,"world")!=RWWorld() || GetLocalString(npc,"rw_mode")!="auto" || GetIsDMPossessed(npc) || GetIsDead(npc) || GetIsInCombat(npc)
-        || GetLocalString(npc,"rw_action_status")=="running" || GetLocalString(npc,"rw_action_status")=="waiting for player" || (kind!="shop" && tick<GetLocalInt(npc,"rw_action_next"))
+    if (RWS(cmd,"world")!=RWWorld() || GetLocalString(npc,"rw_mode")!="auto" || GetIsDMPossessed(npc) || GetIsDead(npc) || (kind!="retreat" && (GetIsInCombat(npc)
+        || GetLocalString(npc,"rw_action_status")=="running" || GetLocalString(npc,"rw_action_status")=="waiting for player" || (kind!="shop" && !RWInvKind(kind) && tick<GetLocalInt(npc,"rw_action_next"))))
         || GetStringLength(RWS(cmd,"request"))!=24 || RWS(cmd,"request")==GetLocalString(npc,"rw_action_request")) return FALSE;
     string listener=RWS(cmd,"listener");
     if (listener!="" && (!RWCanHear(StringToObject(listener),npc,RWHearingRange())
         || RWS(cmd,"conversation_revision")!=GetLocalString(m,"rw_talk_revision"))) return FALSE;
+    if(GetLocalInt(npc,"rw_combat_active") && GetLocalString(npc,"rw_combat_phase")!="fighting" && kind!="retreat")return FALSE;
     int animation=-1;
     location dest=GetLocation(npc);
-    if (kind=="walk" || kind=="lead" || kind=="home")
+    if(RWI(cmd,"village"))
+    {
+        if(RWHasConversation(npc) || GetLocalInt(npc,"rw_combat_active"))return FALSE;
+        json h=JsonObjectGet(cmd,"village_home");int radius=RWI(cmd,"village_radius");object area=GetArea(npc);
+        if(radius<2 || radius>12 || RWS(h,"world")!=RWWorld() || RWS(h,"area")!=GetResRef(area) || RWS(h,"area_tag")!=GetTag(area) || !RWActionUniqueArea(area))return FALSE;
+        vector hp=Vector(JsonGetFloat(JsonObjectGet(h,"x")),JsonGetFloat(JsonObjectGet(h,"y")),JsonGetFloat(JsonObjectGet(h,"z")));
+        location home=Location(area,hp,0.0);
+        if(GetDistanceBetweenLocations(GetLocation(npc),home)>IntToFloat(radius)+1.0)return FALSE;
+        SetLocalLocation(npc,"rw_village_home",home);SetLocalInt(npc,"rw_village_radius",radius);
+    }
+    if(kind=="village")
+    {
+        if(!RWI(cmd,"village"))return FALSE;
+        string activity=RWS(cmd,"target");dest=GetLocalLocation(npc,"rw_village_home");
+        if(activity=="wander")
+        {
+            float angle=IntToFloat(Random(360)), radius=IntToFloat(GetLocalInt(npc,"rw_village_radius"));
+            vector point=GetPositionFromLocation(dest);float distance=radius*IntToFloat(25+Random(66))/100.0;
+            point.x+=cos(angle)*distance;point.y+=sin(angle)*distance;
+            // Engine pathfinding owns reachability; blocked walks time out without teleporting.
+            dest=Location(GetArea(npc),point,0.0);
+        }
+        else if(activity=="greet")
+        {
+            object pc=GetFirstPC(),found=OBJECT_INVALID;
+            while(GetIsObjectValid(pc))
+            {
+                if(!GetIsDM(pc) && !GetIsDMPossessed(pc) && !GetIsDead(pc) && !GetIsInCombat(pc) && GetArea(pc)==GetArea(npc)
+                    && GetDistanceBetween(npc,pc)<=5.0 && GetObjectSeen(pc,npc) && LineOfSightObject(npc,pc)
+                    && tick>=GetLocalInt(pc,"rw_village_greet_until")) {found=pc;break;}
+                pc=GetNextPC();
+            }
+            if(!GetIsObjectValid(found))return FALSE;
+            SetLocalInt(found,"rw_village_greet_until",tick+120);
+            kind="gesture";animation=ANIMATION_FIREFORGET_GREETING;
+        }
+        else if(activity!="home")return FALSE;
+    }
+    else if (kind=="retreat" || kind=="walk" || kind=="lead" || kind=="home")
     {
         json d=JsonObjectGet(cmd,"destination"); object area=GetArea(npc);
         if (RWS(d,"world")!=RWWorld() || RWS(d,"id")!=RWS(cmd,"target") || GetResRef(area)!=RWS(d,"area") || GetTag(area)!=RWS(d,"area_tag")) return FALSE;
@@ -74,6 +122,15 @@ int RWStartAction(object npc,json cmd)
         dest=Location(area,v,JsonGetFloat(JsonObjectGet(d,"facing")));
         if (GetDistanceBetweenLocations(GetLocation(npc),dest)>40.0) return FALSE;
     }
+    else if(RWInvKind(kind))
+    {
+        if(tick<GetLocalInt(npc,"rw_inventory_next") || !RWInvStart(npc,cmd))return FALSE;
+        SetLocalInt(npc,"rw_inventory_next",tick+2);
+        if(kind=="exchange")
+        {SetLocalString(npc,"rw_action_request",RWS(cmd,"request"));SetLocalString(npc,"rw_action_kind",kind);SetLocalString(npc,"rw_action_status","exchange window opened; awaiting player confirmation");return TRUE;}
+    }
+    else if(RWNearbyKind(kind))
+    { if(!RWNearbyStart(npc,cmd))return FALSE; }
     else if(kind=="shop")
     {
         int ok=FALSE;
@@ -97,20 +154,37 @@ int RWStartAction(object npc,json cmd)
         if(!GetIsObjectValid(pc) || !GetIsPC(pc) || GetIsDM(pc) || GetIsDMPossessed(pc) || GetIsDead(pc) || !RWCanHear(pc,npc,6.0))return FALSE;
         SetLocalObject(npc,"rw_action_player",pc);
     }
+    if(kind=="retreat")RWCombatRelease(npc);
+    if(RWI(cmd,"village") && RWNearbyKind(kind))
+    {
+        object target=GetLocalObject(npc,"rw_nearby_target");
+        if(GetDistanceBetweenLocations(GetLocation(target),GetLocalLocation(npc,"rw_village_home"))>IntToFloat(GetLocalInt(npc,"rw_village_radius")))return FALSE;
+    }
+    SetLocalInt(npc,"rw_action_village",RWI(cmd,"village"));
     SetLocalString(npc,"rw_action_request",RWS(cmd,"request"));
     SetLocalInt(npc,"rw_action_patrol",RWI(cmd,"patrol"));
     SetLocalString(npc,"rw_action_status","running");
     SetLocalString(npc,"rw_action_kind",kind);
     SetLocalInt(npc,"rw_action_epoch",GetLocalInt(npc,"rw_epoch"));
-    SetLocalInt(npc,"rw_action_next",tick+20);
+    SetLocalInt(npc,"rw_action_next",tick+((RWI(cmd,"village") && RWI(cmd,"village_delay")==5)?5:20));
     SetLocalInt(npc,"rw_action_deadline",tick+3);
     AssignCommand(npc,ClearAllActions(TRUE));
-    if (kind=="walk" || kind=="lead" || kind=="home")
+    if (kind=="village" || kind=="retreat" || kind=="walk" || kind=="lead" || kind=="home")
     {
         SetLocalLocation(npc,"rw_action_destination",dest);
         SetLocalInt(npc,"rw_action_deadline",tick+30);
         if(kind=="lead")SetLocalInt(npc,"rw_action_deadline",tick+120);
-        AssignCommand(npc,ActionMoveToLocation(dest,FALSE));
+        AssignCommand(npc,ActionMoveToLocation(dest,kind=="retreat"));
+    }
+    else if(RWNearbyKind(kind))
+    {
+        SetLocalInt(npc,"rw_action_deadline",tick+30);
+        AssignCommand(npc,ActionMoveToObject(GetLocalObject(npc,"rw_nearby_target"),FALSE,1.5));
+    }
+    else if(RWInvKind(kind))
+    {
+        SetLocalInt(npc,"rw_action_deadline",tick+120);
+        AssignCommand(npc,ActionMoveToObject(GetLocalObject(npc,"rw_inventory_target"),FALSE,1.5));
     }
     else AssignCommand(npc,ActionPlayAnimation(animation,1.0,1.0));
     return TRUE;

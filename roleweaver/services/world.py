@@ -28,6 +28,11 @@ class WorldService:
     def restore_data(self, data):
         data = backup.validate(data)
         with self.lock:
+            if any(
+                s["run"]["status"] not in ("cleaned", "expired")
+                for s in self.live_scenes.values()
+            ):
+                raise ValueError("Clean up live encounters before restoring a backup")
             if self.restoring:
                 raise ValueError("A restore is already running")
             self.restoring = True
@@ -80,6 +85,7 @@ class WorldService:
                     conversation.migrate(self.setting("conversation", None)), reset=True
                 )
                 self.init_actions()
+                self.init_encounters()
                 self.set_startup_auto(False)
                 self.placement_restore_hold = holds
                 self.salt = data["identity_salt"]
@@ -93,7 +99,10 @@ class WorldService:
 
     def knowledge(self, npc, player=""):
         with self.lock:
-            return inspect_knowledge(self.store, npc, player)
+            return dict(
+                inspect_knowledge(self.store, npc, player),
+                encounter=self.encounter_context(npc),
+            )
 
     def edit_memory(self, npc, memory, text):
         self.store.get(npc)

@@ -170,6 +170,15 @@ void RWHandleChat(object speaker, string text, int channel, int moduleEvent)
     int sequence = GetLocalInt(m, "rw_sequence") + 1;
     SetLocalInt(m, "rw_sequence", sequence);
     payload = JsonObjectSet(payload, "event_id", JsonString(GetLocalString(m, "rw_session") + ":" + IntToString(sequence)));
+    SetLocalString(npc,"rw_enc_chat_event",RWS(payload,"event_id"));
+    SetLocalObject(npc,"rw_enc_chat_pc",speaker);
+    SetLocalInt(npc,"rw_enc_chat_seq",sequence);
+    int combatReady=GetLocalString(npc,"rw_enc_status")=="negotiating"
+        && GetLocalObject(npc,"rw_enc_target")==speaker
+        && GetLocalInt(m,"rw_tick")>=GetLocalInt(npc,"rw_enc_deadline")
+        && GetLocalInt(m,"rw_tick")<=GetLocalInt(npc,"rw_enc_warning_expiry")
+        && sequence>GetLocalInt(npc,"rw_enc_warning_seq");
+    payload=JsonObjectSet(payload,"combat_attack_ready",JsonInt(combatReady));
     payload = JsonObjectSet(payload, "player", JsonString(GetPCPublicCDKey(speaker) + ":" + GetName(speaker)));
     payload = JsonObjectSet(payload, "listener", JsonString(ObjectToString(speaker)));
     payload = JsonObjectSet(payload, "text", JsonString(text));

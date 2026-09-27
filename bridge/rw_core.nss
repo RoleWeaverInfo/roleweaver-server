@@ -43,32 +43,148 @@ int RWHasConversation(object npc)
     }
     return FALSE;
 }
+// Publicly observable state only. Never enumerate inventories, locks, traps,
+// hidden identities, resrefs or quest locals. Target metadata is separated by the companion.
+string RWVisibleCondition(object o)
+{
+    if(GetIsDead(o))return "dead";
+    int hp=GetCurrentHitPoints(o), maximum=GetMaxHitPoints(o);
+    if(maximum>0 && hp*2<maximum)return "badly injured";
+    if(hp<maximum)return "injured";
+    return "uninjured";
+}
+string RWVisibleBearing(object npc,object o)
+{
+    float angle=VectorToAngle(GetPosition(o)-GetPosition(npc))-GetFacing(npc);
+    while(angle<0.0)angle+=360.0;
+    while(angle>=360.0)angle-=360.0;
+    if(angle<22.5 || angle>=337.5)return "ahead";
+    if(angle<67.5)return "ahead-left";
+    if(angle<112.5)return "left";
+    if(angle<157.5)return "behind-left";
+    if(angle<202.5)return "behind";
+    if(angle<247.5)return "behind-right";
+    if(angle<292.5)return "right";
+    return "ahead-right";
+}
+// Ordinary unobstructed creatures may be beyond the engine's local perception
+// radius. Hidden/invisible creatures still require actual engine detection.
+int RWAreaCreatureVisible(object npc,object target)
+{
+    if(GetObjectSeen(target,npc))return TRUE;
+    if(GetStealthMode(target))return FALSE;
+    effect e=GetFirstEffect(target);
+    while(GetIsEffectValid(e))
+    {
+        int t=GetEffectType(e);
+        if(t==EFFECT_TYPE_INVISIBILITY || t==EFFECT_TYPE_IMPROVEDINVISIBILITY)return FALSE;
+        e=GetNextEffect(target);
+    }
+    return TRUE;
+}
 json RWSurroundings(object npc)
 {
-    json rows=JsonArray();
-    int i;
-    for(i=1;i<=24;i++)
+    int tick=GetLocalInt(GetModule(),"rw_tick");
+    // Reuse for at most two bridge ticks; scan cost stays bounded per NPC.
+    if(GetLocalInt(npc,"rw_perception_tick")>0 && tick-GetLocalInt(npc,"rw_perception_tick")<2)
+        return JsonParse(GetLocalString(npc,"rw_perception_rows"));
+    // Forget the previous bounded observer map; target references never grant access
+    // to objects that have left this NPC's current visible set.
+    json old=JsonParse(GetLocalString(npc,"rw_perception_rows")); int k;
+    for(k=0;k<JsonGetLength(old);k++) DeleteLocalObject(npc,"rw_visible_"+RWS(JsonArrayGet(old,k),"ref"));
+    json rows=JsonArray(); int scanned=0;
+    object o=GetFirstObjectInArea(GetArea(npc));
+    // Area-wide sight, with explicit workload/output bounds for crowded worlds.
+    while(GetIsObjectValid(o) && scanned<1024 && JsonGetLength(rows)<256)
     {
-        object o=GetNearestObject(OBJECT_TYPE_CREATURE | OBJECT_TYPE_DOOR | OBJECT_TYPE_PLACEABLE,npc,i);
-        if(!GetIsObjectValid(o) || GetDistanceBetween(npc,o)>12.0) break;
-        if(o!=npc && GetArea(o)==GetArea(npc) && !GetIsDM(o) && !GetIsDMPossessed(o)
-            && LineOfSightObject(npc,o) && (GetObjectType(o)!=OBJECT_TYPE_CREATURE || GetObjectSeen(o,npc)))
+        scanned++;
+        int type=GetObjectType(o);
+        if((type==OBJECT_TYPE_CREATURE || type==OBJECT_TYPE_DOOR || type==OBJECT_TYPE_PLACEABLE)
+            && o!=npc && GetArea(o)==GetArea(npc) && !GetIsDM(o) && !GetIsDMPossessed(o)
+            && LineOfSightObject(npc,o) && (type!=OBJECT_TYPE_CREATURE
+                || RWAreaCreatureVisible(npc,o)))
         {
+            string kind="placeable";
+            if(type==OBJECT_TYPE_CREATURE)kind="character";
+            else if(type==OBJECT_TYPE_DOOR)kind="door";
+            else if(GetHasInventory(o))kind="container";
             json row=JsonObject();
-            row=JsonObjectSet(row,"kind",JsonString(GetObjectType(o)==OBJECT_TYPE_DOOR ? "door" : (GetObjectType(o)==OBJECT_TYPE_CREATURE ? "character" : "placeable")));
-            row=JsonObjectSet(row,"label",JsonString(GetIsPC(o) ? "Unidentified player" : GetStringLeft(GetName(o),80)));
+            if(!GetIsPC(o))
+            {
+                int serial=GetLocalInt(o,"rw_visible_serial");
+                if(!serial) { serial=GetLocalInt(GetModule(),"rw_visible_serial")+1; SetLocalInt(GetModule(),"rw_visible_serial",serial); SetLocalInt(o,"rw_visible_serial",serial); }
+                string ref="v"+IntToString(serial);
+                SetLocalObject(npc,"rw_visible_"+ref,o);
+                row=JsonObjectSet(row,"ref",JsonString(ref));
+                // Transport metadata is stripped before model perception. Tags are for the DM's chair allowlist.
+                if(type==OBJECT_TYPE_PLACEABLE)row=JsonObjectSet(row,"tag",JsonString(GetTag(o)));
+                if(type==OBJECT_TYPE_CREATURE)row=JsonObjectSet(row,"peer",JsonString(GetLocalString(o,"rw_id")));
+            }
+            row=JsonObjectSet(row,"kind",JsonString(kind));
+            row=JsonObjectSet(row,"label",JsonString(GetIsPC(o) ? "Unidentified traveler" : GetStringLeft(GetName(o),80)));
             row=JsonObjectSet(row,"distance",JsonFloat(GetDistanceBetween(npc,o)));
+            row=JsonObjectSet(row,"bearing",JsonString(RWVisibleBearing(npc,o)));
+            if(type==OBJECT_TYPE_CREATURE)
+            {
+                row=JsonObjectSet(row,"player",JsonInt(GetIsPC(o)));
+                row=JsonObjectSet(row,"condition",JsonString(RWVisibleCondition(o)));
+                row=JsonObjectSet(row,"activity",JsonString(GetIsInCombat(o) ? "fighting" : "not fighting"));
+                row=JsonObjectSet(row,"attitude",JsonString(GetIsEnemy(o,npc) ? "hostile" : (GetIsFriend(o,npc) ? "friendly" : "neutral")));
+                if(!GetIsPC(o) && GetLocalInt(o,"rw_merchant_enabled"))row=JsonObjectSet(row,"merchant",JsonInt(TRUE));
+            }
+            else
+            {
+                row=JsonObjectSet(row,"usable",JsonInt(GetUseableFlag(o)));
+                if(kind=="door" || kind=="container")row=JsonObjectSet(row,"open",JsonString(GetIsOpen(o) ? "open" : "closed"));
+            }
             rows=JsonArrayInsert(rows,row);
         }
+        o=GetNextObjectInArea(GetArea(npc));
     }
+    SetLocalInt(npc,"rw_perception_truncated",GetIsObjectValid(o));
+    SetLocalInt(npc,"rw_perception_tick",tick);
+    SetLocalString(npc,"rw_perception_rows",JsonDump(rows));
     return rows;
 }
 void RWState(object npc)
 {
     json v = RWBase("state", npc);
+    json peers=JsonArray();
+    int j;
+    for(j=1;j<=24;j++)
+    {
+        object peer=GetNearestObject(OBJECT_TYPE_CREATURE,npc,j);
+        if(!GetIsObjectValid(peer) || GetDistanceBetween(peer,npc)>6.0) break;
+        if(peer!=npc && GetLocalString(peer,"rw_id")!="" && !GetIsPC(peer) && !GetIsDMPossessed(peer)
+            && GetArea(peer)==GetArea(npc) && GetObjectSeen(peer,npc) && LineOfSightObject(npc,peer))
+            peers=JsonArrayInsert(peers,JsonString(GetLocalString(peer,"rw_id")));
+    }
+    v=JsonObjectSet(v,"nearby_npcs",peers);
+    v=JsonObjectSet(v,"checkins_protocol",JsonInt(1));
+    v=JsonObjectSet(v,"retreat_protocol",JsonInt(1));
+    v=JsonObjectSet(v,"encounter_protocol",JsonInt(6));
+    v=JsonObjectSet(v,"live_owner",JsonString(GetLocalString(npc,"rw_live_owner")));
+    v=JsonObjectSet(v,"interaction_protocol",JsonInt(1));
+    v=JsonObjectSet(v,"interaction_revision",JsonString(GetLocalString(npc,"rw_interaction_revision")));
+    v=JsonObjectSet(v,"npc_combat_target",JsonString(GetLocalInt(npc,"rw_combat_target_npc") ? GetLocalString(GetLocalObject(npc,"rw_combat_target"),"rw_id") : ""));
+    if(GetLocalInt(npc,"rw_combat_active"))
+    {
+        v=JsonObjectSet(v,"combat_encounter",JsonString(GetLocalString(npc,"rw_combat_id")));
+        v=JsonObjectSet(v,"combat_token",JsonString(GetLocalString(npc,"rw_combat_token")));
+        v=JsonObjectSet(v,"combat_phase",JsonString(GetLocalString(npc,"rw_combat_phase")));
+    }
     v=JsonObjectSet(v,"awareness_protocol",JsonInt(1));
+    v=JsonObjectSet(v,"village_protocol",JsonInt(1));
     v=JsonObjectSet(v,"conversation_active",JsonInt(RWHasConversation(npc)));
     v=JsonObjectSet(v,"surroundings",RWSurroundings(npc));
+    v=JsonObjectSet(v,"perception_protocol",JsonInt(3));
+    v=JsonObjectSet(v,"nearby_protocol",JsonInt(1));
+    v=JsonObjectSet(v,"inventory_protocol",JsonInt(GetLocalString(npc,"rw_inventory_revision")!="" ? 1 : 0));
+    v=JsonObjectSet(v,"inventory_revision",JsonString(GetLocalString(npc,"rw_inventory_revision")));
+    v=JsonObjectSet(v,"inventory",JsonParse(GetLocalString(npc,"rw_inventory_snapshot")));
+    v=JsonObjectSet(v,"perception_truncated",JsonInt(GetLocalInt(npc,"rw_perception_truncated")));
+    v=JsonObjectSet(v,"perception_tick",JsonInt(GetLocalInt(npc,"rw_perception_tick")));
+    v=JsonObjectSet(v,"self_condition",JsonString(RWVisibleCondition(npc)));
     v = JsonObjectSet(v, "object", JsonString(ObjectToString(npc)));
     v = JsonObjectSet(v, "mode", JsonString(GetLocalString(npc, "rw_mode")));
     v = JsonObjectSet(v, "source", JsonString(GetLocalString(npc, "rw_source")));
@@ -100,8 +216,27 @@ void RWState(object npc)
     RWEmit(v);
 }
 
+// Undo only the movement lock installed by encounter withdrawal.
+void RWCombatRelease(object npc)
+{
+    if(GetLocalInt(npc,"rw_combat_target_npc") && !GetIsDMPossessed(npc))AssignCommand(npc,ClearAllActions(TRUE));
+    DeleteLocalInt(npc,"rw_combat_target_npc");
+    if(GetLocalInt(npc,"rw_combat_locked"))
+    {
+        SetCommandable(GetLocalInt(npc,"rw_combat_commandable"),npc);
+        if(!GetIsDMPossessed(npc) && !GetIsDead(npc))AssignCommand(npc,ClearAllActions(TRUE));
+        DeleteLocalInt(npc,"rw_combat_locked");
+    }
+    DeleteLocalInt(npc,"rw_combat_active");
+}
 void RWMode(object npc, string mode)
 {
+    RWCombatRelease(npc);
+    if(GetLocalInt(npc,"rw_live_staged"))
+    {
+        SetCommandable(GetLocalInt(npc,"rw_live_commandable"),npc);
+        DeleteLocalInt(npc,"rw_live_staged");
+    }
     if ((GetLocalString(npc,"rw_action_status")=="running" || GetLocalString(npc,"rw_action_status")=="waiting for player"))
     {
         SetLocalString(npc,"rw_action_status","interrupted");

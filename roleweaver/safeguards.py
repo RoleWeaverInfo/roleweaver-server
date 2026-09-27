@@ -139,6 +139,7 @@ def trusted_sources(profile, memories):
         "dm_memories": [m["text"] for m in memories],
         "live_shop": profile.get("merchant", {}),
         "live_story": story.facts(profile.get("story")),
+        "authorized_encounter": profile.get("encounter", {}),
     }
 
 

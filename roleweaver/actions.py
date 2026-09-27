@@ -3,7 +3,7 @@
 import json
 import math
 import re
-from . import patrol
+from . import patrol, nearby, inventory, village
 
 GESTURES = ("greet", "bow", "salute")
 DEFAULT_POLICY = dict(
@@ -52,9 +52,41 @@ def destination(value):
 
 
 def policy(value, destinations):
+    from .interactions import payment_policy, combat_policy
+
+    payment = (
+        payment_policy(value.get("payment"))
+        if isinstance(value, dict)
+        else payment_policy()
+    )
+    combat = (
+        combat_policy(value.get("npc_combat"))
+        if isinstance(value, dict)
+        else combat_policy()
+    )
+    behaviour = (
+        nearby.policy(value.get("nearby"))
+        if isinstance(value, dict)
+        else nearby.policy()
+    )
+    cargo = (
+        inventory.policy(value.get("inventory"))
+        if isinstance(value, dict)
+        else inventory.policy()
+    )
+    life = (
+        village.policy(value.get("village"))
+        if isinstance(value, dict)
+        else village.policy()
+    )
     duty = value.get("patrol") if isinstance(value, dict) else None
     if isinstance(value, dict):
-        value = {k: v for k, v in value.items() if k != "patrol"}
+        value = {
+            k: v
+            for k, v in value.items()
+            if k
+            not in ("patrol", "nearby", "inventory", "village", "payment", "npc_combat")
+        }
     if (
         not isinstance(value, dict)
         or set(value) != set(DEFAULT_POLICY)
@@ -80,6 +112,15 @@ def policy(value, destinations):
     ):
         raise ValueError("Choose a saved home and a valid shop permission")
     result = {k: list(v) if isinstance(v, list) else v for k, v in value.items()}
+    result["nearby"] = behaviour
+    result["inventory"] = cargo
+    result["village"] = life
+    result["payment"] = payment
+    result["npc_combat"] = combat
+    if life["enabled"] and (not result["enabled"] or not result["home"]):
+        raise ValueError(
+            "Village Life needs controlled actions enabled and a saved home"
+        )
     if duty is not None:
         result["patrol"] = patrol.validate(duty, result["destinations"])
     return result

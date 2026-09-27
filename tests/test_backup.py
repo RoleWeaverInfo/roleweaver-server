@@ -105,7 +105,7 @@ class BackupTests(unittest.TestCase):
         )
         self.app.store.save_placement(placement)
         data = self.app.backup_data()
-        self.assertEqual(data["version"], 11)
+        self.assertEqual(data["version"], 12)
         self.app.store.db.execute("DELETE FROM placements")
         self.app.store.db.commit()
         self.app.restore_data(data)

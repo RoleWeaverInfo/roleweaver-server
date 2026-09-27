@@ -5,12 +5,19 @@ Player conversations, possession and combat always take priority over a duty.
 """
 
 import time
+from .checkins import CheckinService
 
 DEFAULT = dict(enabled=False, purpose="", route=[], dwell_seconds=30)
 ACTIVE = ("pending", "running", "waiting for player")
 
 
 def validate(value, allowed):
+    if isinstance(value, dict):
+        value = dict(value)
+        checkins = value.pop("checkins", {})
+        cooldown = value.pop("checkin_cooldown", 300)
+    else:
+        checkins, cooldown = {}, 300
     if not isinstance(value, dict) or set(value) != set(DEFAULT):
         raise ValueError("Invalid patrol settings")
     if type(value["enabled"]) is not bool:
@@ -31,14 +38,38 @@ def validate(value, allowed):
         or not 20 <= value["dwell_seconds"] <= 600
     ):
         raise ValueError("Time at each stop must be 20–600 seconds")
-    return dict(value, route=list(route))
+    import re
+
+    if (
+        not isinstance(checkins, dict)
+        or len(checkins) > 20
+        or any(
+            k not in route
+            or not isinstance(v, str)
+            or not re.fullmatch(r"[a-z][a-z0-9_]{0,23}", v)
+            for k, v in checkins.items()
+        )
+        or type(cooldown) is not int
+        or not 60 <= cooldown <= 3600
+    ):
+        raise ValueError(
+            "Check-ins need route stops, valid NPC IDs and a cooldown of 60–3600 seconds"
+        )
+    return dict(value, route=list(route), checkins=checkins, checkin_cooldown=cooldown)
 
 
-class PatrolService:
+class PatrolService(CheckinService):
     def save_patrol(self, npc, value):
         self.store.get(npc)
         permissions = self.action_config["npcs"].get(npc, {})
         duty = validate(value, permissions.get("destinations", []))
+        for target in duty["checkins"].values():
+            if target == npc:
+                raise ValueError("Choose another NPC for a check-in")
+            self.store.get(target)
+        if self.checkin and npc in self.checkin["pair"]:
+            # Changing the game epoch also invalidates speech already queued in Redis.
+            self.stop_action(npc)
         if duty["enabled"] and not permissions.get("enabled"):
             raise ValueError("Enable controlled actions first")
         job = self.action_jobs.get(npc, {})
@@ -52,6 +83,11 @@ class PatrolService:
 
     def patrol_tick(self, npc, event):
         """Called under the service lock for a fresh, authoritative state event."""
+        if self.encounter_for(npc):
+            self.patrol_runtime.setdefault(npc, {})[
+                "status"
+            ] = "Reserved for DM encounter"
+            return
         duty = self.action_config["npcs"].get(npc, {}).get("patrol", DEFAULT)
         if not duty["enabled"]:
             return
@@ -62,6 +98,10 @@ class PatrolService:
             runtime.update(session=event.get("session"), index=0, next=now + 5)
         if self.restoring or event.get("awareness_protocol") != 1:
             runtime["status"] = "Waiting for updated game bridge"
+            return
+        if self.checkin and npc in self.checkin["pair"]:
+            runtime["status"] = "NPC check-in in progress"
+            runtime["next"] = now + duty["dwell_seconds"]
             return
         if (
             event.get("mode") != "auto"
@@ -90,8 +130,10 @@ class PatrolService:
                 return
             runtime.pop("request", None)
             if job["status"] == "completed":
+                stop = duty["route"][runtime["index"]]
                 runtime["index"] = (runtime["index"] + 1) % len(duty["route"])
                 runtime["next"] = now + duty["dwell_seconds"]
+                self.start_checkin(npc, stop, duty)
             elif job["status"] == "interrupted":
                 runtime["next"] = now + duty["dwell_seconds"]
             else:

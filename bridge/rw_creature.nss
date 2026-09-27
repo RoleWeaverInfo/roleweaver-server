@@ -18,9 +18,11 @@ int RWValidBuild(json b)
 object RWCreateCreature(json b, location loc)
 {
     if (!RWValidBuild(b)) return OBJECT_INVALID;
-    object seed=CreateObject(OBJECT_TYPE_CREATURE,"rw_base",loc);
-    if (!GetIsObjectValid(seed)) return OBJECT_INVALID;
-    json j=ObjectToJson(seed); DestroyObject(seed);
+    // Read the blueprint without spawning a temporary creature. DestroyObject
+    // is deferred: a seed at loc still occupies the destination when the final
+    // NPC is created, causing collision relocation and cumulative restore drift.
+    json j=TemplateToJson("rw_base",RESTYPE_UTC);
+    if (JsonGetType(j)!=JSON_TYPE_OBJECT) return OBJECT_INVALID;
     int c=JsonGetInt(JsonObjectGet(b,"npc_class"));
     int race=JsonGetInt(JsonObjectGet(b,"race"));
     int gender=JsonGetInt(JsonObjectGet(b,"gender"));
@@ -36,8 +38,10 @@ object RWCreateCreature(json b, location loc)
     j=RWField(j,"Race",JsonInt(race));j=RWField(j,"Gender",JsonInt(gender));
     j=RWField(j,"Appearance_Type",JsonInt(JsonGetInt(JsonObjectGet(b,"appearance"))));
     j=RWField(j,"HitPoints",JsonInt(1));j=RWField(j,"CurrentHitPoints",JsonInt(1));j=RWField(j,"MaxHitPoints",JsonInt(1));
-    j=RWField(j,"BaseAttackBonus",JsonInt(0));
-    j=RWField(j,"StartingPackage",JsonInt(c));j=RWField(j,"xStartingPackage",JsonInt(c));
+    // Runtime-only fields may be absent from the UTC blueprint. Add typed GFF fields.
+    j=JsonObjectSet(j,"BaseAttackBonus",JsonParse("{\"type\":\"byte\",\"value\":0}"));
+    j=RWField(j,"StartingPackage",JsonInt(c));
+    j=JsonObjectSet(j,"xStartingPackage",JsonObjectSet(JsonParse("{\"type\":\"dword\"}"),"value",JsonInt(c)));
     j=RWField(j,"LawfulChaotic",JsonInt(50));j=RWField(j,"GoodEvil",JsonInt(50));
     if(c==5 || c==6) j=RWField(j,"LawfulChaotic",JsonInt(100));
     if(c==6) j=RWField(j,"GoodEvil",JsonInt(100));

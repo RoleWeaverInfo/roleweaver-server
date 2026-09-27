@@ -22,6 +22,7 @@ ENTRY_SCRIPTS = (
     "rw_unbind",
     "rw_talk",
     "rw_shop_evt",
+    "rw_trade_evt",
     "rw_load",
 )
 
@@ -49,6 +50,7 @@ def check_dependencies(base, native, scripts=()):
         "nwnx_redis.nss",
         "nwnx_creature.nss",
         "nwnx_player.nss",
+        "nwnx_item.nss",
     ):
         if not (native / "nwscripts" / name).is_file():
             missing.append(
@@ -112,6 +114,13 @@ def audit(module, scripts=()):
         "rw_creature",
         "rw_talk_inc",
         "rw_actions",
+        "rw_nearby",
+        "rw_inventory",
+        "rw_encounter",
+        "rw_social",
+        "rw_payment",
+        "rw_npcfight",
+        "rw_live",
         "rw_merchant",
         "rw_stock",
         "rw_shop",
@@ -168,6 +177,13 @@ def build(module, output, native, world, prefix, owner, chat, scripts=()):
         "rw_creature",
         "rw_talk_inc",
         "rw_actions",
+        "rw_nearby",
+        "rw_inventory",
+        "rw_encounter",
+        "rw_social",
+        "rw_payment",
+        "rw_npcfight",
+        "rw_live",
         "rw_merchant",
         "rw_stock",
     ):

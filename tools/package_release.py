@@ -9,8 +9,8 @@ import tarfile
 
 ROOT = Path(__file__).resolve().parents[1]
 NAMES = {
-    "demo": "RoleWeaver-Demo-Alpha-0.1.0",
-    "addon": "RoleWeaver-Server-Addon-Alpha-0.1.0",
+    "demo": "RoleWeaver-Demo-Alpha-0.2.0",
+    "addon": "RoleWeaver-Server-Addon-Alpha-0.2.0",
 }
 FOLDERS = (
     "roleweaver",

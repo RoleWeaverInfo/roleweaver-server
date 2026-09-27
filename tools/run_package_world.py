@@ -11,6 +11,7 @@ e.update(
     NWNX_CORE_LOAD_PATH=str(n / "plugins"),
     NWNX_CORE_SKIP_ALL="1",
     NWNX_PLAYER_SKIP="n",
+    NWNX_ITEM_SKIP="n",
     NWNX_CREATURE_SKIP="n",
     NWNX_CHAT_SKIP="n",
     NWNX_EVENTS_SKIP="n",

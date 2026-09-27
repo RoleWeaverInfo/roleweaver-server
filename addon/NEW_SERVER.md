@@ -14,7 +14,7 @@ Our tested reference pair is dedicated server **8193.37-17** and NWNX **8193.37.
 | Folder | Must contain |
 | --- | --- |
 | `~/nwserver` | `bin/linux-x86/nwserver-linux` and the runtime `data` directory |
-| `~/nwnx/plugins` | `NWNX_Core.so`, `NWNX_Chat.so`, `NWNX_Events.so`, `NWNX_Redis.so`, `NWNX_Creature.so`, `NWNX_Player.so` |
+| `~/nwnx/plugins` | `NWNX_Core.so`, `NWNX_Chat.so`, `NWNX_Events.so`, `NWNX_Redis.so`, `NWNX_Creature.so`, `NWNX_Player.so`, `NWNX_Item.so` |
 | `~/nwnx/nwscripts` | `nwnx_core.nss`, the other `nwnx_*.nss` files from NWScript.zip |
 
 Use Ubuntu's archive manager to extract the archives. If it creates an extra enclosing folder, move its contents so the paths match this table. Keep the plugin and script-header folders separate.
@@ -59,3 +59,9 @@ This is a private test launcher using local player characters. Configure your ow
 When ordinary player and DM connections work, enter `quit` in the foreground game console and wait for NWN to stop. Return to [START_HERE](../START_HERE.md) in a release download, or [START_ADDON](../START_ADDON.md) in the source repository, and follow steps 1–6.
 
 Use `bash addon/start-new-server.sh` whenever those instructions ask you to start your new test game server. Use `bash addon/setup.sh restart` to restart only the AI companion.
+
+### Keep encounters when switching from DM to player
+
+The supplied launcher uses `-reloadwhenempty 0`. This keeps the current module
+running when the last player or DM logs out. Live encounters remain until cleanup
+or a deliberate module/server reset. Keep this flag if you customize the launcher.

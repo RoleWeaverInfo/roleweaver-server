@@ -5,7 +5,17 @@ They do not own separate worker pools or database connections.
 """
 
 import time
-from .. import provider, guardrails, safeguards, actions, merchants, story
+from .. import (
+    provider,
+    guardrails,
+    safeguards,
+    actions,
+    merchants,
+    story,
+    perception,
+    nearby,
+    inventory,
+)
 
 
 class DialogueService:
@@ -76,18 +86,44 @@ class DialogueService:
                 request_config = dict(self.config)
                 story_context = story.context(profile.get("story"))
                 profile = dict(profile, story=story_context)
+                profile["encounter"] = self.encounter_context(npc)
+                profile["confirmed_payments"] = self.payment_context(npc, player)
+                profile["checkin_reports"] = self.checkin_reports(npc)
                 state = self.states.get(npc, {})
-                profile["surroundings"] = (
-                    state.get("surroundings", [])
-                    if time.monotonic() - state.get("seen", 0) < 4
-                    else []
-                )
+                profile["perception"] = perception.snapshot(state)
+                profile["surroundings"] = profile["perception"]["objects"]
+                job = self.action_jobs.get(npc, {})
+                if job and job.get("session") == state.get("session"):
+                    profile["last_action"] = dict(
+                        choice=job.get("choice"), status=job.get("status")
+                    )
                 profile["duty"] = (
                     self.action_config["npcs"].get(npc, {}).get("patrol", {})
                 )
-                available_actions = self.action_choices(npc) + story_context.get(
-                    "actions", []
+                available_actions = nearby.dialogue_choices(
+                    self.action_choices(npc, listener), speech
+                ) + story_context.get("actions", [])
+                turn = profile.pop("_combat_turn", {})
+                combat_choices, combat_command = self.live_combat_choices(npc, turn)
+                available_actions += combat_choices
+                profile["inventory"] = inventory.snapshot(state)
+                profile["inventory_availability"] = dict(
+                    permissions=self.action_config["npcs"]
+                    .get(npc, {})
+                    .get("inventory", inventory.DEFAULT),
+                    enabled=self.action_config["npcs"]
+                    .get(npc, {})
+                    .get("enabled", False),
+                    cooldown_seconds=max(
+                        0,
+                        round(
+                            2 - (time.monotonic() - self.inventory_last.get(npc, 0)), 1
+                        ),
+                    ),
+                    current_action=job.get("status", "idle"),
                 )
+                profile["movement_availability"] = self.movement_context(npc)
+                profile["social_visit_request"] = nearby.conversation_request(speech)
                 policy = safeguards.settings(self.safeguard_policy)
                 if self.action_config["npcs"].get(npc, {}).get("shop"):
                     shop = self.shop_context(npc)
@@ -113,8 +149,17 @@ class DialogueService:
                             customer_quote=True,
                         )
                     profile = dict(profile, merchant=shop)
+            history = self.store.transcript(npc, player, 16)
+            # Keep saved memories, but do not replay a previous live activation's
+            # surrender/agreement as if it happened in the newly started scene.
+            with self.lock:
+                live_run = self.live_for(npc)
+                if live_run:
+                    history = [
+                        r for r in history if r["created"] >= live_run["started"]
+                    ]
             history = provider.private_transcript(
-                self.store.transcript(npc, player, 16),
+                history,
                 display_name,
                 self.name_privacy_cutoff,
             )
@@ -177,6 +222,41 @@ class DialogueService:
                             else row
                         )
                     history = checked
+                profile["social_check"] = self.resolve_social_check(
+                    npc,
+                    player,
+                    listener,
+                    turn,
+                    generation,
+                    started,
+                    speech,
+                    guardrails.clean_history(history),
+                    request_config,
+                )
+                # The reply must not turn a failed influence attempt into an automatic
+                # concession or combat. A later, separate exchange can escalate normally.
+                self.director_before_reply(npc, turn, generation, started)
+                with self.lock:
+                    profile["encounter"] = self.encounter_context(npc)
+                    combat_choices, combat_command = self.live_combat_choices(npc, turn)
+                    available_actions = [
+                        a
+                        for a in available_actions
+                        if not a["id"].startswith("encounter:")
+                    ] + combat_choices
+                if profile["social_check"].get("required"):
+                    if not profile["social_check"].get("reused"):
+                        available_actions = [
+                            a
+                            for a in available_actions
+                            if a["id"] != "encounter:attack"
+                        ]
+                    if not profile["social_check"].get("success"):
+                        available_actions = [
+                            a
+                            for a in available_actions
+                            if a["id"] != "encounter:stand_down"
+                        ]
                 if available_actions and request_config.get("provider") != "offline":
                     profile["controlled_actions"] = available_actions
                 with provider.observe_requests(
@@ -230,6 +310,8 @@ class DialogueService:
                 if (
                     generation != self.generations.get(npc, 0)
                     or state.get("mode") != "auto"
+                    or state.get("combat")
+                    or state.get("dead")
                 ):
                     return
                 if (
@@ -247,8 +329,14 @@ class DialogueService:
                     player=player,
                     listener=listener,
                     action_choice=(
-                        "" if action_choice.startswith("story:") else action_choice
+                        ""
+                        if action_choice.startswith(("story:", "encounter:"))
+                        else action_choice
                     ),
+                    encounter_choice=(
+                        action_choice if action_choice.startswith("encounter:") else ""
+                    ),
+                    **combat_command,
                     story_action=(
                         action_choice if action_choice.startswith("story:") else ""
                     ),

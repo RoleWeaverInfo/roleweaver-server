@@ -81,7 +81,7 @@ rw_base.utc and review the creature-build requirements. All selected actions rem
 
 ## E. Redis and plugin configuration
 
-Keep your server launcher and existing plugins. Ensure Chat, Events, Redis, Creature and Player are
+Keep your server launcher and existing plugins. Ensure Chat, Events, Redis, Creature, Player and Item are
 enabled on a matching Core/server build. Point NWNX Redis to the same loopback port as the companion.
 Do not change a Redis endpoint used by other systems without coordinating their configuration.
 This Python transport does not support Redis authentication, TLS or remote hosts.

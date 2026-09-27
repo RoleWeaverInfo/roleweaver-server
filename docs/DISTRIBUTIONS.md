@@ -2,8 +2,8 @@
 
 | Download | Audience |
 | --- | --- |
-| RoleWeaver-Demo-Alpha-0.1.0.tar.gz | Players/testers using the supplied separate world |
-| RoleWeaver-Server-Addon-Alpha-0.1.0.tar.gz | Owners integrating an existing NWN/NWNX world |
+| RoleWeaver-Demo-Alpha-0.2.0.tar.gz | Players/testers using the supplied separate world |
+| RoleWeaver-Server-Addon-Alpha-0.2.0.tar.gz | Owners integrating an existing NWN/NWNX world |
 
 Each archive has its own START_HERE.md and README. Both include the edited YourWorld_Fixed.mod: under demo/world/ in the demo and addon/example-world/ in the add-on. The add-on copy is an optional example with authoring content, not an automatic replacement for an existing world. The add-on has no demo launcher and prepares bridge resources without requiring a module path. The source repository retains both authoring trees.
 

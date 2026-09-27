@@ -81,3 +81,15 @@ class AddonTests(unittest.TestCase):
             self.assertIn(
                 str(collision.resolve()), report["reserved_resource_collisions"]
             )
+
+
+class EncounterIncludeTests(unittest.TestCase):
+    def test_source_bundle_contains_live_and_persistent_runtime_includes(self):
+        import prepare_addon
+
+        with tempfile.TemporaryDirectory() as directory:
+            out = Path(directory) / "bundle"
+            prepare_addon.prepare(out, "world", "roleweaver:world", source_only=True)
+            for name in ("rw_live", "rw_encounter", "rw_nearby"):
+                self.assertTrue((out / "scripts" / (name + ".nss")).is_file())
+                self.assertNotIn(name, prepare_addon.ENTRIES)

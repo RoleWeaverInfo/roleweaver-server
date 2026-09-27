@@ -46,6 +46,9 @@ class SetupTests(unittest.TestCase):
                 (root / "headers/nwnx_redis_lib.nss").read_bytes(),
             )
             self.assertIn(("rw_core", 2009), resources)
+            self.assertIn(("rw_encounter", 2009), resources)
+            self.assertIn(("rw_live", 2009), resources)
+            self.assertIn(("rw_nearby", 2009), resources)
             self.assertIn(("rw_shopcore", 2009), resources)
             self.assertIn(("rw_base", 2027), resources)
             self.assertIn(("rw_shop", 2051), resources)
