@@ -29,6 +29,7 @@ from .live_encounters import LiveEncounterService
 from .live_director import LiveDirectorService
 from .persistent_director import PersistentDirectorService
 from .social_service import SocialCheckService
+from .translation_service import TranslationService
 from . import __version__
 from .recovery import RecoveryBackups
 from .redis_wire import Redis
@@ -48,6 +49,7 @@ class Service(
     LiveDirectorService,
     PersistentDirectorService,
     SocialCheckService,
+    TranslationService,
 ):
     """Own runtime state and dispatch game events to domain service methods.
 
@@ -120,6 +122,7 @@ class Service(
         self.restore_attempts = {}
         self.error = ""
         self.running = True
+        self.stop_event = threading.Event()
         self.pool = concurrent.futures.ThreadPoolExecutor(max_workers=4)
         self.redis_ok = False
         self.recovery = RecoveryBackups(
@@ -156,8 +159,46 @@ class Service(
             return settings.probe(body, False)
 
     def start(self):
-        self.recovery.start()
-        threading.Thread(target=self.loop, daemon=True, name="game-bridge").start()
+        self.translation_start()
+        if not hasattr(self, "database_recovery"):
+            self.recovery.start()
+        self.bridge_thread = threading.Thread(
+            target=self.loop, daemon=True, name="game-bridge"
+        )
+        self.bridge_thread.start()
+
+    def quiesce(self):
+        """Drain every writer before recovery touches database files.
+
+        Provider calls may still be in flight. Waiting for their workers prevents
+        a late reply from writing into a database after it has been restored.
+        HTTP callers must be drained by RecoveryRuntime first.
+        """
+        self.running = False
+        if hasattr(self, "stop_event"):
+            self.stop_event.set()
+        if hasattr(self, "lock"):
+            with self.lock:
+                self.restoring = True
+                for npc in self.busy:
+                    self.generations[npc] = self.generations.get(npc, 0) + 1
+        if hasattr(self, "recovery"):
+            self.recovery.stop.set()
+            if self.recovery.thread:
+                self.recovery.thread.join()
+        for name in ("bridge_thread", "translation_thread"):
+            thread = getattr(self, name, None)
+            if thread and thread is not threading.current_thread():
+                thread.join()
+        if hasattr(self, "pool"):
+            self.pool.shutdown(wait=True, cancel_futures=True)
+
+    def close(self):
+        self.quiesce()
+        for obj in (getattr(self, "store", None), getattr(self, "_translations", None)):
+            if obj:
+                with obj.lock:
+                    obj.db.close()
 
     def loop(self):
         while self.running:
@@ -248,6 +289,15 @@ class Service(
             return
         kind = event.get("kind")
         npc = event.get("npc", "")
+        if kind in (
+            "translation_player",
+            "translation_preference",
+            "translation_examine",
+            "translation_dialogue",
+            "translation_names",
+        ):
+            self.translation_event(event)
+            return
         if kind == "payment_result":
             with self.lock:
                 self.payment_event(event)

@@ -1,7 +1,7 @@
 # Testing
 
 Run from the repository root: `python -m unittest discover -s tests`.
-The inherited baseline has 214 tests. Optional Guardrails tests require `requirements-guardrails.txt`.
+Optional Guardrails tests require `requirements-guardrails.txt`.
 
 | Change | Useful test area |
 | --- | --- |
@@ -11,6 +11,8 @@ The inherited baseline has 214 tests. Optional Guardrails tests require `require
 | Safeguards | `test_safeguards.py`, `test_guardrails_ai.py` |
 | Module preparation and installer | `test_addon.py`, `test_installer.py` |
 | Shops | `test_merchants.py` and merchant-related tests |
+| Database integrity, retention and interrupted restore | `test_database_recovery.py`, `test_recovery_http.py` |
+| Translation isolation, stale results and on-demand dialogue preparation | `test_translation.py`, `test_translation_surfaces.py`, `test_prepare_dialogues.py` |
 
 Use mocked provider responses and temporary directories for regression tests. Never require a real
 API key in CI. Exercise failures, stale acknowledgements and cancellation rather than only happy paths.

@@ -29,12 +29,27 @@ INCLUDES = (
     "rw_encounter",
     "rw_social",
     "rw_payment",
+    "rw_translate",
+    "rw_tr_names",
+    "rw_tr_dialog",
+    "rw_tr_demo",
+    "rw_tr_nodes",
     "rw_npcfight",
     "rw_live",
     "rw_merchant",
     "rw_stock",
 )
-HEADERS = ("core", "chat", "events", "redis", "creature", "player", "item")
+HEADERS = (
+    "core",
+    "chat",
+    "events",
+    "redis",
+    "creature",
+    "player",
+    "item",
+    "dialog",
+    "util",
+)
 
 
 def prepare(

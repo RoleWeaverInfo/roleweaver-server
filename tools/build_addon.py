@@ -23,7 +23,17 @@ ENTRY_SCRIPTS = (
     "rw_talk",
     "rw_shop_evt",
     "rw_trade_evt",
+    "rw_tr_event",
+    "rw_tr_nui",
+    "rw_tr_end",
+    "rw_tr_talk",
+    "rw_tr_send",
     "rw_load",
+) + tuple(
+    sorted(
+        p.stem
+        for p in (Path(__file__).resolve().parents[1] / "bridge").glob("rtd_*.nss")
+    )
 )
 
 
@@ -51,6 +61,8 @@ def check_dependencies(base, native, scripts=()):
         "nwnx_creature.nss",
         "nwnx_player.nss",
         "nwnx_item.nss",
+        "nwnx_dialog.nss",
+        "nwnx_util.nss",
     ):
         if not (native / "nwscripts" / name).is_file():
             missing.append(
@@ -119,6 +131,11 @@ def audit(module, scripts=()):
         "rw_encounter",
         "rw_social",
         "rw_payment",
+        "rw_translate",
+        "rw_tr_names",
+        "rw_tr_dialog",
+        "rw_tr_demo",
+        "rw_tr_nodes",
         "rw_npcfight",
         "rw_live",
         "rw_merchant",
@@ -182,6 +199,11 @@ def build(module, output, native, world, prefix, owner, chat, scripts=()):
         "rw_encounter",
         "rw_social",
         "rw_payment",
+        "rw_translate",
+        "rw_tr_names",
+        "rw_tr_dialog",
+        "rw_tr_demo",
+        "rw_tr_nodes",
         "rw_npcfight",
         "rw_live",
         "rw_merchant",
@@ -238,6 +260,8 @@ def build(module, output, native, world, prefix, owner, chat, scripts=()):
         shutil.move(str(source / (name + ".ncs")), compiled / (name + ".ncs"))
     shutil.copy2(base / "assets/rw_base.utc", compiled / "rw_base.utc")
     shutil.copy2(base / "assets/rw_shop.utm", compiled / "rw_shop.utm")
+    shutil.copy2(base / "assets/rw_tr_demo.dlg", compiled / "rw_tr_demo.dlg")
+    shutil.copy2(base / "assets/rw_tr_guide.utc", compiled / "rw_tr_guide.utc")
     config = json.loads((base / "config.example.json").read_text())
     config.update(placement_owner=owner, redis_prefix=prefix, world_id=world)
     (output / "service-config.example.json").write_text(

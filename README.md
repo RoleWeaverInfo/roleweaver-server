@@ -38,6 +38,21 @@ and token, latency and estimated-cost monitoring.
 OpenAI, Gemini and a local LM Studio endpoint are supported. Provider availability and quotas remain
 external dependencies. Offline mode allows dashboard development without API credentials.
 
+The development source also includes a [world text translation preview](docs/TRANSLATION.md):
+player language preferences, cached object text and public NPC/player biographies,
+private reading windows, NPC/placeable hover labels
+and an offline preparation tool for existing standard NPC dialogues. An optional
+[NWNX adapter](extensions/nwnx_translation/README.md) delivers dialogue text in each
+viewer's language without changing shared dialogue or choices. Translation
+requests are limited to reached lines and available replies; preparation makes no
+LLM calls and does not catalogue the world in the translation database. It is not yet in the
+published Alpha 0.2.0 packages.
+
+The development dashboard also includes [Database & Recovery](docs/DATABASE_RECOVERY.md):
+verified SQLite snapshots of world data, translations and usage, automatic rotation,
+restore previews, and an independent recovery page for database startup failures.
+The companion installer saves a verified recovery point before upgrading an existing world.
+
 ## Quick developer start (Ubuntu 24.04, Python 3.12)
 
 ```bash

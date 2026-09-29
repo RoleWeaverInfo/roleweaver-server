@@ -18,6 +18,8 @@ Start with [developer setup](DEVELOPMENT.md), [architecture](ARCHITECTURE.md),
 
 - [Backup Restore](BACKUP_RESTORE.md)
 
+- [Database Recovery](DATABASE_RECOVERY.md)
+
 - [Controlled Actions](CONTROLLED_ACTIONS.md)
 
 - [Conversation Controls](CONVERSATION_CONTROLS.md)
@@ -69,3 +71,6 @@ Feature guides were carried forward from development. Paths describing an instal
 
 - [Existing-server setup](../START_ADDON.md)
 - [Distribution packaging](DISTRIBUTIONS.md)
+
+- [World text translation and offline dialogue preparation](TRANSLATION.md)
+- [Optional NWNX adapter for per-viewer multiplayer dialogue](../extensions/nwnx_translation/README.md)

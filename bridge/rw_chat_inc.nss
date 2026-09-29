@@ -1,5 +1,6 @@
 #include "rw_inc"
 #include "nwnx_chat"
+#include "rw_tr_dialog"
 // Conservative vocatives: Name:, Name, ... and Hello/Hi/Hey/Greetings[, ] Name.
 string RWTrimAddress(string value)
 {
@@ -43,7 +44,7 @@ string RWShortName(string name)
     }
     return GetStringLeft(name,split);
 }
-int RWNameMatch(string address,string exact,object npc)
+int RWNameMatch(string address,string exact,object npc,string alias="")
 {
     string name=RWTrimAddress(GetName(npc));
     string id=GetLocalString(npc,"rw_id");
@@ -51,6 +52,8 @@ int RWNameMatch(string address,string exact,object npc)
         || exact==name || (id!="" && exact==id)) return 1;
     string shortName=RWShortName(name);
     if(shortName!="" && (address==shortName || exact==shortName)) return 1;
+    alias=RWTrimAddress(alias);
+    if(alias!="" && (address==alias || exact==alias))return 1;
     return 0;
 }
 object RWChatTarget(object speaker, string text)
@@ -65,7 +68,7 @@ object RWChatTarget(object speaker, string text)
     {
         object npc = GetLocalObject(m, "rw_slot_" + IntToString(i));
         if (!GetIsObjectValid(npc) || GetLocalString(npc,"rw_id")=="") continue;
-        int score=RWNameMatch(address,exact,npc);
+        int score=RWNameMatch(address,exact,npc,RWTrNameAlias(speaker,npc));
         if(score==0) continue;
         knownOther=TRUE;
         if (!RWCanHear(speaker,npc,RWHearingRange())) continue;
@@ -112,6 +115,12 @@ object RWChatTarget(object speaker, string text)
 void RWHandleChat(object speaker, string text, int channel, int moduleEvent)
 {
     object m = GetModule();
+    if(GetIsPC(speaker) && !GetIsDMPossessed(speaker) && channel==NWNX_CHAT_CHANNEL_PLAYER_TALK && GetStringLowerCase(text)=="/rw language")
+    {if(moduleEvent)SetPCChatMessage("");else NWNX_Chat_SkipMessage();RWTrMenu(speaker);return;}
+    if(GetIsPC(speaker) && !GetIsDMPossessed(speaker) && channel==NWNX_CHAT_CHANNEL_PLAYER_TALK && GetStringLowerCase(text)=="/rw dialogue")
+    {if(moduleEvent)SetPCChatMessage("");else NWNX_Chat_SkipMessage();RWTrDemoBegin(speaker);return;}
+    // Native dialogue selections are not new free-form prompts for an AI NPC.
+    if(GetLocalInt(speaker,"rw_tr_dialog_active") && IsInConversation(speaker))return;
     if (GetIsDM(speaker) && GetStringLeft(text, 4) == "!rw ")
     {
         if (moduleEvent) SetPCChatMessage(""); else NWNX_Chat_SkipMessage();
@@ -134,6 +143,32 @@ void RWHandleChat(object speaker, string text, int channel, int moduleEvent)
             SendMessageToPC(speaker, "Role Weaver: " + id + " is " + mode + ".");
             return;
         }
+        if (verb == "name")
+        {
+            object named=GetNearestObjectByTag(id,speaker);
+            if(!GetIsObjectValid(named) || GetIsPC(named) || GetIsDMPossessed(named)
+              || GetArea(named)!=GetArea(speaker) || GetDistanceBetween(named,speaker)>10.0)
+            {SendMessageToPC(speaker,"Stand within 10 metres of a non-player object with that tag.");return;}
+            if(value!="auto" && value!="preserve" && value!="translate")
+            {SendMessageToPC(speaker,"Use !rw name TAG auto, preserve or translate.");return;}
+            SetLocalInt(named,"rw_tr_name_mode",value=="preserve"?1:(value=="translate"?2:0));
+            object viewer=GetFirstPC();while(GetIsObjectValid(viewer))
+            {RWTrApplyName(viewer,named,"");SetLocalInt(viewer,"rw_tr_names_seq",GetLocalInt(viewer,"rw_tr_names_seq")+1);viewer=GetNextPC();}
+            SendMessageToPC(speaker,"Name translation policy: "+value+". Save rw_tr_name_mode in Aurora to keep it after resets.");return;
+        }
+        if (verb == "translate")
+        {
+            object marked = GetNearestObjectByTag(id, speaker);
+            int type = GetObjectType(marked);
+            if (!GetIsObjectValid(marked) || GetArea(marked) != GetArea(speaker) || GetDistanceBetween(marked, speaker) > 10.0
+                || (type != OBJECT_TYPE_ITEM && type != OBJECT_TYPE_DOOR && type != OBJECT_TYPE_PLACEABLE))
+            { SendMessageToPC(speaker, "Stand within 10 metres of a placeable, door or item with that tag."); return; }
+            if (value != "on" && value != "off")
+            { SendMessageToPC(speaker, "Use !rw translate TAG on or !rw translate TAG off."); return; }
+            RWTrSetExcluded(marked,value=="off");
+            SendMessageToPC(speaker,"World text translation " + value + " for " + GetName(marked) + ". This runtime flag lasts until the object/server resets.");
+            return;
+        }
         if (verb == "bind")
         {
             object candidate = GetNearestObjectByTag(value, speaker);
@@ -148,7 +183,7 @@ void RWHandleChat(object speaker, string text, int channel, int moduleEvent)
             SetLocalString(spawned, "rw_source", "spawn");
             RWBind(spawned, id, speaker); return;
         }
-        SendMessageToPC(speaker, "Role Weaver: !rw bind ID TAG | !rw spawn ID RESREF | !rw pause ID | !rw resume ID | !rw dm ID");
+        SendMessageToPC(speaker, "Role Weaver: !rw bind ID TAG | !rw spawn ID RESREF | !rw pause ID | !rw resume ID | !rw dm ID | !rw translate TAG on/off | !rw name TAG auto/preserve/translate");
         return;
     }
     // Only public nearby player talk. Never collect tells, party, DM chat or OOC.

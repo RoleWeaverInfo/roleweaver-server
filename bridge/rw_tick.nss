@@ -5,6 +5,9 @@
 #include "rw_live"
 #include "rw_social"
 #include "rw_npcfight"
+#include "rw_tr_dialog"
+#include "rw_tr_names"
+#include "rw_tr_nodes"
 void RWFinishMove(object npc, location destination, string request, int epoch)
 {
     int ok = GetIsObjectValid(npc) && !GetIsDMPossessed(npc) && GetLocalInt(npc, "rw_epoch") == epoch
@@ -24,6 +27,10 @@ void main()
     while (GetIsObjectValid(participant))
     {
         RWCurrentTalk(participant);
+        RWTrLoad(participant);
+        // A standard dialogue NPC is not in rw_slot_, so also clean up via its player.
+        RWTrDlgWatch(GetLocalObject(participant,"rw_tr_dialog_npc"));
+        RWTrNamesTick(participant);
         participant = GetNextPC();
     }
     json hello = RWBase("hello", OBJECT_INVALID);
@@ -79,6 +86,7 @@ void main()
                 DeleteLocalInt(npc, "rw_was_possessed");
                 RWMode(npc, "paused");
             }
+            RWTrDlgWatch(npc);
             RWNPCFightTick(npc);
             RWCombatTick(npc);
             RWEncounterTick(npc);
@@ -95,6 +103,9 @@ void main()
         string raw = NWNX_Redis_GetResultAsString(result);
         if (resultType == NWNX_REDIS_RESULT_NULL || raw == "") break;
         json cmd = JsonParse(raw);
+        if(RWS(cmd,"kind")=="translation_dialogue_reply"){if(RWI(cmd,"on_demand"))RWTrNodeReply(cmd);continue;}
+        if(RWS(cmd,"kind")=="translation_names_reply"){RWTrNamesReply(cmd);continue;}
+        if(RWS(cmd,"kind")=="translation_reply"){RWTrReply(cmd);continue;}
         if (RWS(cmd,"kind") == "conversation_settings")
         {
             if (RWS(cmd,"world") == RWWorld() && RWS(cmd,"session") == GetLocalString(m,"rw_session")

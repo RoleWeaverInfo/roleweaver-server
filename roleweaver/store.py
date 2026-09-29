@@ -36,6 +36,8 @@ class Store:
         self.db.row_factory = sqlite3.Row
         self.db.executescript("""
         PRAGMA journal_mode=WAL;
+        PRAGMA synchronous=FULL;
+        PRAGMA busy_timeout=5000;
         CREATE TABLE IF NOT EXISTS access_lore (id TEXT PRIMARY KEY, entry TEXT NOT NULL);
         CREATE TABLE IF NOT EXISTS backup_settings (key TEXT PRIMARY KEY, value TEXT NOT NULL);
         CREATE TABLE IF NOT EXISTS safeguard_events (id INTEGER PRIMARY KEY, created REAL NOT NULL,

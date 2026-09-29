@@ -1,9 +1,28 @@
-# Dashboard backup and restore — 0.6.0
+# Backup and restore
 
-Download backup saves a JSON file containing all NPC profiles, shared world lore, curated memories, conversation history and the player identity salt needed to match returning characters. It excludes provider settings, API keys, server passwords, modules and creature placement. Treat backups as private player-history files.
+For coordinated world, translation and usage database recovery, use
+**Database & Recovery** and follow [the recovery guide](DATABASE_RECOVERY.md).
+It includes automatic snapshots and a recovery page that can start when a database
+is corrupt. This is a development-source feature, not part of Alpha 0.2.0.
 
-Choose a JSON backup (maximum 32 MB) to validate it and see NPC names and record counts. Restore this backup asks for confirmation and replaces current data. A preview expires after ten minutes and is single-use. Connected NPCs must acknowledge Paused first; release DM possession before restoring. A disconnected known NPC or failed acknowledgement blocks replacement. A failed attempt may leave some NPCs paused.
+## Portable JSON backups
 
-Before replacement a recovery JSON is saved under the companion data directory as before-restore-<timestamp>.json. Restore is one SQLite transaction. Profiles start paused, credentials remain unchanged, and the world continues owning its creatures. NPCs present only in the previous data have no restored AI profile; creatures are neither created nor destroyed. Resume selected NPCs after reviewing the result. This is replacement, not merge. Edits not saved in the dashboard are not backed up.
+The older controls remain below the database recovery panel. **Download backup**
+saves profiles, world lore, memories, conversation history, supported world settings,
+the player identity salt and persistent NPC placement records. JSON backups exclude
+translations, language preferences, usage history, credentials and NWN game files.
+They contain private player history; store them securely.
 
-Validation: 42 Python tests, isolated HTTP download/preview/restore roundtrip and single-use-token check, dashboard JavaScript syntax check, and live read-only endpoint verification. No restore was performed against user playtest data.
+Choose a JSON backup (up to 32 MB) to validate and preview it. The restore token is
+single-use and expires after ten minutes. **Restore this backup** replaces current
+world data after connected NPCs acknowledge Paused. Release DM possession first.
+Failed acknowledgements block replacement and may leave some NPCs paused.
+
+The managed dashboard saves a coordinated ZIP snapshot before JSON replacement;
+the world importer also writes before-restore-<timestamp>.json under the data
+folder. JSON replacement uses one SQLite transaction. Profiles start paused and
+credentials remain unchanged. Restart the NWN module as directed to apply restored
+locations. Review and resume NPCs afterward. Unsaved browser edits are not included.
+
+For whole-installation recovery use the ZIP controls, so memories, identity and
+translation preferences come from the same recovery point.

@@ -92,7 +92,7 @@ Do not move your server or change its launcher. Identify these four paths:
 
 Use Ubuntu Files to locate the files if needed. The plugin folder and header folder can be in completely different locations. If all your NWNX files are directly in `~/nwnx`, use that path for the appropriate link; do not add `/plugins` or `/nwscripts` unless those folders actually exist.
 
-Required plugins: **Core, Chat, Events, Redis, Creature, Player, Item**. Required headers come from the **NWScript.zip matching your installed NWNX build**, including dependencies such as `nwnx_redis_lib.nss`. If you have plugins but no headers, obtain NWScript.zip from that same release and extract it into a separate header folder.
+Required plugins: **Core, Chat, Events, Redis, Creature, Player, Item, Dialog, Util**. Dialog and Util support the development dialogue translation preview. Required headers come from the **NWScript.zip matching your installed NWNX build**, including dependencies such as `nwnx_redis_lib.nss`. If you have plugins but no headers, obtain NWScript.zip from that same release and extract it into a separate header folder.
 
 If the compiler is missing, follow **A4** (create the Downloads/roleweaver-deps folder first). If Redis/Python prerequisites are missing, follow **A1**. If using another Redis port, add `--redis-port YOUR_PORT` to the setup command in D.
 

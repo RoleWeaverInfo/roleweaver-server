@@ -1,0 +1,15 @@
+{
+  "resource": "rw_tr_demo",
+  "token_base": 2000000,
+  "nodes": [
+    {"id": 0, "kind": "dialogue_entry", "text": "Welcome to the Kingdom of Role Weaver. What would you like to know?", "links": [4, 5, 6, 7]},
+    {"id": 1, "kind": "dialogue_entry", "text": "Visit the merchant's stall. You can ask about the goods and try negotiating a better price.", "links": [8, 7]},
+    {"id": 2, "kind": "dialogue_entry", "text": "Captain Beran can explain your duties. The cleric can tell you about our faith.", "links": [8, 7]},
+    {"id": 3, "kind": "dialogue_entry", "text": "Read the noticeboard, examine objects, and speak with the people around you.", "links": [8, 7]},
+    {"id": 4, "kind": "dialogue_reply", "text": "Where can I buy supplies?", "links": [1]},
+    {"id": 5, "kind": "dialogue_reply", "text": "Who can tell me about the kingdom?", "links": [2]},
+    {"id": 6, "kind": "dialogue_reply", "text": "How can I explore the demonstration?", "links": [3]},
+    {"id": 7, "kind": "dialogue_reply", "text": "Goodbye.", "links": []},
+    {"id": 8, "kind": "dialogue_reply", "text": "Ask another question.", "links": [0]}
+  ]
+}

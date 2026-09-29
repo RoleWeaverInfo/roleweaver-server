@@ -32,6 +32,10 @@ FILES = (
     "requirements-dev.txt",
     "pyproject.toml",
     "start-roleweaver.sh",
+    "extensions/nwnx_translation/CMakeLists.txt",
+    "extensions/nwnx_translation/Translation.cpp",
+    "extensions/nwnx_translation/TranslationTests.inc",
+    "extensions/nwnx_translation/README.md",
 )
 
 

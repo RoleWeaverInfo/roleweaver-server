@@ -188,7 +188,17 @@ def dependencies(native, compiler):
     required = [native / "runtime/bin/linux-x86/nwserver-linux", compiler]
     required += [
         native / "plugins" / ("NWNX_" + name + ".so")
-        for name in ("Core", "Chat", "Events", "Redis", "Creature", "Player", "Item")
+        for name in (
+            "Core",
+            "Chat",
+            "Events",
+            "Redis",
+            "Creature",
+            "Player",
+            "Item",
+            "Dialog",
+            "Util",
+        )
     ]
     required += [native / "nwscripts/nwnx_chat.nss"]
     missing = [str(p) for p in required if not p.is_file()]
@@ -470,7 +480,16 @@ def launch(runtime, settings):
         NWNX_CORE_LOG_LEVEL="4",
         NWNX_CORE_LOG_FILE_PATH=str(runtime / "nwnx.log"),
     )
-    for name in ("PLAYER", "CREATURE", "CHAT", "EVENTS", "REDIS", "ITEM"):
+    for name in (
+        "PLAYER",
+        "CREATURE",
+        "CHAT",
+        "EVENTS",
+        "REDIS",
+        "ITEM",
+        "DIALOG",
+        "UTIL",
+    ):
         env["NWNX_" + name + "_SKIP"] = "n"
     game = [
         str(binary),

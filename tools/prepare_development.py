@@ -33,7 +33,7 @@ def main():
     for path in (base / "bridge").glob("*.nss"):
         (override / path.name).write_bytes(path.read_bytes())
     (override / "rw_shop.utm").write_bytes((base / "assets/rw_shop.utm").read_bytes())
-    from build_addon import settings as bridge_settings
+    from build_addon import settings as bridge_settings, ENTRY_SCRIPTS
 
     (override / "rw_settings.nss").write_text(
         bridge_settings(
@@ -45,15 +45,7 @@ def main():
         wrapper += 'ExecuteScript("' + old + '", OBJECT_SELF);\n'
     wrapper += 'ExecuteScript("rw_init", GetModule());\n}\n'
     (override / "rw_load.nss").write_text(wrapper)
-    for name in (
-        "rw_init",
-        "rw_chat",
-        "rw_possess",
-        "rw_tick",
-        "rw_talk",
-        "rw_shop_evt",
-        "rw_load",
-    ):
+    for name in ENTRY_SCRIPTS:
         subprocess.run(
             [
                 str(base / "tools/nwnsc"),

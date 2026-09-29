@@ -5,13 +5,16 @@ import argparse
 import json
 import os
 import secrets
+import signal
+import threading
 import time
 from . import backup
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import parse_qs, urlparse
 
-from .service import Service
+from .recovery_runtime import RecoveryRuntime
+from .recovery_web import handle as recovery_request
 from . import __version__
 
 
@@ -22,7 +25,7 @@ def main():
     os.umask(0o077)
     config_path = Path(args.config).resolve()
     config = json.loads(config_path.read_text())
-    app = Service(config_path.parent / "data", config)
+    runtime = RecoveryRuntime(config_path.parent / "data", config, start_workers=False)
     port = int(config.get("web_port", 8741))
     page = (Path(__file__).parent / "static/index.html").read_bytes()
 
@@ -55,6 +58,23 @@ def main():
             return origin is None or origin == "http://" + host
 
         def do_GET(self):
+            self.dispatch("GET")
+
+        def do_POST(self):
+            self.dispatch("POST")
+
+        def dispatch(self, method):
+            if not self.allowed():
+                return self.respond(403, {"error": "Use the local dashboard address"})
+            if recovery_request(self, runtime, method):
+                return
+            try:
+                with runtime.lease() as app:
+                    return self.get(app) if method == "GET" else self.post(app)
+            except ValueError as exc:
+                self.respond(503, {"error": str(exc), "recovery": "/recovery"})
+
+        def get(self, app):
             if not self.allowed():
                 return self.respond(403, {"error": "Use the local dashboard address"})
             parsed = urlparse(self.path)
@@ -134,6 +154,16 @@ def main():
                     (Path(__file__).parent / "static/actions.js").read_bytes(),
                     "application/javascript; charset=utf-8",
                 )
+            if parsed.path == "/api/translations":
+                return self.respond(200, app.translations.status())
+            if parsed.path == "/api/translation-diagnostics":
+                return self.respond(200, app.translation_diagnostics())
+            if parsed.path == "/translations.js":
+                return self.respond(
+                    200,
+                    (Path(__file__).parent / "static/translations.js").read_bytes(),
+                    "application/javascript; charset=utf-8",
+                )
             if parsed.path == "/api/actions":
                 return self.respond(200, app.action_status())
             if parsed.path == "/api/live-encounters":
@@ -182,7 +212,7 @@ def main():
                     },
                 )
             if parsed.path == "/api/recovery":
-                return self.respond(200, app.recovery.status())
+                return self.respond(200, dict(app.recovery.status(), managed=True))
             if parsed.path == "/api/recovery-download":
                 try:
                     return self.respond(
@@ -210,7 +240,7 @@ def main():
                 )
             self.respond(404, {"error": "Not found"})
 
-        def do_POST(self):
+        def post(self, app):
             if (
                 not self.allowed()
                 or self.headers.get("Content-Type") != "application/json"
@@ -266,11 +296,19 @@ def main():
                         raise ValueError(
                             "Restore preview expired. Preview the backup again."
                         )
+                    runtime.capture("before-json-restore")
                     return self.respond(200, app.restore_data(entry[1]))
                 with app.lock:
                     if app.restoring:
                         raise ValueError("Restore in progress; wait before editing")
-                    if self.path == "/api/lore":
+                    if self.path == "/api/translation-settings":
+                        result = app.translations.configure(body)
+                    elif self.path == "/api/translation-edit":
+                        app.translations.edit(
+                            body["key"], body["revision"], body.get("text")
+                        )
+                        result = app.translations.status()
+                    elif self.path == "/api/lore":
                         result = {"text": app.save_world_lore(body["text"])}
                     elif self.path == "/api/usage-pricing":
                         result = app.usage.save_price(body["model"], body["rates"])
@@ -443,8 +481,22 @@ def main():
                     },
                 )
 
-    server = ThreadingHTTPServer(("127.0.0.1", port), Handler)
-    app.start()
+    try:
+        server = ThreadingHTTPServer(("127.0.0.1", port), Handler)
+    except BaseException:
+        runtime.close()
+        raise
+    runtime.workers = True
+    if runtime.app:
+        runtime.app.start()
+    runtime.start()
+
+    # systemctl stop sends SIGTERM. Drain writers just as on Ctrl+C instead of
+    # relying on crash recovery for every routine companion restart.
+    def terminate(*_):
+        threading.Thread(target=server.shutdown, daemon=True).start()
+
+    signal.signal(signal.SIGTERM, terminate)
     print(
         f"Role Weaver Server {__version__} â€” http://127.0.0.1:{port} â€” provider: {config['provider']}",
         flush=True,
@@ -454,12 +506,8 @@ def main():
     except KeyboardInterrupt:
         pass
     finally:
-        app.running = False
-        app.recovery.stop.set()
-        if app.recovery.thread:
-            app.recovery.thread.join(timeout=5)
-        app.pool.shutdown(wait=True, cancel_futures=True)
         server.server_close()
+        runtime.close()
 
 
 if __name__ == "__main__":

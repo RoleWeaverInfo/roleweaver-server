@@ -9,11 +9,13 @@ from pathlib import Path
 import re
 import shutil
 import socket
-import sqlite3
 import subprocess
 import sys
 
 SOURCE = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(SOURCE))
+from roleweaver.db_recovery import DatabaseRecovery
+from roleweaver.recovery_runtime import InstanceLock
 
 
 def identifier(value):
@@ -43,7 +45,17 @@ def check(args):
         errors.append("Redis is not reachable on 127.0.0.1:" + str(args.redis_port))
     if args.native:
         native = args.native.resolve()
-        for name in ("Core", "Chat", "Events", "Redis", "Creature", "Player", "Item"):
+        for name in (
+            "Core",
+            "Chat",
+            "Events",
+            "Redis",
+            "Creature",
+            "Player",
+            "Item",
+            "Dialog",
+            "Util",
+        ):
             if not (native / "plugins" / ("NWNX_" + name + ".so")).is_file():
                 errors.append("Missing NWNX plugin: " + name)
         if not (native / "runtime").is_dir():
@@ -91,21 +103,18 @@ def install(args):
             raise ValueError(
                 "Dashboard port is already in use; choose a different --port for a fresh install"
             )
+    with InstanceLock(root / "data"):
+        _install_files(root, world, unit_name, config)
+
+
+def _install_files(root, world, unit_name, config):
     root.mkdir(parents=True, exist_ok=True)
     os.chmod(root, 0o700)
     if (root / "data/roleweaver.sqlite3").exists():
-        snapshots = root / "upgrade-backups"
-        snapshots.mkdir(exist_ok=True)
-        name = datetime.datetime.now().strftime("%Y%m%d-%H%M%S-%f")
-        with (
-            sqlite3.connect(root / "data/roleweaver.sqlite3") as db,
-            sqlite3.connect(snapshots / (name + ".sqlite3")) as dest,
-        ):
-            db.backup(dest)
-        if (root / "data/identity_salt").exists():
-            shutil.copy2(
-                root / "data/identity_salt", snapshots / (name + ".identity_salt")
-            )
+        recovery = DatabaseRecovery(root / "data", world)
+        recovery.rollback_interrupted()
+        point = recovery.create(reason="before-upgrade")
+        print("Verified database recovery point:", point["name"])
     release = root / "releases" / datetime.datetime.now().strftime("%Y%m%d-%H%M%S-%f")
     release.mkdir(parents=True)
     shutil.copytree(
@@ -113,7 +122,13 @@ def install(args):
         release / "roleweaver",
         ignore=shutil.ignore_patterns("__pycache__", "*.pyc"),
     )
-    for document in ("INSTALL_COMPANION.md", "INTEGRATION.md", "BACKUP_RESTORE.md"):
+    for document in (
+        "INSTALL_COMPANION.md",
+        "INTEGRATION.md",
+        "BACKUP_RESTORE.md",
+        "DATABASE_RECOVERY.md",
+        "TRANSLATION.md",
+    ):
         if (SOURCE / "docs" / document).exists():
             shutil.copy2(SOURCE / "docs" / document, release / document)
     if not (root / "config.json").exists():
