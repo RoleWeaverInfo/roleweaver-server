@@ -128,6 +128,8 @@ def _install_files(root, world, unit_name, config):
         "BACKUP_RESTORE.md",
         "DATABASE_RECOVERY.md",
         "TRANSLATION.md",
+        "HEALTH_AND_SUPPORT.md",
+        "GUIDED_SETUP.md",
     ):
         if (SOURCE / "docs" / document).exists():
             shutil.copy2(SOURCE / "docs" / document, release / document)

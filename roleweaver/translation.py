@@ -139,6 +139,10 @@ class TranslationCache:
         self.window = deque()
         self.hits = 0
         self.worker_error = ""
+        # Transient, content-free diagnostics; these do not alter the cache key.
+        self.active_job = None
+        self.last_job = None
+        self.queue_full = 0
 
     def config(self):
         with self.lock:
@@ -217,6 +221,7 @@ class TranslationCache:
             if row and (row["status"] == "pending" or row["retry"] > time.time()):
                 return None
             if len(self.jobs) >= 64:
+                self.queue_full += 1
                 return None
             if not row:
                 self.db.execute(
@@ -293,28 +298,44 @@ class TranslationCache:
                     )
                 return True
             self.window.append(now)
+            self.active_job = now
         try:
             result = validate_text(row["original"], translator(row))
             state, error = "ready", ""
         except Exception as exc:
+            from .diagnostics_log import record
+
+            record(self, "translation_job_failed", exc)
             result, state, error = "", "failed", type(exc).__name__
-        with self.lock, self.db:
-            if not self.db.execute(
-                "SELECT 1 FROM current_sources WHERE key=? LIMIT 1", (key,)
-            ).fetchone():
-                state, result = "obsolete", ""
-            self.db.execute(
-                "UPDATE entries SET translated=?,status=?,error=?,retry=?,updated=? WHERE key=? AND revision=? AND status='pending'",
-                (
-                    result,
-                    state,
-                    error,
-                    time.time() + 60 if error else 0,
-                    time.time(),
-                    key,
-                    rev,
-                ),
-            )
+        try:
+            with self.lock, self.db:
+                if not self.db.execute(
+                    "SELECT 1 FROM current_sources WHERE key=? LIMIT 1", (key,)
+                ).fetchone():
+                    state, result = "obsolete", ""
+                changed = self.db.execute(
+                    "UPDATE entries SET translated=?,status=?,error=?,retry=?,updated=? WHERE key=? AND revision=? AND status='pending'",
+                    (
+                        result,
+                        state,
+                        error,
+                        time.time() + 60 if error else 0,
+                        time.time(),
+                        key,
+                        rev,
+                    ),
+                ).rowcount
+                from .diagnostics_log import ERRORS
+
+                self.last_job = dict(
+                    finished_at=time.time(),
+                    status=state if changed else "superseded",
+                    duration_ms=round((time.monotonic() - now) * 1000, 1),
+                    error=error if error in ERRORS else "Error" if error else "",
+                )
+        finally:
+            with self.lock:
+                self.active_job = None
         return True
 
     def edit(self, key, revision, text=None):

@@ -8,9 +8,46 @@ This package adds Role Weaver to an NWN:EE/NWNX Linux server. Your module stays 
 - **I need to create a server first:** follow [New server setup](addon/NEW_SERVER.md), then return here.
 - **I only want to play the supplied investigation:** use the Demo download and its START_HERE.md. The optional YourWorld_Fixed example is already hooked; do not import the generic bridge over it.
 
+## Recommended: guided setup
+
+Open a terminal in the extracted package folder and run:
+
+```bash
+bash setup.sh
+```
+
+1. Choose **1 — Prepare an existing server**. Enter your world ID, ports and NWNX
+   headers folder when asked. You do not need to edit JSON. The wizard creates a
+   new numbered Aurora import folder and prints its **INSTALL.md** path.
+2. Follow that generated guide to import scripts into a copy of your module in
+   Aurora, preserve your existing event scripts, and compile. Your module stays
+   in its normal server location; the wizard does not copy or replace it.
+3. Return to the wizard and choose **3 — Check addon prerequisites**, then
+   **4 — Install and start the addon**. It offers to prepare `.venv` and always
+   uses that Python environment. Install `python3-venv` and local Redis first if
+   requested. An active installed addon must be stopped deliberately before an
+   upgrade; the wizard does not stop it automatically.
+4. Start your edited module using your normal NWN launcher. Open the dashboard
+   address shown during setup, then **Health & Support** to check the connection.
+
+The wizard saves non-secret choices in **.local/setup-addon.json**. Reopen
+`bash setup.sh` to check, install, restart or view the service using those same
+choices. Copy that file into a new package's `.local/` folder when upgrading.
+Advanced commands below use the separate **addon/setup.json** file; do not mix
+the two settings files unintentionally. See [guided setup details](docs/GUIDED_SETUP.md).
+
+For translation, choose **7** to prepare standard dialogues and **8** to build
+the optional multiplayer adapter. Both produce reviewable output and instructions;
+neither installs game scripts/plugins nor restarts NWN. Enable translation in the
+dashboard after installation. Existing dialogue preparation makes no LLM requests.
+
+## Advanced/manual setup
+
+The steps below remain available for administrators who prefer editable settings.
+
 ## 1. Extract the add-on and open its folder
 
-Extract `RoleWeaver-Server-Addon-Alpha-0.1.0.tar.gz` on Ubuntu. Open the extracted folder in Files, right-click empty space and choose **Open in Terminal**. All commands below run in this folder. Keep the folder after installing.
+Extract your downloaded RoleWeaver-Server-Addon archive on Ubuntu. Open the extracted folder in Files, right-click empty space and choose **Open in Terminal**. All commands below run in this folder. Keep the folder after installing.
 
 Your existing server, module, HAKs and launcher stay where they are.
 

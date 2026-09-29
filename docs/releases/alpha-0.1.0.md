@@ -12,7 +12,7 @@ NWN/NWNX and compiler binaries are external prerequisites. The demo defaults to 
 
 Talk to Captain Beran and examine the noticeboard. Collect witness accounts, request an audience and present your conclusion to the King. Try shopping, haggling, directions and memory after reconnecting. The investigation resets each login; personal conversation memories remain.
 
-Compare models for natural dialogue, distinct personalities, consistent lore, memory and response time. Test guardrail bypasses and false positives using synthetic data. See the [model comparison guide](../../demo/LLM_COMPARISON.md) and [playtest checklist](../../demo/PLAYTEST.md).
+Compare models for natural dialogue, distinct personalities, consistent lore, memory and response time. Test guardrail bypasses and false positives using synthetic data. See the [model comparison guide](https://github.com/RoleWeaverInfo/roleweaver-server/blob/v0.1.0-alpha.1/demo/LLM_COMPARISON.md) and [playtest checklist](https://github.com/RoleWeaverInfo/roleweaver-server/blob/v0.1.0-alpha.1/demo/PLAYTEST.md).
 
 Report the exact provider/model, guardrail settings, test message, response and reproduction steps in [Issues](https://github.com/RoleWeaverInfo/roleweaver-server/issues). Remove API keys and private player information.
 

@@ -7,7 +7,7 @@ import tempfile
 import unittest
 from unittest.mock import patch
 
-from demo.investigation.gff_tools import read, write
+from tools.gff import read, write
 from tools.build_translation_demo import build
 from tools.prepare_dialogues import prepare_dialogue, prepare
 

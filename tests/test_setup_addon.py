@@ -49,6 +49,8 @@ class SetupTests(unittest.TestCase):
             self.assertIn(("rw_encounter", 2009), resources)
             self.assertIn(("rw_live", 2009), resources)
             self.assertIn(("rw_nearby", 2009), resources)
+            self.assertIn(("rw_tr_native", 2009), resources)
+            self.assertIn(("rw_health", 2009), resources)
             self.assertIn(("rw_shopcore", 2009), resources)
             self.assertIn(("rw_base", 2027), resources)
             self.assertIn(("rw_shop", 2051), resources)

@@ -19,7 +19,7 @@ import sys
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
-from demo.investigation.gff_tools import read, write
+from tools.gff import read, write
 from tools.module_copy import resources
 
 RESREF = re.compile(r"[a-z0-9_]{1,16}")

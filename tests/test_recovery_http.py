@@ -35,7 +35,11 @@ class RecoveryHTTPTests(unittest.TestCase):
                     args.append(self.rfile.read(size).decode())
                     self.rfile.read(2)
                 calls.append(args)
-                self.wfile.write(b"$-1\r\n" if args[0] == "LPOP" else b":0\r\n")
+                self.wfile.write(
+                    b"+PONG\r\n"
+                    if args[0] == "PING"
+                    else b"$-1\r\n" if args[0] == "LPOP" else b":0\r\n"
+                )
 
         self.redis = socketserver.ThreadingTCPServer(("127.0.0.1", 0), RedisHandler)
         self.redis.daemon_threads = True
@@ -74,6 +78,24 @@ class RecoveryHTTPTests(unittest.TestCase):
             self.process.terminate()
             self.process.wait(timeout=10)
             self.process = None
+
+    def test_health_and_support_remain_available_with_corrupt_world(self):
+        data = self.root / "data"
+        data.mkdir()
+        (data / "roleweaver.sqlite3").write_bytes(b"corrupt PRIVATE_WORLD")
+        self.start()
+        self.assertIn(b"Health &amp; Support", self.request("/health"))
+        for _ in range(100):
+            health = self.request("/api/health")
+            if "companion" in health["components"]:
+                break
+            time.sleep(0.05)
+        self.assertEqual(health["components"]["companion"]["state"], "error")
+        self.assertEqual(health["components"]["redis"]["state"], "healthy")
+        self.assertTrue(self.request("/api/support-report").startswith(b"PK"))
+        with self.assertRaises(HTTPError) as cm:
+            self.request("/api/support-report", origin="https://outside.invalid")
+        self.assertEqual(cm.exception.code, 403)
 
     def tearDown(self):
         self.halt()

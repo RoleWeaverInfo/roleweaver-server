@@ -6,39 +6,16 @@ import threading
 import time
 from .translation import CHARACTER_DESCRIPTION_BYTES, TranslationCache, translate
 from . import provider
+from .diagnostics_log import record
 from .translation_surfaces import lookup_batch, name_context
 
 
 class TranslationService:
     def translation_diagnostics(self):
         """Technical status only: no text, player identifiers or provider secrets."""
-        with self.lock:
-            cache = self.translations
-            with cache.lock:
-                counts = dict(
-                    cache.db.execute(
-                        "SELECT status,COUNT(*) FROM entries GROUP BY status"
-                    )
-                )
-                settings = cache.config()
-                worker = getattr(self, "translation_thread", None)
-                return dict(
-                    enabled=settings["enabled"],
-                    source=settings["source"],
-                    languages=settings["languages"],
-                    per_minute=settings["per_minute"],
-                    provider=self.config.get("provider", "offline"),
-                    model=settings["model"] or self.config.get("model", ""),
-                    worker_running=bool(worker and worker.is_alive()),
-                    bridge_online=time.monotonic()
-                    - self.conversation_hello.get("seen", -1e9)
-                    < 4,
-                    pending=len(cache.jobs),
-                    cache_hits=cache.hits,
-                    counts=counts,
-                    worker_error=cache.worker_error,
-                    native_adapter="Not probed by the companion; verify NWNX_RWTranslation in the NWNX startup log.",
-                )
+        from .translation_diagnostics import snapshot
+
+        return snapshot(self)
 
     @property
     def translations(self):
@@ -69,6 +46,7 @@ class TranslationService:
                         backup_at = time.monotonic() + 900
                     cache.worker_error = ""
                 except Exception as exc:
+                    record(self, "translation_worker_failed", exc)
                     # Do not expose provider details or stop NPC dialogue on failure.
                     if hasattr(self, "_translations"):
                         self._translations.worker_error = type(exc).__name__

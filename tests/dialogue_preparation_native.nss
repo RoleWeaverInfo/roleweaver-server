@@ -1,5 +1,6 @@
 // Isolated server fixture only. It never changes the live world or calls an LLM.
 #include "rw_tr_nodes"
+#include "rw_health"
 void Check(string label,int ok)
 {WriteTimestampedLogEntry("RW_INV_TEST "+label+" "+(ok?"PASS":"FAIL"));}
 void Run(string resource,object partner)
@@ -28,6 +29,13 @@ void Run(string resource,object partner)
 }
 void main()
 {
+ json health=RWHealth(JsonObject());
+ json plugins=JsonObjectGet(health,"health_plugins");
+ Check("health_protocol",JsonGetInt(JsonObjectGet(health,"health_protocol"))==1);
+ Check("health_core_loaded",JsonGetInt(JsonObjectGet(plugins,"Core"))==1);
+ Check("health_dialog_loaded",JsonGetInt(JsonObjectGet(plugins,"Dialog"))==1);
+ Check("health_chat_absent",JsonGetInt(JsonObjectGet(plugins,"Chat"))==0);
+ Check("health_translation_protocol",JsonGetInt(JsonObjectGet(health,"translation_protocol"))==1);
  Check("dialog_plugin",NWNX_Core_PluginExists("NWNX_Dialog"));
  Check("util_plugin",NWNX_Core_PluginExists("NWNX_Util"));
  if(NWNX_Core_PluginExists("NWNX_RWTranslation"))

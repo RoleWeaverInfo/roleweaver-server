@@ -2,6 +2,11 @@
 
 Use a GitHub issue with this template:
 
+In **Health & Support**, download a filtered support report. For translation
+issues, also use **Translations → Download diagnostics**. These omit game text
+and credentials; review attachments before sharing. Package versions are in
+`RELEASE.json`; the dashboard reports the running application version.
+
 - Package and runtime version:
 - OS / NWN dedicated server build / NWNX build:
 - Provider and exact requested model:

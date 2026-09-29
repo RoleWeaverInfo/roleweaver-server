@@ -1,8 +1,29 @@
-# Role Weaver editable demo — alpha 0.1.0
+# Role Weaver editable demo — alpha
 
 This package runs a separate demo NWN server and Role Weaver dashboard on Linux. Ubuntu 24.04
 (or an Ubuntu VM on Windows) is the tested target. No Docker is required. It starts in offline mode;
 choose an LLM in the dashboard when ready. It does not use an existing world's data or API keys.
+
+## Recommended: guided setup
+
+With the dependencies described below installed, open a terminal in this package
+and run **`bash setup.sh`**. Choose **2 — Prepare or start the separate demo**.
+
+The wizard asks separately for your NWN runtime, NWNX plugins, NWNX headers and
+compiler paths. For example: `~/nwserver`, `~/nwnx/plugins`, `~/nwnx/nwscripts`
+and `~/bin/nwnsc`. It checks them and creates the required links automatically;
+you do not need to arrange a `nwn-demo-deps` folder yourself. It also prepares
+`.venv` if needed and asks which game/dashboard ports to use.
+
+When preparation finishes, choose whether to start. Startup prints the game
+address, dashboard URL and SSH tunnel instructions. Default DM password:
+**roleweaver**. Stop with **Ctrl+C**. To return later, run `bash setup.sh`, choose
+**2**, and enter the same instance name (normally `rw_demo`). Existing data is kept.
+
+If starting without dependencies, complete **section A** of
+[demo/DEPENDENCIES.md](demo/DEPENDENCIES.md), then return to the wizard. Its path
+questions replace the guide's manual linking commands. The detailed command-line
+procedure below remains available.
 
 ## 1. Prepare dependencies once
 
@@ -107,7 +128,9 @@ campaign data stay in `.demo/rw_demo/`. This is a foreground demo runner, not a 
 
 If startup fails, read `.demo/rw_demo/game.log`, `dashboard.log` and `nwnx.log`. Never publish those
 files wholesale: they can contain player dialogue or local details. Logs are local troubleshooting
-files; automated redacted diagnostic export remains a separate planned feature.
+files. Prefer **Health & Support → Download support report**, which excludes game
+text and credentials. **Translations → Download diagnostics** provides a separate
+content-free translation snapshot.
 
 ## If every message is blocked
 

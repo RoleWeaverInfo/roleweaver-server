@@ -3,7 +3,7 @@
 For coordinated world, translation and usage database recovery, use
 **Database & Recovery** and follow [the recovery guide](DATABASE_RECOVERY.md).
 It includes automatic snapshots and a recovery page that can start when a database
-is corrupt. This is a development-source feature, not part of Alpha 0.2.0.
+is corrupt. This is included in Alpha 0.3.0, not the older Alpha 0.2.0.
 
 ## Portable JSON backups
 

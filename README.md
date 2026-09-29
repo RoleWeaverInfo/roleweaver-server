@@ -3,19 +3,20 @@
 An AI NPC companion for **Neverwinter Nights: Enhanced Edition** servers using NWNX:EE.
 It runs alongside an existing server; it does not replace NWN or its module.
 
-## Alpha demo and server add-on downloads
+## Alpha demo and server add-on packages
 
-[Download Demo Alpha 0.2.0](https://github.com/RoleWeaverInfo/roleweaver-server/releases/tag/v0.2.0-alpha.1)
+**Alpha 0.3.0 is prepared for release; publication is a separate step.**
+The previous published release is [Alpha 0.2.0](https://github.com/RoleWeaverInfo/roleweaver-server/releases/tag/v0.2.0-alpha.1), which does not include the new translation and recovery features.
 
 Explore the Kingdom of Role Weaver, meet its inhabitants, shop and haggle, and solve a caravan investigation through conversation. Personal NPC memories persist between visits; the investigation resets each login.
 
-- **Play the demo:** download `RoleWeaver-Demo-Alpha-0.2.0.tar.gz`, extract it on Linux and open its START_HERE.md. [Read the demo guide](START_DEMO.md).
-- **Integrate your own server:** download `RoleWeaver-Server-Addon-Alpha-0.2.0.tar.gz`. It includes a separate add-on installer, editable setup files and an Aurora import generator. Follow [START_ADDON.md](START_ADDON.md) on a staging world first.
+- **Play the demo:** use `RoleWeaver-Demo-Alpha-0.3.0.tar.gz`, extract it on Linux and open its START_HERE.md. [Read the demo guide](START_DEMO.md).
+- **Integrate your own server:** use `RoleWeaver-Server-Addon-Alpha-0.3.0.tar.gz`. It includes a separate add-on installer, guided setup and an Aurora import generator. Follow [START_ADDON.md](START_ADDON.md) on a staging world first.
 - **Help test:** try the [playtest checklist](demo/PLAYTEST.md) and [conversation/guardrail model comparisons](demo/LLM_COMPARISON.md). Report results in [Issues](https://github.com/RoleWeaverInfo/roleweaver-server/issues), including the model, settings and reproduction steps, without private data or keys.
 
 Ubuntu 24.04 is the tested server environment. Players use the normal NWN:EE client. Generated dialogue requires a configured provider or local model; provider charges and limits may apply.
 
-The application derives from runtime **0.27.0**; **Alpha 0.2.0** identifies the distribution. See the [release notes](docs/releases/alpha-0.2.0.md) for known limitations.
+Application runtime: **0.28.0**. Distribution: **Alpha 0.3.0**. See the [release notes](docs/releases/alpha-0.3.0.md) for update steps, validation limits and open release checks.
 
 See [distribution contents and release packaging](docs/DISTRIBUTIONS.md).
 NWN/NWNX/compiler dependencies are supplied separately.
@@ -38,20 +39,30 @@ and token, latency and estimated-cost monitoring.
 OpenAI, Gemini and a local LM Studio endpoint are supported. Provider availability and quotas remain
 external dependencies. Offline mode allows dashboard development without API credentials.
 
-The development source also includes a [world text translation preview](docs/TRANSLATION.md):
+Alpha 0.3.0 includes a [world text translation preview](docs/TRANSLATION.md):
 player language preferences, cached object text and public NPC/player biographies,
 private reading windows, NPC/placeable hover labels
 and an offline preparation tool for existing standard NPC dialogues. An optional
 [NWNX adapter](extensions/nwnx_translation/README.md) delivers dialogue text in each
 viewer's language without changing shared dialogue or choices. Translation
 requests are limited to reached lines and available replies; preparation makes no
-LLM calls and does not catalogue the world in the translation database. It is not yet in the
-published Alpha 0.2.0 packages.
+LLM calls and does not catalogue the world in the translation database.
 
-The development dashboard also includes [Database & Recovery](docs/DATABASE_RECOVERY.md):
+The dashboard also includes [Database & Recovery](docs/DATABASE_RECOVERY.md):
 verified SQLite snapshots of world data, translations and usage, automatic rotation,
 restore previews, and an independent recovery page for database startup failures.
 The companion installer saves a verified recovery point before upgrading an existing world.
+
+[Health & Support](docs/HEALTH_AND_SUPPORT.md) brings connection, worker, plugin,
+database, backup and recent provider status into one panel. Download a filtered
+support report with bounded rotating error logs; credentials and game text are
+excluded.
+
+The [guided setup launcher](docs/GUIDED_SETUP.md), `bash setup.sh`, asks for the
+paths/settings needed by the separate demo and existing-server workflows. The
+Translations page now explains queue/rate-limit waits, cache reuse, recent errors
+and translation request usage. See [the next-alpha plan](docs/NEXT_ALPHA.md) for
+scope and explicitly deferred validation.
 
 ## Quick developer start (Ubuntu 24.04, Python 3.12)
 

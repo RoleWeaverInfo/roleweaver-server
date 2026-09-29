@@ -201,6 +201,8 @@ class Service(
                     obj.db.close()
 
     def loop(self):
+        from .diagnostics_log import record
+
         while self.running:
             try:
                 raw = self.redis.call("LPOP", self.prefix + ":events")
@@ -214,6 +216,7 @@ class Service(
                 with self.lock:
                     for k, v in list(self.pending.items()):
                         if time.monotonic() - v["time"] >= 30:
+                            record(self, "game_confirmation_timeout")
                             if v["kind"] == "encounter_end":
                                 self.director_command_result(v, False)
                             if v["kind"] in ("move_dm", "despawn", "persistence"):
@@ -225,6 +228,7 @@ class Service(
                                 self.action_notice = "Location capture timed out; retry after checking the game connection."
                             self.pending.pop(k, None)
             except Exception as exc:
+                record(self, "bridge_failed", exc)
                 self.redis_ok = False
                 self.error = "Bridge error: " + type(exc).__name__
                 time.sleep(1)

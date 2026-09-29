@@ -15,7 +15,7 @@ from tests.test_actions import FakeRedis
 from tools.build_translation_demo import build, build_creature
 from tools.add_translation_guide import add_guide
 from tools.module_copy import resources
-from demo.investigation.gff_tools import read, write
+from tools.gff import read, write
 
 ROOT = Path(__file__).resolve().parents[1]
 

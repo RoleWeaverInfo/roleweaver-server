@@ -8,6 +8,7 @@
 #include "rw_tr_dialog"
 #include "rw_tr_names"
 #include "rw_tr_nodes"
+#include "rw_health"
 void RWFinishMove(object npc, location destination, string request, int epoch)
 {
     int ok = GetIsObjectValid(npc) && !GetIsDMPossessed(npc) && GetLocalInt(npc, "rw_epoch") == epoch
@@ -40,7 +41,7 @@ void main()
     hello = JsonObjectSet(hello,"actions_protocol",JsonInt(6));
     hello=JsonObjectSet(hello,"live_protocol",JsonInt(1));
     hello=JsonObjectSet(hello,"inventory_protocol",JsonInt(NWNX_Core_PluginExists("NWNX_Item") ? 1 : 0));
-    RWEmit(hello);
+    RWEmit(RWHealth(hello));
     if (GetLocalInt(m, "rw_allow_dm_spawn"))
     {
         object dm = GetFirstPC();

@@ -30,6 +30,7 @@ flowchart LR
 | Safety | `guardrails.py`, `ai_validation.py`, `safeguards.py` | Core checks, optional validators, review policy |
 | Persistence | `store.py`, `backup.py`, `recovery.py` | SQLite, validated restore, scheduled snapshots |
 | Observability | `usage.py`, `knowledge.py` | Request metrics and authorized knowledge inspection |
+| Health/support | `health.py`, `health_web.py`, `diagnostics_log.py` | Independent health monitor, bounded content-free logs and support ZIPs |
 | UI | `web.py`, `static/` | Loopback routes and browser panels |
 | Native integration | `bridge/*.nss` | Hearing, targeting, DM authority, transactions and actions |
 

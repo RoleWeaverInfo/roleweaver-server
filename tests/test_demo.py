@@ -12,6 +12,34 @@ spec.loader.exec_module(demo)
 
 
 class DemoTests(unittest.TestCase):
+    def test_rebuild_refreshes_bridge_without_changing_authored_resources(self):
+        import sys
+
+        sys.path.insert(0, str(ROOT / "demo/investigation"))
+        from runtime import refresh_bridge
+        from module_copy import resources
+        from prepare_addon import ENTRIES, INCLUDES
+
+        entries = {
+            (n, k): raw
+            for n, k, raw in resources(
+                (ROOT / "demo/world/YourWorld_Fixed.mod").read_bytes()
+            )
+        }
+        # Model an old editable module and preserve all of its authored layout.
+        entries["rw_tick", 2009] = b"old bridge"
+        entries.pop(("rw_health", 2009), None)
+        before = dict(entries)
+        refresh_bridge(entries)
+        for name in (*ENTRIES, *INCLUDES):
+            self.assertEqual(
+                entries[name, 2009], (ROOT / "bridge" / (name + ".nss")).read_bytes()
+            )
+        for key in before:
+            if key[1] in (2014, 2023, 2012, 2046) or key[0].startswith("rq_"):
+                self.assertEqual(entries[key], before[key])
+        self.assertIn(("rw_tr_demo", 2029), entries)
+
     def test_dm_password_reset_preserves_other_settings(self):
         with tempfile.TemporaryDirectory() as directory:
             runtime = Path(directory)

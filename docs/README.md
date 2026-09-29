@@ -1,76 +1,47 @@
 # Documentation
 
+## Installation and this release
 
-
-Start with [developer setup](DEVELOPMENT.md), [architecture](ARCHITECTURE.md),
-
-[game bridge](GAME_BRIDGE.md), and [testing](TESTING.md).
-
-
-
-## Feature and integration references
-
-
-
-- [Alpha Checklist](ALPHA_CHECKLIST.md)
-
-- [Architecture](ARCHITECTURE.md)
-
-- [Backup Restore](BACKUP_RESTORE.md)
-
-- [Database Recovery](DATABASE_RECOVERY.md)
-
-- [Controlled Actions](CONTROLLED_ACTIONS.md)
-
-- [Conversation Controls](CONVERSATION_CONTROLS.md)
-
-- [Conversations](CONVERSATIONS.md)
-
-- [Development](DEVELOPMENT.md)
-
-- [Game Bridge](GAME_BRIDGE.md)
-
-- [Guardrails Ai](GUARDRAILS_AI.md)
-
-- [Install Companion](INSTALL_COMPANION.md)
-
-- [Integration](INTEGRATION.md)
-
-- [Knowledge And Usage](KNOWLEDGE_AND_USAGE.md)
-
-- [Llm Settings](LLM_SETTINGS.md)
-
-- [Lore](LORE.md)
-
-- [Lore Documents](LORE_DOCUMENTS.md)
-
-- [Merchant Admin](MERCHANT_ADMIN.md)
-
-- [Merchants And Leading](MERCHANTS_AND_LEADING.md)
-
-- [Multi Npc](MULTI_NPC.md)
-
-- [Testing](TESTING.md)
-
-
-
-Feature guides were carried forward from development. Paths describing an installed world are examples, not paths automatically created by this source checkout. The alpha packaging checklist tracks replacement with guided setup.
-
-
-- [Source refactor notes](REFACTOR_NOTES.md)
-- [Validation results](VALIDATION.md)
-
-## Editable demo
-
+- [Guided setup](GUIDED_SETUP.md)
 - [Demo setup](../START_DEMO.md)
-- [Customization](../demo/CUSTOMIZE.md)
-- [Playtest](../demo/PLAYTEST.md)
-- [LLM and Guardrails comparison](../demo/LLM_COMPARISON.md)
-
-## Separate distributions
-
 - [Existing-server setup](../START_ADDON.md)
-- [Distribution packaging](DISTRIBUTIONS.md)
+- [Alpha 0.3.0 notes](releases/alpha-0.3.0.md)
+- [Alpha 0.3.0 review and validation](releases/alpha-0.3.0-review.md)
+- [Distributions and packaging](DISTRIBUTIONS.md)
+- [Release checklist](ALPHA_CHECKLIST.md)
+- [Roadmap toward 1.0](NEXT_ALPHA.md)
 
-- [World text translation and offline dialogue preparation](TRANSLATION.md)
-- [Optional NWNX adapter for per-viewer multiplayer dialogue](../extensions/nwnx_translation/README.md)
+## Operation and troubleshooting
+
+- [Health & Support](HEALTH_AND_SUPPORT.md)
+- [Database recovery](DATABASE_RECOVERY.md)
+- [Portable backups](BACKUP_RESTORE.md)
+- [Translation and diagnostics](TRANSLATION.md)
+- [Multiplayer dialogue adapter](../extensions/nwnx_translation/README.md)
+- [Restart, update and remote dashboard access](../addon/OPERATIONS.md)
+- [Providers and models](LLM_SETTINGS.md)
+- [Guardrails](GUARDRAILS_AI.md)
+- [Knowledge and usage](KNOWLEDGE_AND_USAGE.md)
+
+## NPCs and AI DM encounters
+
+- [Conversations](CONVERSATIONS.md) and [hearing controls](CONVERSATION_CONTROLS.md)
+- [World lore](LORE.md) and [documents](LORE_DOCUMENTS.md)
+- [Controlled actions](CONTROLLED_ACTIONS.md)
+- [Perception](PERCEPTION.md) and [nearby behavior](NEARBY_BEHAVIOUR.md)
+- [Inventory, exchanges and assistance](INVENTORY_TASKS.md)
+- [Merchants](MERCHANTS_AND_LEADING.md) and [shop administration](MERCHANT_ADMIN.md)
+- [Payments and NPC combat](PAYMENTS_AND_NPC_COMBAT.md)
+- [Live Encounters](LIVE_ENCOUNTERS.md)
+- [Persistent Encounters](ENCOUNTERS.md)
+- [Example encounters](../examples/encounters/README.md)
+
+## Development
+
+- [Setup](DEVELOPMENT.md), [architecture](ARCHITECTURE.md) and [contributing](../CONTRIBUTING.md)
+- [Bridge authority and protocol](GAME_BRIDGE.md)
+- [Testing](TESTING.md) and [historical source-baseline validation](VALIDATION.md)
+- [Earlier refactor notes](REFACTOR_NOTES.md)
+
+Installed-world paths in feature guides are examples; a source checkout does not
+create them automatically. Follow the guide for the distribution you downloaded.

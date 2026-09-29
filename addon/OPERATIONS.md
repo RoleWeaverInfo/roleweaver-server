@@ -2,6 +2,12 @@
 
 Run commands from the extracted package folder. They read addon/setup.json.
 
+**If you used the guided `bash setup.sh` wizard**, reopen it and use its service
+menu instead. It reads **.local/setup-addon.json**. To use commands below with
+those choices, append `--config .local/setup-addon.json`. When upgrading, copy
+that wizard settings file to the new package's `.local/` folder rather than
+copying the unchanged sample `addon/setup.json`.
+
 ## Restart the dashboard/AI companion
 
 ```bash

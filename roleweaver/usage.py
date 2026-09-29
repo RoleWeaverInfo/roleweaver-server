@@ -7,6 +7,7 @@ import math
 import sqlite3
 import threading
 import time
+from .diagnostics_log import record as diagnostic_record
 
 WINDOWS = {
     "1h": (3600, 60),
@@ -163,6 +164,14 @@ class Usage:
             self.error = "Usage pricing could not be read."
 
         def record(event):
+            if event.get("status") == "error":
+                diagnostic_record(
+                    self,
+                    "provider_failed",
+                    error=event.get("error"),
+                    phase=phase,
+                    http_status=event.get("http_status"),
+                )
             try:
                 actual_model = event.get("model") or model
                 rates = rates_by_model.get(actual_model)
@@ -204,7 +213,8 @@ class Usage:
                     db.execute(
                         "DELETE FROM requests WHERE id <= COALESCE((SELECT id FROM requests ORDER BY id DESC LIMIT 1 OFFSET 50000),-1)"
                     )
-            except Exception:
+            except Exception as exc:
+                diagnostic_record(self, "usage_write_failed", exc)
                 self.error = (
                     "Some usage records could not be saved. Totals may be incomplete."
                 )
@@ -220,6 +230,7 @@ class Usage:
             "input_review",
             "output_review",
             "connection_test",
+            "translation",
         ):
             raise ValueError("Invalid request category")
         now = time.time()

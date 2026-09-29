@@ -19,6 +19,8 @@ import time
 from .db_recovery import DatabaseRecovery, DATABASES, digest
 from .service import Service
 from .redis_wire import Redis
+from .diagnostics_log import DiagnosticsLog
+from .health import HealthMonitor
 
 
 class InstanceLock:
@@ -62,6 +64,7 @@ class RecoveryRuntime:
         self.directory = Path(directory)
         self.config = copy.deepcopy(config)
         self.instance = InstanceLock(directory)
+        self.diagnostics = DiagnosticsLog(self.directory / "logs")
         self.manager = DatabaseRecovery(directory, config.get("world_id", "default"))
         self.condition = threading.Condition(threading.RLock())
         self.active = 0
@@ -76,13 +79,16 @@ class RecoveryRuntime:
         self.previews = {}
         self.files = []
         self.health = {}
+        self.health_checked = 0
         self.next_backup = time.monotonic() + 10
         try:
             self.manager.rollback_interrupted()
             self._open()
         except Exception as exc:
+            self.diagnostics.record("companion_start_failed", exc)
             self.error = self.failure(exc)
         self.refresh()
+        self.monitor = HealthMonitor(self)
 
     @staticmethod
     def failure(exc):
@@ -96,6 +102,7 @@ class RecoveryRuntime:
 
     def refresh(self):
         self.health = self.manager.health()
+        self.health_checked = time.time()
         self.files = self.manager.files()
 
     def _open(self):
@@ -134,6 +141,9 @@ class RecoveryRuntime:
             Service.__init__(app, self.directory, copy.deepcopy(self.config))
             app.database_recovery = self.manager
             app.translations  # Check the cache before allowing requests/starting workers.
+            app.support_log = self.diagnostics
+            app.usage.support_log = self.diagnostics
+            app.translations.support_log = self.diagnostics
             # SQLite integrity alone cannot detect malformed JSON in saved
             # profiles/settings. Exercise the persisted data needed by the UI
             # before committing a restore or reporting the companion available.
@@ -199,11 +209,13 @@ class RecoveryRuntime:
                 try:
                     result = callback()
                 except Exception as exc:
+                    self.diagnostics.record("recovery_failed", exc)
                     error = self.failure(exc)
                 finally:
                     try:
                         self.refresh()
                     except Exception as exc:
+                        self.diagnostics.record("recovery_failed", exc)
                         error = error or self.failure(exc)
                     with self.condition:
                         self.job = dict(
@@ -218,6 +230,8 @@ class RecoveryRuntime:
         return dict(accepted=True)
 
     def start(self):
+        self.monitor.start()
+
         def schedule():
             while not self.stop.wait(2):
                 if self.app is None or self.maintenance or self.job["running"]:
@@ -387,6 +401,7 @@ class RecoveryRuntime:
 
     def close(self):
         self.stop.set()
+        self.monitor.close()
         if self.scheduler:
             self.scheduler.join()
         if self.job_thread:

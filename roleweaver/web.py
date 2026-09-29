@@ -15,6 +15,7 @@ from urllib.parse import parse_qs, urlparse
 
 from .recovery_runtime import RecoveryRuntime
 from .recovery_web import handle as recovery_request
+from .health_web import handle as health_request
 from . import __version__
 
 
@@ -35,11 +36,15 @@ def main():
         def log_message(self, *_):
             pass
 
-        def respond(self, code, data, content_type="application/json"):
+        def respond(self, code, data, content_type="application/json", download=None):
             body = data if isinstance(data, bytes) else json.dumps(data).encode()
             self.send_response(code)
             self.send_header("Content-Type", content_type)
             self.send_header("Content-Length", str(len(body)))
+            if download:
+                self.send_header(
+                    "Content-Disposition", f'attachment; filename="{download}"'
+                )
             self.send_header("Cache-Control", "no-store")
             self.send_header("X-Content-Type-Options", "nosniff")
             self.send_header("X-Frame-Options", "DENY")
@@ -66,13 +71,23 @@ def main():
         def dispatch(self, method):
             if not self.allowed():
                 return self.respond(403, {"error": "Use the local dashboard address"})
-            if recovery_request(self, runtime, method):
-                return
             try:
+                if health_request(self, runtime, method) or recovery_request(
+                    self, runtime, method
+                ):
+                    return
                 with runtime.lease() as app:
                     return self.get(app) if method == "GET" else self.post(app)
             except ValueError as exc:
                 self.respond(503, {"error": str(exc), "recovery": "/recovery"})
+            except (BrokenPipeError, ConnectionResetError):
+                pass  # Browser left; not an application error.
+            except Exception as exc:
+                runtime.diagnostics.record("http_failed", exc)
+                self.respond(
+                    503,
+                    {"error": "Request failed. Open Health & Support for diagnostics."},
+                )
 
         def get(self, app):
             if not self.allowed():
@@ -158,6 +173,20 @@ def main():
                 return self.respond(200, app.translations.status())
             if parsed.path == "/api/translation-diagnostics":
                 return self.respond(200, app.translation_diagnostics())
+            if parsed.path == "/api/translation-diagnostics/download":
+                return self.respond(
+                    200,
+                    app.translation_diagnostics(),
+                    download="roleweaver-translation-diagnostics.json",
+                )
+            if parsed.path == "/translation-diagnostics.js":
+                return self.respond(
+                    200,
+                    (
+                        Path(__file__).parent / "static/translation-diagnostics.js"
+                    ).read_bytes(),
+                    "application/javascript; charset=utf-8",
+                )
             if parsed.path == "/translations.js":
                 return self.respond(
                     200,
@@ -473,7 +502,8 @@ def main():
                 self.respond(200, result)
             except (ValueError, KeyError, TypeError) as exc:
                 self.respond(400, {"error": str(exc)})
-            except Exception:
+            except Exception as exc:
+                runtime.diagnostics.record("http_failed", exc)
                 self.respond(
                     503,
                     {

@@ -9,6 +9,23 @@ import subprocess
 from pathlib import Path
 from build_addon import settings
 from module_copy import resources
+from prepare_addon import ENTRIES, INCLUDES
+
+ROOT = Path(__file__).resolve().parents[2]
+ASSET_TYPES = {".utc": 2027, ".utm": 2051, ".dlg": 2029}
+
+
+def refresh_bridge(entries):
+    """Replace only managed bridge resources, preserving authored world content.
+
+    The editable module can contain older scripts. Never let those silently win
+    over the bridge shipped with the application during a demo rebuild.
+    """
+    for name in (*ENTRIES, *INCLUDES):
+        entries[name, 2009] = (ROOT / "bridge" / (name + ".nss")).read_bytes()
+    for path in sorted((ROOT / "assets").iterdir()):
+        if path.suffix in ASSET_TYPES:
+            entries[path.stem, ASSET_TYPES[path.suffix]] = path.read_bytes()
 
 
 def pack(raw, entries):
@@ -28,12 +45,18 @@ def pack(raw, entries):
     return bytes(header) + localized + keys + indexes + payload
 
 
-def build_investigation(source, bundle, native, compiler, world, prefix, seed):
+def build_investigation(source, bundle, native, compiler, world, prefix, seed=None):
     raw = source.read_bytes()
     entries = {(name, kind): data for name, kind, data in resources(raw)}
     original = dict(entries)
     if ("rq_load", 2009) not in entries or ("rq_enter", 2010) not in entries:
         raise ValueError("Investigation module is missing its load/login scripts")
+    refresh_bridge(entries)
+    managed_assets = {
+        (p.stem, ASSET_TYPES[p.suffix])
+        for p in (ROOT / "assets").iterdir()
+        if p.suffix in ASSET_TYPES
+    }
     bridge = bundle / "bridge"
     compiled = bundle / "compiled"
     bridge.mkdir(parents=True)
@@ -45,17 +68,19 @@ def build_investigation(source, bundle, native, compiler, world, prefix, seed):
         raise ValueError(
             "Unrecognized investigation load hook; source module unchanged"
         )
-    entries["rq_load", 2009] = load.replace(
-        marker,
-        marker + '\n DelayCommand(3.0,ExecuteScript("rw_demoseed",GetModule()));',
-    ).encode()
-    entries["rw_demoseed", 2009] = seed.encode()
+    if seed is not None:
+        entries["rq_load", 2009] = load.replace(
+            marker,
+            marker + '\n DelayCommand(3.0,ExecuteScript("rw_demoseed",GetModule()));',
+        ).encode()
+        entries["rw_demoseed", 2009] = seed.encode()
     for (name, kind), data in entries.items():
         if kind == 2009:
             (bridge / (name + ".nss")).write_bytes(data)
     entrypoints = sorted(
         {name for name, kind in entries if kind == 2010 and (name, 2009) in entries}
-        | {"rw_demoseed"}
+        | set(ENTRIES)
+        | ({"rw_demoseed"} if seed is not None else set())
     )
     for name in entrypoints:
         result = subprocess.run(
@@ -85,7 +110,7 @@ def build_investigation(source, bundle, native, compiler, world, prefix, seed):
     assert all(
         entries[key] == data
         for key, data in original.items()
-        if key[1] not in (2009, 2010)
+        if key[1] not in (2009, 2010) and key not in managed_assets
     )
     output = bundle / "module" / source.name
     output.parent.mkdir()

@@ -12,10 +12,8 @@ import copy
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(ROOT / "demo/investigation"))
-from gff_tools import read, write, text
-
 sys.path.insert(0, str(ROOT))
+from tools.gff import read, write, text
 from tools.prepare_dialogues import prepare_dialogue
 
 

@@ -5,9 +5,15 @@ NPC/placeable hover labels and prepared standard NPC dialogues in their preferre
 Examine window remains unchanged. A private reading window opens alongside it when
 a cached translation is available. Nothing is written back to shared object text.
 
-This feature is in the development source, not the published Alpha 0.2.0 packages.
+Included in the prepared Alpha 0.3.0 packages; absent from Alpha 0.2.0.
 
 ## Administrator setup
+
+For guided path selection and preparation, run **`bash setup.sh`**. Option **1**
+prepares the bridge import, **7** prepares existing standard dialogues, and **8**
+builds the optional native adapter with path-specific installation instructions.
+See [Guided setup](GUIDED_SETUP.md). These tools prepare files; they do not change
+a running server or trigger LLM requests.
 
 1. Install the updated companion **and** bridge scripts. The bridge needs NWNX
    Events, Player, Dialog and Util, plus NWN:EE NUI support. For an existing installation, rebuild its bridge
@@ -353,10 +359,21 @@ translation-only restore. Follow [Database recovery](DATABASE_RECOVERY.md).
 Existing `translation-backups/*.sqlite3` files remain untouched for manual recovery;
 the managed dashboard no longer runs that separate five-file backup schedule.
 
-**Translations → Download diagnostics** exports technical settings, worker/queue
-status and counts without cached text, player IDs or credentials. It does not probe
-the optional native plugin; confirm `NWNX_RWTranslation` loaded in the NWNX startup
-log. A connected bridge alone does not prove that plugin is active.
+**Translations → Translation diagnostics** shows worker state, active request time,
+queued jobs, rate-limit waiting, cache counts by language, cache hits, recent
+provider errors and last-hour requests/tokens/estimated costs. Prices must be set
+under **Usage & Performance**; missing prices remain unknown. Fallback attempts
+can generate multiple HTTP calls per job. Select **World text translation** in
+Usage & Performance to inspect this request category separately.
+
+Diagnostics refresh without replacing unsaved settings or cache corrections.
+**Download diagnostics** exports technical settings and counts without cached text,
+player IDs, model names, endpoints or credentials. Error advice uses exception
+categories and HTTP codes; raw provider messages are excluded. Native plugin
+readiness comes from the current bridge heartbeat. An old or disconnected bridge
+cannot confirm it, and the panel cannot verify every module hook or dialogue.
+Exclusions/unsupported text rejected inside the game never reach this database,
+so their frequency cannot be inferred from these counts.
 
 Disabling the service prevents new jobs from starting. A request already sent to
 a provider can finish; cached text remains available for later re-enabling. Game

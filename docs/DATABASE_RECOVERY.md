@@ -1,7 +1,7 @@
 # Database recovery
 
 Open **World administration → Database & Recovery** in the dashboard. This feature
-is in the development source; it is not in the published Alpha 0.2.0 packages.
+is included in Alpha 0.3.0; it is not in the older Alpha 0.2.0 packages.
 
 ## Save a backup
 
@@ -109,6 +109,10 @@ Use the new ZIP controls for coordinated recovery. Never copy a live SQLite file
 by itself while its companion is running.
 
 ## Implementation and testing
+
+For connection/worker checks and a report that excludes database content, open
+[Health & Support](HEALTH_AND_SUPPORT.md). Its independent `/health` page remains
+available during recovery and can export errors even when the world cannot open.
 
 `db_recovery.py` owns archives, checksums, integrity checks, retention and the restore
 journal. `recovery_runtime.py` drains requests and workers before file replacement.

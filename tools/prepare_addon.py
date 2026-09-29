@@ -34,6 +34,8 @@ INCLUDES = (
     "rw_tr_dialog",
     "rw_tr_demo",
     "rw_tr_nodes",
+    "rw_tr_native",
+    "rw_health",
     "rw_npcfight",
     "rw_live",
     "rw_merchant",

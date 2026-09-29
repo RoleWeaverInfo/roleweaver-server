@@ -154,7 +154,7 @@ All must find files. A link can be created successfully even when its target doe
 
 ## D. Return to the extracted demo package
 
-Open the extracted **RoleWeaver-Demo-Alpha-0.2.0** folder in Ubuntu Files, right-click empty space, and choose **Open in Terminal**. This matters: the following commands must run in the package folder, not in Downloads/roleweaver-deps or nwn-demo-deps.
+Open the extracted **RoleWeaver-Demo-Alpha-0.3.0** folder in Ubuntu Files, right-click empty space, and choose **Open in Terminal**. This matters: the following commands must run in the package folder, not in Downloads/roleweaver-deps or nwn-demo-deps.
 
 If you have not already created its Python environment:
 

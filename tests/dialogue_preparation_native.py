@@ -8,7 +8,7 @@ normal bridge headers. No provider or Redis connection is needed.
 import json
 from pathlib import Path
 
-from demo.investigation.gff_tools import read, write
+from tools.gff import read, write
 from tools.build_translation_demo import build
 from tools.prepare_dialogues import prepare_dialogue
 
