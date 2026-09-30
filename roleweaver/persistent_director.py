@@ -328,6 +328,8 @@ do not promise an automatic captive release mechanic, item task or reward not su
 Choose a recorded location ID or empty string. Preserve personalities. List unavailable mechanics
 or missing actors in limitations. No attacks unless allow_combat is true; AI-directed attacks
 must use conversation mode (use greeting mode when combat is disabled), explicit conditions, warning and a later reply after grace.
+Each actor may include combatant (boolean). Set combatant false for captives and other
+noncombatants; this prevents the encounter's group attack from targeting players through them.
 Return exactly {"summary":"plan","limitations":["setup steps"],"draft":{"id":"lowercase_id",
 "name":"title","summary":"synopsis","public_facts":"shared facts","dm_notes":"",
 "boundaries":"limits","location":"existing ID or empty","actors":[{"npc":"existing ID",

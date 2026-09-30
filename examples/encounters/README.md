@@ -1,9 +1,12 @@
 # Example encounters
 
-Both distributions include these opt-in examples:
+Both distributions include these two examples:
 
 - [Roadside robbery](robbery/README.md): Rusk, negotiation, social checks, payment and possible combat.
 - [Troll hostage](troll-ransom/README.md): Grust, Morga and Elana Voss; staged ransom negotiations and a rescue with competing interests.
-- `cave_spiders.json`: earlier proximity-warning, pursuit and reset test.
 
-Profiles contain authored fiction only, not player conversations or credentials. They do not automatically spawn, configure combat, or activate an encounter. Follow each example's instructions. Use the existing-server guide to install the updated bridge once before using these features.
+Profiles contain authored fiction only, not player conversations or credentials.
+The demo sets up these scenes in its forest and cave; see `demo/ENCOUNTER_AREAS.md`.
+On an existing server, the example files are optional authoring material and do
+not automatically spawn creatures or activate encounters. Follow each example's
+instructions and install the updated bridge before using these features.

@@ -12,6 +12,53 @@ spec.loader.exec_module(demo)
 
 
 class DemoTests(unittest.TestCase):
+    def test_encounters_spawn_in_their_areas_and_seed_without_resetting_a_run(self):
+        value = demo.content(ROOT / "demo/content.json")
+        script = demo.seed_script(value)
+        self.assertIn('area=GetObjectByTag("rw_cave")', script)
+        self.assertIn('area=GetObjectByTag("rw_forest")', script)
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "world.sqlite3"
+            demo.seed_database(path, value, "test_world")
+            store = demo.Store(path)
+            self.assertEqual(
+                {n["id"] for n in store.list_npcs()}, {n["id"] for n in value["npcs"]}
+            )
+            data = json.loads(
+                store.db.execute(
+                    "SELECT value FROM backup_settings WHERE key='encounters'"
+                ).fetchone()[0]
+            )
+            self.assertEqual(set(data["runs"]), {"forest_robbery", "troll_ransom"})
+            self.assertTrue(
+                all(
+                    r["status"] == "waiting" and r["world"] == "test_world"
+                    for r in data["runs"].values()
+                )
+            )
+            captive = next(
+                a
+                for a in data["templates"]["troll_ransom"]["actors"]
+                if a["npc"] == "elana_voss"
+            )
+            self.assertFalse(captive["combatant"])
+            data["runs"]["troll_ransom"]["stage"] = "negotiation"
+            with store.db:
+                store.db.execute(
+                    "UPDATE backup_settings SET value=? WHERE key='encounters'",
+                    (json.dumps(data),),
+                )
+            store.db.close()
+            demo.seed_database(path, value, "test_world")
+            store = demo.Store(path)
+            again = json.loads(
+                store.db.execute(
+                    "SELECT value FROM backup_settings WHERE key='encounters'"
+                ).fetchone()[0]
+            )
+            self.assertEqual(again["runs"], data["runs"])
+            store.db.close()
+
     def test_rebuild_refreshes_bridge_without_changing_authored_resources(self):
         import sys
 

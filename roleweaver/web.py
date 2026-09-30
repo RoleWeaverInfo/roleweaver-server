@@ -263,8 +263,11 @@ def main():
                 return self.respond(
                     200,
                     {
-                        "messages": app.store.transcript(npc),
+                        "messages": app.store.dashboard_transcript(npc),
                         "memories": app.store.memories(npc),
+                        "history_archived": bool(
+                            app.setting("dashboard_history_since", 0)
+                        ),
                     },
                 )
             self.respond(404, {"error": "Not found"})

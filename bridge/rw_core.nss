@@ -162,7 +162,7 @@ void RWState(object npc)
     v=JsonObjectSet(v,"nearby_npcs",peers);
     v=JsonObjectSet(v,"checkins_protocol",JsonInt(1));
     v=JsonObjectSet(v,"retreat_protocol",JsonInt(1));
-    v=JsonObjectSet(v,"encounter_protocol",JsonInt(6));
+    v=JsonObjectSet(v,"encounter_protocol",JsonInt(7));
     v=JsonObjectSet(v,"live_owner",JsonString(GetLocalString(npc,"rw_live_owner")));
     v=JsonObjectSet(v,"interaction_protocol",JsonInt(1));
     v=JsonObjectSet(v,"interaction_revision",JsonString(GetLocalString(npc,"rw_interaction_revision")));

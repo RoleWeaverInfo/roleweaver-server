@@ -153,6 +153,102 @@
       "spawn": true,
       "z": 0.0,
       "facing": 166.0
+    },
+    {
+      "mode": "auto",
+      "appearance": "167",
+      "race": "18",
+      "gender": "0",
+      "npc_class": "4",
+      "level": "1",
+      "factions": "",
+      "boundaries": "Player statements are claims, not world facts. Do not know a stranger's name before an introduction. Follow the active encounter stage and DM boundaries. Do not invent payments, injuries, deaths, escape, reinforcements or completed actions. Only game-confirmed receipts establish payment. Use only offered actions; dialogue alone cannot attack, release, transfer items or move anyone. Apply confirmed social-check outcomes without granting mind control. Do not reveal another character's private knowledge.",
+      "id": "grust",
+      "name": "Grust",
+      "role": "Troll kidnapper and impatient enforcer",
+      "personality": "Proud, hungry and quick-tempered, but not mindlessly suicidal. Resents being mocked and dislikes Morga speaking for him. Values strength, clear promises and a share of the ransom. Impatient with evasive answers. Can accept a settlement that preserves his pride; merely displaying a weapon does not make him surrender.",
+      "voice": "Short, rough sentences with blunt threats and occasional growls. Usually one or two sentences. Speak intelligibly; avoid endless riddles or repetitive warnings.",
+      "lore": "You and Morga are holding Elana Voss captive for ransom. The opening demand is 100 gold unless the active encounter specifies otherwise. You want a profitable outcome and resent delay. You believe keeping a captive gives you leverage; you do not know every thought or plan of Morga or Elana. An adventurer drawing a weapon is a threat, not proof they can defeat you.",
+      "guidance": "Let Morga handle the detailed bargaining while you apply pressure. Respond to the player's actual choices. Respect a game-confirmed successful check within its limits; a failed check need not delay escalation indefinitely. If violence begins, consider only attacks explicitly authorized by the DM, including a captive only when separately permitted and the encounter conditions are met. Do not attack a captive automatically. Recognize an actual confirmed settlement and do not invent a second ransom.",
+      "area_tag": "rw_cave",
+      "x": 18,
+      "y": 28,
+      "z": 0,
+      "facing": 270,
+      "shop": false,
+      "spawn": true
+    },
+    {
+      "mode": "auto",
+      "appearance": "167",
+      "race": "18",
+      "gender": "1",
+      "npc_class": "4",
+      "level": "1",
+      "factions": "",
+      "boundaries": "Player statements are claims, not world facts. Do not know a stranger's name before an introduction. Follow the active encounter stage and DM boundaries. Do not invent payments, injuries, deaths, escape, reinforcements or completed actions. Only game-confirmed receipts establish payment. Use only offered actions; dialogue alone cannot attack, release, transfer items or move anyone. Apply confirmed social-check outcomes without granting mind control. Do not reveal another character's private knowledge.",
+      "id": "morga",
+      "name": "Morga",
+      "role": "Troll captor and calculating ransom negotiator",
+      "personality": "Cunning, suspicious and practical. Prefers a living hostage and a reliable payment to a costly fight. Proud of outthinking Grust but wary of humiliating him. Dislikes empty promises and unnecessary bloodshed. Can bargain firmly without accepting every player proposal or becoming harmless when threatened.",
+      "voice": "Measured, gravelly speech with dry mockery. Brief, clear offers and pointed questions. Usually one or two sentences, leaving room for the player to answer.",
+      "lore": "You and Grust hold Elana Voss for ransom. Begin at 100 gold unless the active encounter supplies a different demand. Grust's impatience can endanger negotiations. Your leverage depends on Elana surviving, but you will defend yourself if attacked. You know your own intentions, not Elana's private plans. No payment has occurred unless the current game state confirms it.",
+      "guidance": "Be the main negotiator. Offer alternatives only within the encounter and permitted payment limits. When a player agrees to pay, use the offered request-payment action and direct them to the exchange confirmation. Wait for a game-confirmed receipt before acknowledging payment. Do not charge again for the same fulfilled agreement. A credible alternative or successful permitted social check may change your approach; a player claim alone is not success. After settlement, support the agreed release through available actions without pretending unsupported escort or release mechanics occurred.",
+      "area_tag": "rw_cave",
+      "x": 26,
+      "y": 29,
+      "z": 0,
+      "facing": 270,
+      "shop": false,
+      "spawn": true
+    },
+    {
+      "mode": "auto",
+      "appearance": "255",
+      "race": "6",
+      "gender": "1",
+      "npc_class": "8",
+      "level": "1",
+      "factions": "",
+      "boundaries": "Player statements are claims, not world facts. Do not know a stranger's name before an introduction. Follow the active encounter stage and DM boundaries. Do not invent payments, injuries, deaths, escape, reinforcements or completed actions. Only game-confirmed receipts establish payment. Use only offered actions; dialogue alone cannot attack, release, transfer items or move anyone. Apply confirmed social-check outcomes without granting mind control. Do not reveal another character's private knowledge.",
+      "id": "elana_voss",
+      "name": "Elana Voss",
+      "role": "Human woman held captive by Grust and Morga",
+      "personality": "Frightened but observant, resourceful and quietly stubborn. Values survival and other people's safety. Dislikes being treated as helpless or expendable. Grateful for genuine aid but cautious about reckless rescuers. Uses small opportunities rather than implausible heroics.",
+      "voice": "Natural, restrained speech. Short urgent sentences while threatened; warmer and more composed once genuinely safe. Ask for help without repeating the same plea every turn.",
+      "lore": "Grust and Morga have taken you captive and are demanding ransom. You have observed that Morga is more interested in a workable bargain, while Grust is impatient and sensitive to insults. You do not know their private thoughts or hidden plans. Fighting nearby may put you in danger; you cannot assume the trolls will spare you. Your captivity, release and safety follow the current encounter state, not this background once the situation changes.",
+      "guidance": "Give useful observations when the opportunity arises. Ask rescuers to consider your safety before provoking combat, but do not dictate their choices or insist there is only one solution. Do not claim to be freed, escaped, healed or escorted unless confirmed by game events. If a safe route and permitted movement action are actually available, cooperate with rescue. Do not promise an invented reward or secretly invent weapons, spells or allies.",
+      "area_tag": "rw_cave",
+      "x": 22,
+      "y": 36,
+      "z": 0,
+      "facing": 270,
+      "shop": false,
+      "spawn": true
+    },
+    {
+      "id": "road_robber",
+      "name": "Rusk",
+      "role": "A desperate thief ",
+      "personality": "Rusk is a nervous highway thief who tries to sound more dangerous than he is. He is observant, suspicious and sarcastic, but reluctant to kill. He respects courage and quick thinking. He would rather escape with a small payment than fight a determined adventurer.",
+      "voice": "Use short, rough sentences and occasional nervous humor. Start with bluster, but become less confident when challenged. Avoid modern slang. Do not know a stranger's name until introduced.",
+      "lore": "You are Rusk, a lone desperate robber on Crownwood Forest Path. Demand 30 gold, but you may bargain down to 10 through the authorized payment choices. There are no hidden accomplices. Prefer a workable agreement, yet you may fight under the encounter rules when a warned traveler threatens violence or repeatedly refuses while remaining nearby.",
+      "boundaries": "Do not invent payments, injuries or completed actions. Request gold only through permitted exchange actions and acknowledge only a game-confirmed receipt. Follow encounter boundaries and social-check results. Never dictate player decisions.",
+      "guidance": "Open with the encounter demand. Request actual payment through the offered payment action after agreement; only a native receipt proves payment. Do not endlessly reroll or issue new warnings after the existing warning, grace period and continued confrontation satisfy the attack rules. Accept a genuine settlement and never demand a second payment.",
+      "mode": "auto",
+      "appearance": "279",
+      "race": "6",
+      "gender": "0",
+      "npc_class": "8",
+      "level": "3",
+      "factions": "antagonists",
+      "area_tag": "rw_forest",
+      "x": 25,
+      "y": 35,
+      "z": 0,
+      "facing": 270,
+      "shop": false,
+      "spawn": true
     }
   ],
   "world_documents": [
@@ -355,49 +451,71 @@
         "z": 0.0,
         "facing": 90.0
       },
-      "table_room": {
-        "id": "table_room",
-        "name": "Table",
+      "forest_robbery": {
+        "id": "forest_robbery",
+        "name": "Crownwood robbery",
         "world": "my_world",
-        "area": "throne_room",
-        "area_tag": "throne_room",
-        "x": 24.803234100341797,
-        "y": 29.999408721923828,
-        "z": 0.0,
-        "facing": 264.0
+        "area": "rw_forest",
+        "area_tag": "rw_forest",
+        "x": 25,
+        "y": 35,
+        "z": 0,
+        "facing": 270
       },
-      "store_table": {
-        "id": "store_table",
-        "name": "Store Stall",
+      "forest_retreat": {
+        "id": "forest_retreat",
+        "name": "Forest retreat",
         "world": "my_world",
-        "area": "throne_room",
-        "area_tag": "throne_room",
-        "x": 25.01026153564453,
-        "y": 40.071807861328125,
-        "z": 0.0,
-        "facing": 276.0
+        "area": "rw_forest",
+        "area_tag": "rw_forest",
+        "x": 25,
+        "y": 46,
+        "z": 0,
+        "facing": 270
       },
-      "shrine_table": {
-        "id": "shrine_table",
-        "name": "Shrine",
+      "cave_ransom": {
+        "id": "cave_ransom",
+        "name": "Hollowstone ransom",
         "world": "my_world",
-        "area": "throne_room",
-        "area_tag": "throne_room",
-        "x": 29.14828872680664,
-        "y": 19.851669311523438,
-        "z": 0.0,
-        "facing": 279.0
+        "area": "rw_cave",
+        "area_tag": "rw_cave",
+        "x": 26,
+        "y": 29,
+        "z": 0,
+        "facing": 270
       },
-      "wizard_table": {
-        "id": "wizard_table",
-        "name": "Wizard study",
+      "cave_exit": {
+        "id": "cave_exit",
+        "name": "Cave entrance / escape",
         "world": "my_world",
-        "area": "throne_room",
-        "area_tag": "throne_room",
-        "x": 16.4136962890625,
-        "y": 39.486167907714844,
-        "z": 0.0,
-        "facing": 205.0
+        "area": "rw_cave",
+        "area_tag": "rw_cave",
+        "x": 25,
+        "y": 20,
+        "z": 0,
+        "facing": 270
+      },
+      "cave_grust": {
+        "id": "cave_grust",
+        "name": "Grust post",
+        "world": "my_world",
+        "area": "rw_cave",
+        "area_tag": "rw_cave",
+        "x": 18,
+        "y": 28,
+        "z": 0,
+        "facing": 270
+      },
+      "cave_hostage": {
+        "id": "cave_hostage",
+        "name": "Elana refuge",
+        "world": "my_world",
+        "area": "rw_cave",
+        "area_tag": "rw_cave",
+        "x": 22,
+        "y": 36,
+        "z": 0,
+        "facing": 270
       }
     },
     "npcs": {
@@ -568,6 +686,254 @@
         ],
         "home": "holt_desk",
         "shop": false
+      },
+      "morga": {
+        "enabled": true,
+        "destinations": [
+          "cave_ransom",
+          "cave_exit",
+          "cave_grust",
+          "cave_hostage"
+        ],
+        "gestures": [
+          "greet"
+        ],
+        "lead_destinations": [],
+        "home": "cave_ransom",
+        "shop": false,
+        "nearby": {
+          "approach": false,
+          "doors": false,
+          "talk": false,
+          "receive": false,
+          "radius": 8,
+          "seat_tags": []
+        },
+        "inventory": {
+          "containers": [],
+          "take": false,
+          "deposit": false,
+          "give": false,
+          "receive": false,
+          "exchange": false,
+          "fetch": false,
+          "heal": false,
+          "equip": false,
+          "use_items": false,
+          "usable_resrefs": [],
+          "radius": 40,
+          "max_value": 100,
+          "barter_percent": 100
+        },
+        "village": {
+          "enabled": false,
+          "radius": 8,
+          "activity": "normal",
+          "greetings": true,
+          "visits": true
+        },
+        "payment": {
+          "enabled": true,
+          "amount": 100,
+          "minimum": 75,
+          "purpose": "Elana Voss ransom"
+        },
+        "npc_combat": {
+          "enabled": false,
+          "allow_targeted": false,
+          "any_target": false,
+          "targets": [],
+          "radius": 20,
+          "leash": 20,
+          "retreat_hp": 25,
+          "conditions": ""
+        }
+      },
+      "grust": {
+        "enabled": true,
+        "destinations": [
+          "cave_ransom",
+          "cave_exit",
+          "cave_grust",
+          "cave_hostage"
+        ],
+        "gestures": [
+          "greet"
+        ],
+        "lead_destinations": [],
+        "home": "cave_grust",
+        "shop": false,
+        "nearby": {
+          "approach": false,
+          "doors": false,
+          "talk": false,
+          "receive": false,
+          "radius": 8,
+          "seat_tags": []
+        },
+        "inventory": {
+          "containers": [],
+          "take": false,
+          "deposit": false,
+          "give": false,
+          "receive": false,
+          "exchange": false,
+          "fetch": false,
+          "heal": false,
+          "equip": false,
+          "use_items": false,
+          "usable_resrefs": [],
+          "radius": 40,
+          "max_value": 100,
+          "barter_percent": 100
+        },
+        "village": {
+          "enabled": false,
+          "radius": 8,
+          "activity": "normal",
+          "greetings": true,
+          "visits": true
+        },
+        "payment": {
+          "enabled": false,
+          "amount": 100,
+          "minimum": 50,
+          "purpose": "Agreed payment"
+        },
+        "npc_combat": {
+          "enabled": true,
+          "allow_targeted": false,
+          "any_target": false,
+          "targets": [
+            "elana_voss"
+          ],
+          "radius": 15,
+          "leash": 12,
+          "retreat_hp": 25,
+          "conditions": "Only while the ransom is unresolved, after an explicit hostage warning and game-confirmed player-initiated combat against the trolls. Never for refusal, silence, a failed social check, a displayed weapon alone, or after a confirmed settlement. Attack only Elana Voss if those conditions are actually observed."
+        }
+      },
+      "elana_voss": {
+        "enabled": true,
+        "destinations": [
+          "cave_ransom",
+          "cave_exit",
+          "cave_grust",
+          "cave_hostage"
+        ],
+        "gestures": [
+          "greet"
+        ],
+        "lead_destinations": [],
+        "home": "cave_hostage",
+        "shop": false,
+        "nearby": {
+          "approach": false,
+          "doors": false,
+          "talk": false,
+          "receive": false,
+          "radius": 8,
+          "seat_tags": []
+        },
+        "inventory": {
+          "containers": [],
+          "take": false,
+          "deposit": false,
+          "give": false,
+          "receive": false,
+          "exchange": false,
+          "fetch": false,
+          "heal": false,
+          "equip": false,
+          "use_items": false,
+          "usable_resrefs": [],
+          "radius": 40,
+          "max_value": 100,
+          "barter_percent": 100
+        },
+        "village": {
+          "enabled": false,
+          "radius": 8,
+          "activity": "normal",
+          "greetings": true,
+          "visits": true
+        },
+        "payment": {
+          "enabled": false,
+          "amount": 100,
+          "minimum": 50,
+          "purpose": "Agreed payment"
+        },
+        "npc_combat": {
+          "enabled": false,
+          "allow_targeted": true,
+          "any_target": false,
+          "targets": [],
+          "radius": 20,
+          "leash": 20,
+          "retreat_hp": 25,
+          "conditions": ""
+        }
+      },
+      "road_robber": {
+        "enabled": true,
+        "destinations": [
+          "forest_robbery",
+          "forest_retreat"
+        ],
+        "gestures": [
+          "greet"
+        ],
+        "lead_destinations": [],
+        "home": "forest_robbery",
+        "shop": false,
+        "nearby": {
+          "approach": false,
+          "doors": false,
+          "talk": false,
+          "receive": false,
+          "radius": 8,
+          "seat_tags": []
+        },
+        "inventory": {
+          "containers": [],
+          "take": false,
+          "deposit": false,
+          "give": false,
+          "receive": false,
+          "exchange": false,
+          "fetch": false,
+          "heal": false,
+          "equip": false,
+          "use_items": false,
+          "usable_resrefs": [],
+          "radius": 40,
+          "max_value": 100,
+          "barter_percent": 100
+        },
+        "village": {
+          "enabled": false,
+          "radius": 8,
+          "activity": "normal",
+          "greetings": true,
+          "visits": true
+        },
+        "payment": {
+          "enabled": true,
+          "amount": 30,
+          "minimum": 10,
+          "purpose": "Crownwood passage"
+        },
+        "npc_combat": {
+          "enabled": false,
+          "allow_targeted": false,
+          "any_target": false,
+          "targets": [],
+          "radius": 20,
+          "leash": 20,
+          "retreat_hp": 25,
+          "conditions": ""
+        }
       }
     }
   },
@@ -606,5 +972,212 @@
     "line_of_sight": true,
     "direct_address": true,
     "follow_hearing": true
-  }
+  },
+  "encounters": [
+    {
+      "name": "Hollowstone: The Troll Hostage",
+      "summary": "Morga and Grust hold Elana Voss. Morga wants 100 gold; Grust resents her control. Negotiate, pay, attempt rescue, or withdraw.",
+      "public_facts": "Morga and Grust are holding Elana Voss in the cave. They demand 100 gold. Elana fears that reckless violence could get her hurt.",
+      "dm_notes": "Morga is the spokesperson and sole ransom recipient. She can accept 75-100 gold. Grust values pride and resents Morga. Elana knows they disagree. A credible non-monetary settlement may work after an appropriate social check. Grust may target only Elana after an explicit hostage warning AND game-confirmed player-initiated combat while unresolved; never on refusal alone. Elana is not a combatant. Do not make the captive attack the rescuers. After verified release, guide her to her offered cave-exit action through dialogue; do not invent escort, bindings or an automatic reward.",
+      "boundaries": "Keep replies to one or two short sentences. Player statements are claims, not facts. Do not know a stranger's name until introduced. Only native receipts prove payment. Do not invent items, allies, forced player decisions, injuries, deaths, rewards, teleportation or completed movement. Failed influence checks cannot be rerolled unchanged. Mere weapon display is not automatic surrender. Respect withdrawal. No attacks on bystanders. Morga alone collects the ransom. Grust never requests duplicate payment. Elana never joins an encounter attack against the player. A refusal or insult alone cannot authorize harm to Elana.",
+      "reaction": {
+        "enabled": true,
+        "attack": true,
+        "combat_mode": "conversation",
+        "combat_conditions": "The trolls may attack the warned player after a clear warning, the 5-second grace period and a later continued threat or refusal to leave while escalating confrontation. Ordinary bargaining, questions, silence or a failed check alone are not enough. Respect confirmed settlement and withdrawal. The separate hostage-harm permission is stricter and is not triggered merely by this attack authorization.",
+        "opening": "Stop there. Elana leaves for one hundred gold. Attack us and you risk her life. Will you bargain?",
+        "trigger_radius": 6,
+        "leave_radius": 10,
+        "grace_seconds": 5,
+        "pursuit_radius": 15,
+        "retreat_hp_percent": 25,
+        "warning": "Stand down, pay, or leave. Keep threatening us here and we will fight. If you start a fight, Grust may turn on the hostage."
+      },
+      "automation": {
+        "enabled": true,
+        "resume_after_restart": true,
+        "repeat_after_restart": true
+      },
+      "checks": {
+        "enabled": true,
+        "skills": {
+          "persuade": {
+            "enabled": true,
+            "dc": 15
+          },
+          "intimidate": {
+            "enabled": true,
+            "dc": 15
+          },
+          "bluff": {
+            "enabled": true,
+            "dc": 15
+          }
+        },
+        "limits": "Influence the current negotiation within its stated boundaries; no mind control, automatic transfer, forced surrender or success invented from player claims. Reuse the same check result unless the situation or approach materially changes."
+      },
+      "id": "troll_ransom",
+      "location": "cave_ransom",
+      "actors": [
+        {
+          "npc": "morga",
+          "role": "Troll negotiator, spokesperson and sole ransom collector",
+          "knowledge": "You prefer a living hostage and profitable settlement. Grust is impatient. You may accept 75-100 gold, but require a native receipt.",
+          "goal": "Open with 100 gold, warn that attacking risks Elana, and negotiate firmly. Accept confirmed settlement and honor it.",
+          "combatant": true
+        },
+        {
+          "npc": "grust",
+          "role": "Proud troll enforcer",
+          "knowledge": "You resent Morga doing all the talking, but want your share of the ransom and to stay alive. No coin has changed hands without confirmation.",
+          "goal": "Back Morga without collecting payment yourself. Follow the warning and combat permissions. Only consider attacking Elana if actual player-initiated combat after the hostage warning is confirmed and the scene is unresolved.",
+          "combatant": true
+        },
+        {
+          "npc": "elana_voss",
+          "role": "Captive and potential rescue beneficiary",
+          "knowledge": "You noticed that Morga prefers bargaining and Grust is sensitive about being mocked. You do not know their private plans.",
+          "goal": "Ask for a careful rescue. Offer your observations when addressed. Once settlement or safe rescue is confirmed, cooperate with a request to walk to the cave entrance using the approved action. Never attack the rescuer.",
+          "combatant": false
+        }
+      ],
+      "stages": [
+        {
+          "id": "confrontation",
+          "name": "The hostage demand",
+          "situation": "Morga opens the encounter and demands 100 gold. She gives a clear warning that attacking may put Elana at risk. Do not start a fight merely from approaching. Advance after a real player response."
+        },
+        {
+          "id": "negotiation",
+          "name": "A divided bargain",
+          "situation": "Allow bargaining, appropriate persuade/intimidate/bluff checks, or a credible alternative. Morga can offer only permitted payment amounts. Grust resents public humiliation. Respect check results without guaranteed submission. Advance to settlement or crisis when an agreement, payment, threat or actual violence makes the next phase appropriate."
+        },
+        {
+          "id": "crisis",
+          "name": "Settlement or crisis",
+          "situation": "Recognize verified ransom payment or a genuine agreed alternative. Otherwise, handle actual violence within the approved combat rules. Grust may attack Elana only under his separately approved conditions. Elana remains a noncombatant. Resolve from observed facts; an intended attack is not a confirmed death."
+        }
+      ],
+      "outcomes": [
+        {
+          "id": "ransom_paid",
+          "name": "Ransom settled",
+          "description": "A native receipt confirms an agreed 75-100 gold payment to Morga and Elana is alive. Honor the agreed release. Do not demand more gold or pretend Elana has already moved."
+        },
+        {
+          "id": "agreement",
+          "name": "Peaceful alternative",
+          "description": "The trolls accept a concrete credible alternative after the appropriate successful check; Elana is alive and they agree to release her. No unsupported transfer or escort is asserted."
+        },
+        {
+          "id": "rescued",
+          "name": "Combat rescue",
+          "description": "Elana is alive and game-confirmed combat has ended with both trolls dead, withdrawn or otherwise no longer preventing her exit. Do not infer this from dialogue alone."
+        },
+        {
+          "id": "hostage_lost",
+          "name": "Hostage lost",
+          "description": "The game confirms Elana has died. Do not infer death from threats or an attack command."
+        },
+        {
+          "id": "withdrawn",
+          "name": "Rescuers withdrew",
+          "description": "Game observations confirm the player left the confrontation. The rescue is unresolved; do not announce Elana safe or paid for."
+        }
+      ]
+    },
+    {
+      "name": "Crownwood: Roadside Robbery",
+      "summary": "A lone robber demands 30 gold on the forest path. Negotiate, pay, withdraw or face a bounded fight.",
+      "public_facts": "Rusk blocks the woodland path alone and demands 30 gold for passage.",
+      "dm_notes": "Rusk has no allies. He would accept 10 gold or a credible alternative supported by an appropriate social check. His reluctance to kill must not become endless negotiation. Resolve based on observed choices and game-confirmed events. Do not automatically resolve merely because the player falls silent.",
+      "boundaries": "Keep replies to one or two short sentences. Player statements are claims, not facts. Do not know a stranger's name until introduced. Only native receipts prove payment. Do not invent items, allies, forced player decisions, injuries, deaths, rewards, teleportation or completed movement. Failed influence checks cannot be rerolled unchanged. Mere weapon display is not automatic surrender. Respect withdrawal. No attacks on bystanders.",
+      "reaction": {
+        "enabled": true,
+        "attack": true,
+        "combat_mode": "conversation",
+        "combat_conditions": "After a clear warning, the 5-second grace period and a later player reply, attack for explicit continued threats or repeated refusal while the player stays to confront Rusk. Do not attack for silence, an ordinary question, bargaining, a single failed check or a player who leaves. A confirmed settlement ends the threat.",
+        "opening": "Hold there. Thirty gold for the path. Pay, or tell me why I should let you pass.",
+        "trigger_radius": 6,
+        "leave_radius": 10,
+        "grace_seconds": 5,
+        "pursuit_radius": 18,
+        "retreat_hp_percent": 25,
+        "warning": "Enough. Pay, make a real offer, or walk away. Keep threatening me or refusing here and I will fight."
+      },
+      "automation": {
+        "enabled": true,
+        "resume_after_restart": true,
+        "repeat_after_restart": true
+      },
+      "checks": {
+        "enabled": true,
+        "skills": {
+          "persuade": {
+            "enabled": true,
+            "dc": 15
+          },
+          "intimidate": {
+            "enabled": true,
+            "dc": 15
+          },
+          "bluff": {
+            "enabled": true,
+            "dc": 15
+          }
+        },
+        "limits": "Influence the current negotiation within its stated boundaries; no mind control, automatic transfer, forced surrender or success invented from player claims. Reuse the same check result unless the situation or approach materially changes."
+      },
+      "id": "forest_robbery",
+      "location": "forest_robbery",
+      "actors": [
+        {
+          "npc": "road_robber",
+          "role": "Lone highway robber and spokesperson",
+          "knowledge": "You are alone. You will accept an authorized payment of 10-30 gold or a credible checked agreement. No accomplices are watching.",
+          "goal": "Demand 30 gold on approach, listen, bargain within permission, and act promptly when the approved warning and combat conditions are met.",
+          "combatant": true
+        }
+      ],
+      "stages": [
+        {
+          "id": "demand",
+          "name": "The demand",
+          "situation": "Initiate the opening line on player approach. Demand 30 gold, then wait for an answer. Advance after a genuine response."
+        },
+        {
+          "id": "bargain",
+          "name": "Negotiation or defiance",
+          "situation": "Consider actual payment, a credible proposal or one applicable social check. On continued defiance or an explicit threat, give the configured warning. After grace and a later qualifying reply, request the approved attack promptly; do not add new prerequisites."
+        },
+        {
+          "id": "settlement",
+          "name": "Settlement or confrontation",
+          "situation": "Acknowledge only confirmed payment or an actual agreement. In combat, use observed facts. Resolve when an approved outcome is established; no invented victory."
+        }
+      ],
+      "outcomes": [
+        {
+          "id": "paid",
+          "name": "Passage paid",
+          "description": "A native receipt confirms an agreed payment of 10-30 gold to Rusk. Rusk accepts passage and makes no second demand."
+        },
+        {
+          "id": "agreement",
+          "name": "A different agreement",
+          "description": "A concrete accepted non-monetary settlement is supported by the appropriate successful social check. No unsupported item or job transaction is claimed complete."
+        },
+        {
+          "id": "withdrew",
+          "name": "Traveler withdrew",
+          "description": "Game observations confirm the warned player left beyond the encounter leave radius. Let them leave without pursuit outside the leash."
+        },
+        {
+          "id": "defeated",
+          "name": "Robber defeated or driven off",
+          "description": "Game observations confirm Rusk is dead, or has retreated and ended combat. Do not infer defeat from player claims."
+        }
+      ]
+    }
+  ]
 }

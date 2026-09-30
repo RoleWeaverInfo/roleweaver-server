@@ -155,6 +155,13 @@ int RWEncounterArm(object leader,json cmd)
         || JsonGetLength(cast)<1 || JsonGetLength(cast)>8 || RWS(JsonArrayGet(cast,0),"npc")!=GetLocalString(leader,"rw_id"))return FALSE;
     if(RWS(p,"combat_mode")=="conversation" && ((RWS(cmd,"live_owner")=="" && RWS(cmd,"persistent_owner")=="") || JsonDump(JsonObjectGet(p,"attack"))!="true" || RWS(p,"combat_conditions")==""))return FALSE;
     string token=RWS(cmd,"token"); if(token=="")return FALSE;
+    int permissionIndex;
+    for(permissionIndex=0;permissionIndex<JsonGetLength(cast);permissionIndex++)
+    {
+        string combatant=JsonDump(JsonObjectGet(JsonArrayGet(cast,permissionIndex),"combatant"));
+        // Missing means legacy combatant; a supplied value must be a real boolean.
+        if(combatant!="null" && combatant!="true" && combatant!="false")return FALSE;
+    }
     location anchor=GetLocation(leader);
     string owner=RWS(cmd,"live_owner");
     string persistent=RWS(cmd,"persistent_owner");
@@ -277,7 +284,10 @@ void RWEncounterAttack(object leader,object pc,json p,location anchor)
     json cast=JsonParse(GetLocalString(leader,"rw_enc_cast")); int i;
     for(i=0;i<JsonGetLength(cast);i++)
     {
-        object npc=RWFind(RWS(JsonArrayGet(cast,i),"npc"));
+        json actor=JsonArrayGet(cast,i);
+        // Hostages and witnesses remain part of the story without joining its attack.
+        if(JsonDump(JsonObjectGet(actor,"combatant"))=="false")continue;
+        object npc=RWFind(RWS(actor,"npc"));
         RWCombatRelease(npc);
         if(RWI(p,"pursuit_radius")>0 || RWI(p,"retreat_hp_percent")>0)
         {

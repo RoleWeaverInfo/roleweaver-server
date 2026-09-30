@@ -231,6 +231,21 @@ class Store:
                 )
             return [dict(r) for r in rows]
 
+    def dashboard_transcript(self, npc, limit=40):
+        """Hide archived demo activity without erasing NPC conversation memory."""
+        with self.lock:
+            row = self.db.execute(
+                "SELECT value FROM backup_settings WHERE key='dashboard_history_since'"
+            ).fetchone()
+            since = json.loads(row[0]) if row else 0
+            if type(since) not in (int, float) or not math.isfinite(since):
+                since = 0
+            rows = self.db.execute(
+                "SELECT * FROM messages WHERE npc=? AND created>=? ORDER BY id DESC LIMIT ?",
+                (npc, since, limit),
+            )
+            return list(reversed([dict(r) for r in rows]))
+
     def add_memory(self, npc, player, text):
         self.get(npc)
         if not text.strip() or len(text) > 2000:
