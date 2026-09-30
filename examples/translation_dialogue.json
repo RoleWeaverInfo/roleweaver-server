@@ -2,14 +2,189 @@
   "resource": "rw_tr_demo",
   "token_base": 2000000,
   "nodes": [
-    {"id": 0, "kind": "dialogue_entry", "text": "Welcome to the Kingdom of Role Weaver. What would you like to know?", "links": [4, 5, 6, 7]},
-    {"id": 1, "kind": "dialogue_entry", "text": "Visit the merchant's stall. You can ask about the goods and try negotiating a better price.", "links": [8, 7]},
-    {"id": 2, "kind": "dialogue_entry", "text": "Captain Beran can explain your duties. The cleric can tell you about our faith.", "links": [8, 7]},
-    {"id": 3, "kind": "dialogue_entry", "text": "Read the noticeboard, examine objects, and speak with the people around you.", "links": [8, 7]},
-    {"id": 4, "kind": "dialogue_reply", "text": "Where can I buy supplies?", "links": [1]},
-    {"id": 5, "kind": "dialogue_reply", "text": "Who can tell me about the kingdom?", "links": [2]},
-    {"id": 6, "kind": "dialogue_reply", "text": "How can I explore the demonstration?", "links": [3]},
-    {"id": 7, "kind": "dialogue_reply", "text": "Goodbye.", "links": []},
-    {"id": 8, "kind": "dialogue_reply", "text": "Ask another question.", "links": [0]}
+    {
+      "id": 0,
+      "kind": "dialogue_entry",
+      "text": "Welcome to the Kingdom of Role Weaver. I can help you explore Crown Hall and its two nearby adventures. Choose any topic below; return whenever you need directions.",
+      "links": [
+        6,
+        10,
+        4,
+        12,
+        14,
+        16,
+        18,
+        5,
+        20,
+        7
+      ]
+    },
+    {
+      "id": 1,
+      "kind": "dialogue_entry",
+      "text": "Speak to the Merchant and ask, \"What do you sell?\" or \"May I see your shop?\" Ask about an item, then try \"Can you offer a better price?\" A successful haggle should agree with the price shown when the shop reopens. Purchases use real gold and stock. Ask about the item again after buying it. If you need coin, Captain Beran can introduce the caravan investigation, which offers a royal reward.",
+      "links": [
+        8,
+        7
+      ]
+    },
+    {
+      "id": 2,
+      "kind": "dialogue_entry",
+      "text": "Captain Beran, beside the entrance noticeboard, can explain your investigation. Read the board, question the witnesses and ask Beran for an audience when ready to present your findings. Master Aldren Vale knows spellcraft; Sister Meriel Dawn can discuss faith. The Tavern Owner and Merchant have their own experiences of the kingdom. Learn about them without asking me to reveal the mystery!",
+      "links": [
+        8,
+        7
+      ]
+    },
+    {
+      "id": 3,
+      "kind": "dialogue_entry",
+      "text": "Start in Crown Hall: meet its people, visit the Merchant, and ask an NPC to show you a destination. Try translation whenever you like. Facing the throne from the entrance, the left door leads to Crownwood Forest Path and Rusk; the right door leads to Hollowstone Cave and the hostage scene. Each area has an exit back to the hall. You may explore in any order. Come back to me for help.",
+      "links": [
+        8,
+        7
+      ]
+    },
+    {
+      "id": 4,
+      "kind": "dialogue_reply",
+      "text": "Where can I buy supplies?",
+      "links": [
+        1
+      ]
+    },
+    {
+      "id": 5,
+      "kind": "dialogue_reply",
+      "text": "Who can tell me about the kingdom?",
+      "links": [
+        2
+      ]
+    },
+    {
+      "id": 6,
+      "kind": "dialogue_reply",
+      "text": "Where should I start the tour?",
+      "links": [
+        3
+      ]
+    },
+    {
+      "id": 7,
+      "kind": "dialogue_reply",
+      "text": "Goodbye.",
+      "links": []
+    },
+    {
+      "id": 8,
+      "kind": "dialogue_reply",
+      "text": "Ask another question.",
+      "links": [
+        0
+      ]
+    },
+    {
+      "id": 9,
+      "kind": "dialogue_entry",
+      "text": "Right-click an AI character and choose Talk To. Speak normally in nearby chat, introduce yourself if you wish, and wait for each reply. You can continue without repeating the character's full name. Ask about work, likes, dislikes or local events. Return later and ask about something you discussed. Type /rw end to finish your current conversation, or use Talk To on someone else.",
+      "links": [
+        8,
+        7
+      ]
+    },
+    {
+      "id": 10,
+      "kind": "dialogue_reply",
+      "text": "How do I talk to the AI characters?",
+      "links": [
+        9
+      ]
+    },
+    {
+      "id": 11,
+      "kind": "dialogue_entry",
+      "text": "Ask a hall character, \"Could you show me the merchant stall?\" Walk with them and watch what actually happens. You can also ask an NPC to go to an approved destination. Some characters have permission to use the chest near the throne, exchange items or help with supplies: first ask what they carry or can do, then request an item or exchange. A spoken promise is not a completed action; look for the movement, item or confirmation.",
+      "links": [
+        8,
+        7
+      ]
+    },
+    {
+      "id": 12,
+      "kind": "dialogue_reply",
+      "text": "What actions can I ask an NPC to perform?",
+      "links": [
+        11
+      ]
+    },
+    {
+      "id": 13,
+      "kind": "dialogue_entry",
+      "text": "Take the left door while facing the throne. Follow the forest path toward Rusk; he should speak when you approach. Listen to his demand, then bargain, offer payment, try persuading him, or leave. Pay through the game's payment window when offered. Repeated threats or defiance after his warning can lead to a fight. Moving away offers another choice. There is no single required answer.",
+      "links": [
+        8,
+        7
+      ]
+    },
+    {
+      "id": 14,
+      "kind": "dialogue_reply",
+      "text": "Tell me about the forest robbery.",
+      "links": [
+        13
+      ]
+    },
+    {
+      "id": 15,
+      "kind": "dialogue_entry",
+      "text": "Take the right door while facing the throne. Approach Morga in the cave to begin. She and Grust are holding Elana Voss for ransom. Listen to Morga and speak to the others when safe; their personalities and interests differ. You may negotiate, arrange payment, seek another agreement or attempt a rescue. Violence can endanger Elana. Pay only through the game's offered payment window; claiming to have paid does not transfer gold.",
+      "links": [
+        8,
+        7
+      ]
+    },
+    {
+      "id": 16,
+      "kind": "dialogue_reply",
+      "text": "Tell me about the troll hostage scene.",
+      "links": [
+        15
+      ]
+    },
+    {
+      "id": 17,
+      "kind": "dialogue_entry",
+      "text": "Enter /rw language in chat, choose a language and turn translation on. Examine the noticeboard or another object, then speak to me again to try ordinary dialogue choices. A first request may show the original text while translation is prepared; close and reopen it after a short wait. Completed translations are reused. The reading window can switch between original and translated text. This service translates supported world text, not player chat.",
+      "links": [
+        8,
+        7
+      ]
+    },
+    {
+      "id": 18,
+      "kind": "dialogue_reply",
+      "text": "How do I try language translation?",
+      "links": [
+        17
+      ]
+    },
+    {
+      "id": 19,
+      "kind": "dialogue_entry",
+      "text": "Stay close to the character, choose Talk To and wait for a reply. If you chose the wrong person, use /rw end and try again. After an adventure finishes, it may need a reset before another attempt; the host can check its state in Persistent Encounters. If something fails, note the character, what you said and what happened, and send that to the host. You can always return to Crown Hall and try another activity.",
+      "links": [
+        8,
+        7
+      ]
+    },
+    {
+      "id": 20,
+      "kind": "dialogue_reply",
+      "text": "What if I need help?",
+      "links": [
+        19
+      ]
+    }
   ]
 }

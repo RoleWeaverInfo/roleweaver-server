@@ -71,7 +71,7 @@ class PreparationTests(unittest.TestCase):
             wrapper.index("RWTrNodeVisible("),
         )
         self.assertIn("if (!allowed) return allowed;", wrapper)
-        self.assertEqual(report["nodes"], 9)
+        self.assertEqual(report["nodes"], 21)
         self.assertTrue(all(len(name) <= 16 for name in wrappers))
         self.assertEqual(original, fixture())
 

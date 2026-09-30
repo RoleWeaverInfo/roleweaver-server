@@ -15,6 +15,7 @@ from tests.test_actions import FakeRedis
 from tools.build_translation_demo import build, build_creature
 from tools.add_translation_guide import add_guide
 from tools.module_copy import resources
+from tools.expand_demo_world import pack_module
 from tools.gff import read, write
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -470,6 +471,9 @@ class DialogueAssetTests(unittest.TestCase):
         self.assertEqual(fields["ScriptDialogue"], (11, b"rw_tr_talk"))
         self.assertEqual(fields["VarTable"], (15, []))
         self.assertFalse(fields["ScriptHeartbeat"][1])
+        self.assertEqual(fields["Appearance_Type"], (2, 227))
+        self.assertEqual(fields["Gender"], (0, 0))
+        self.assertEqual(fields["Race"], (0, 6))
         mod = write(
             b"IFO V3.2",
             (
@@ -524,6 +528,20 @@ class DialogueAssetTests(unittest.TestCase):
         self.assertEqual(guide["YPosition"], (8, 21.0))
         self.assertEqual(guide["Conversation"], (11, b"rw_tr_demo"))
         self.assertEqual(entries["rw_tr_demo", 2029], dialogue)
+        # Refresh a moved guide without moving him back to the entry point or
+        # changing the other authored creatures and furniture.
+        guide = area["Creature List"][1][-1][1]
+        guide["XPosition"] = (8, 42.0)
+        guide["Appearance_Type"] = (2, 6)
+        entries["hall", 2023] = write(b"GIT V3.2", (0, area))
+        moved = pack_module(patched, entries)
+        updated = {
+            (n, k): d for n, k, d in resources(add_guide(moved, blueprint, dialogue))
+        }
+        changed = read(updated["hall", 2023])[1][1]["Creature List"][1]
+        self.assertEqual(changed[-1][1]["XPosition"], (8, 42.0))
+        self.assertEqual(changed[-1][1]["Appearance_Type"], (2, 227))
+        self.assertEqual(changed[0], original_npc)
 
     def test_generated_asset_and_manifest_match_editable_source_and_branch_graph(self):
         source = json.loads((ROOT / "examples/translation_dialogue.json").read_text())
@@ -534,7 +552,7 @@ class DialogueAssetTests(unittest.TestCase):
         self.assertEqual(signature, b"DLG V3.2")
         fields = root[1]
         entries, replies = fields["EntryList"][1], fields["ReplyList"][1]
-        self.assertEqual((len(entries), len(replies)), (4, 5))
+        self.assertEqual((len(entries), len(replies)), (10, 11))
         tokens = []
         for node in entries + replies:
             tokens.append(node[1]["Text"][1])
@@ -542,9 +560,9 @@ class DialogueAssetTests(unittest.TestCase):
             self.assertTrue(
                 node[1]["Comment"][1]
             )  # English remains available to a builder.
-        self.assertEqual(len(set(tokens)), 9)
+        self.assertEqual(len(set(tokens)), 21)
         root_links = [n[1]["Index"][1] for n in entries[0][1]["RepliesList"][1]]
-        self.assertEqual(root_links, [0, 1, 2, 3])
+        self.assertEqual(root_links, [2, 5, 0, 6, 7, 8, 9, 1, 10, 3])
         for i in range(3):
             self.assertEqual(replies[i][1]["EntriesList"][1][0][1]["Index"][1], i + 1)
         self.assertEqual(replies[3][1]["EntriesList"][1], [])  # Goodbye terminates.
@@ -553,3 +571,8 @@ class DialogueAssetTests(unittest.TestCase):
         )  # Return.
         self.assertEqual(fields["EndConversation"][1], b"rw_tr_end")
         self.assertEqual(fields["EndConverAbort"][1], b"rw_tr_end")
+        # Every explanation offers a return to the menu or an exit. The guide
+        # never forces a player into the tutorial or a separate testing scene.
+        for _, node in entries[1:]:
+            self.assertEqual([n[1]["Index"][1] for n in node["RepliesList"][1]], [4, 3])
+        self.assertNotIn("guardrail", json.dumps(source).lower())

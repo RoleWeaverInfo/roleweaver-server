@@ -3,6 +3,6 @@
 int StartingConditional()
 {
  RWTrNodeRestore(2000008);
- RWTrNodeVisible("rw_tr_demo", "dialogue_reply", 4, 2000008);
+ RWTrNodeVisible("rw_tr_demo", "dialogue_entry", 8, 2000008);
  return TRUE;
 }

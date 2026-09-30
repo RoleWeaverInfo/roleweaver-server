@@ -1,4 +1,4 @@
-"""Generate the optional native dialogue fixture from editable English source.
+"""Generate the Royal Guide walkthrough from editable English source.
 
 Run from the repository root: python tools/build_translation_demo.py
 Produces the dialogue, an ordinary Royal Guide, wrappers and the text manifest.
@@ -29,10 +29,15 @@ def build_creature(base):
         Tag=(10, b"rw_tr_guide"),
         FirstName=(12, text("Royal Guide")),
         LastName=(12, text("")),
+        # Male 02 is a stock full-body appearance with clothing built in. The
+        # generic human player appearance needs armour and otherwise looks bare.
+        Appearance_Type=(2, 227),
+        Gender=(0, 0),
+        Race=(0, 6),
         Description=(
             12,
             text(
-                "Speak to this guide to test a standard NPC dialogue and its translated replies. Use /rw language to choose your reading language."
+                "A welcoming royal attendant offers a tour of Crown Hall, the forest path and the troll cave. Speak to him for help with conversations, shops, NPC actions and translation. Use /rw language to choose your reading language."
             ),
         ),
         Conversation=(11, b"rw_tr_demo"),
@@ -138,5 +143,5 @@ if __name__ == "__main__":
         build_creature((ROOT / "assets/rw_base.utc").read_bytes())
     )
     print(
-        "Generated the English test dialogue, Royal Guide and private-token text manifest."
+        "Generated the Royal Guide walkthrough, clothed male appearance and private-token text manifest."
     )

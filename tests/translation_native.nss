@@ -80,7 +80,7 @@ void main()
  Check("clears_tracked_aliases",GetLocalInt(creature,"rw_tr_name_count")==0 && GetLocalString(creature,"rw_tr_name_0_display")=="");
  Check("name_cleanup_leaves_shared_source",GetName(chest)==name && GetDescription(chest)==description);
  json texts=RWTrDemoTexts();
- Check("dialogue_manifest",JsonGetLength(texts)==9 && RWS(JsonArrayGet(texts,0),"kind")=="dialogue_entry" && RWS(JsonArrayGet(texts,4),"kind")=="dialogue_reply");
+ Check("dialogue_manifest",JsonGetLength(texts)==21 && RWS(JsonArrayGet(texts,0),"kind")=="dialogue_entry" && RWS(JsonArrayGet(texts,4),"kind")=="dialogue_reply");
  object guide=GetObjectByTag("rw_tr_guide");
  Check("ordinary_guide_in_module",GetIsObjectValid(guide) && GetName(guide)=="Royal Guide");
  Check("ordinary_guide_not_ai",GetLocalString(guide,"rw_id")=="" && GetLocalString(guide,"rw_mode")=="");

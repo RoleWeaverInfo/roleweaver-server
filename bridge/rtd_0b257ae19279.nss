@@ -2,7 +2,7 @@
 #include "rw_tr_nodes"
 int StartingConditional()
 {
- RWTrNodeRestore(2000005);
- RWTrNodeVisible("rw_tr_demo", "dialogue_reply", 1, 2000005);
+ RWTrNodeRestore(2000016);
+ RWTrNodeVisible("rw_tr_demo", "dialogue_reply", 6, 2000016);
  return TRUE;
 }

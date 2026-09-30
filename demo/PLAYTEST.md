@@ -4,6 +4,11 @@ For DM tests, start the NWN DM client (`-dmc`) and use the game port with passwo
 
 Use a disposable local character. Tests are optional; report failures as well as successes.
 For the forest robbery and troll hostage scenes, see [ENCOUNTER_AREAS.md](ENCOUNTER_AREAS.md).
+The **Royal Guide**, beside the hall entrance, offers an optional in-game walkthrough
+of conversations, shopping, NPC actions, both encounters and translation. Choose
+Talk To, pick any topic, and return to the menu or leave whenever you like. His
+ordinary dialogue is also a translation example. The walkthrough contains no
+Guardrails testing prompts; model evaluation remains an optional separate document.
 Start with an online provider that passes the dashboard connection test. Keep near the NPC and use
 Talk To/Speak to establish the conversation. Wait for each reply before sending another line.
 
