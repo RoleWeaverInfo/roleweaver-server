@@ -65,6 +65,10 @@ def content(path):
             value[key] = validator(value[key])
     ids = set()
     for npc in value["npcs"]:
+        if not re.fullmatch(
+            r"[A-Za-z0-9_]{1,32}", str(npc.get("area_tag", value["area_tag"]))
+        ):
+            raise ValueError("Invalid NPC area tag")
         actions.identifier(npc["id"])
         if npc["id"] in ids:
             raise ValueError("Duplicate NPC ID")
@@ -92,6 +96,15 @@ def content(path):
         if type(npc.get("shop")) is not bool:
             raise ValueError("shop must be true or false")
     value["world_documents"] = validate_documents(value.get("world_documents", []))
+    if "encounters" in value:
+        from roleweaver.encounters import definition
+
+        if not isinstance(value["encounters"], list) or len(value["encounters"]) > 50:
+            raise ValueError("Invalid demo encounters")
+        value["encounters"] = [definition(d) for d in value["encounters"]]
+        for d in value["encounters"]:
+            if any(a["npc"] not in ids for a in d["actors"]):
+                raise ValueError("Demo encounter references an unknown NPC")
     return value
 
 
@@ -109,6 +122,9 @@ def seed_script(value):
     for i, n in enumerate(value["npcs"]):
         if not n.get("spawn", True):
             continue
+        rows.append(
+            f'    area=GetObjectByTag("{n.get("area_tag", value["area_tag"])}");'
+        )
         creature = {
             k: int(n[k])
             for k in ("appearance", "race", "gender", "npc_class", "level")
@@ -132,8 +148,13 @@ def seed_script(value):
 def seed_database(path, value, world="rw_demo"):
     """Upsert supplied profiles/lore; never erase conversations or removed profiles."""
     path.parent.mkdir(parents=True, exist_ok=True)
+    fresh = not path.exists() or path.stat().st_size == 0
     store = Store(path)
     try:
+        # The generic app starts with Mira; the demo supplies its own cast.
+        # Never remove an existing user's profile during a content reimport.
+        if fresh and DEFAULT_NPC["id"] not in {n["id"] for n in value["npcs"]}:
+            store.delete(DEFAULT_NPC["id"])
         policies = {}
         for npc in value["npcs"]:
             profile = dict(
@@ -180,6 +201,10 @@ def seed_database(path, value, world="rw_demo"):
                 "INSERT OR REPLACE INTO backup_settings VALUES (?,?)",
                 ("startup_auto", "true"),
             )
+        if value.get("encounters"):
+            from demo.encounter_content import seed_encounters
+
+            seed_encounters(store, value["encounters"], world)
     finally:
         store.db.close()
 

@@ -2,6 +2,10 @@
 
 All authoring inputs are editable files. The generated instance is separate from them.
 
+The development world includes a forest path and cave connected to the throne
+room. See [Encounter areas](ENCOUNTER_AREAS.md) for door locations, staging points
+and editing instructions.
+
 | File or folder | What you edit |
 | --- | --- |
 | `demo/world/YourWorld_Fixed.mod` | Source world in the NWN toolset |
@@ -46,7 +50,7 @@ python demo/demo.py apply-content
 ```
 
 This backs up the database, updates listed profiles and public lore documents, enables auto mode and
-replaces the listed NPCs' action permissions with the demo defaults (greet plus shop if selected).
+replaces the listed NPCs' action permissions with their supplied demo settings.
 It preserves conversations, memories and unlisted profiles/documents. Removed entries are **not**
 deleted automatically: remove them in the dashboard when desired. Dashboard edits are not written back
 to content.json. Back up before importing if you wish to retain those edits.
@@ -54,6 +58,36 @@ to content.json. Back up before importing if you wish to retain those edits.
 Changing names, positions or the NPC list also requires `rebuild` so native creatures match the templates.
 Applying content while the launcher is running is refused. Do not run the same instance separately as
 a system service; the demo lock only coordinates this launcher.
+
+## Clean an existing demonstration
+
+New demo installations contain only the supplied cast and the two forest/cave
+encounters. They do not import development logs, conversations, keys or databases.
+The King remains part of the cast because the investigation summons him; the Royal
+Guide is a normal module NPC used to demonstrate translated dialogue.
+
+To tidy your own **demo** after testing, stop the game and add-on first. From the
+extracted demo folder, preview the cleanup:
+
+```bash
+.venv/bin/python demo/cleanup.py --data-dir .demo/rw_demo/data --world-id rw_demo
+```
+
+Review the NPC IDs it will remove, then repeat with `--apply` to make the changes.
+Use your instance name in both places if you chose a different one. This tool is
+for disposable demos, not an existing persistent world: it removes profiles and
+lore absent from `demo/content.json`, past live scenes, unused destinations and
+old encounter definitions. It rearms the two supplied encounters from their first
+stage, clears usage and safeguard activity, and archives support logs.
+
+It makes a private `before-demo-cleanup-*` backup beside the data folder. Kept NPCs
+retain their conversation memory; earlier conversations are hidden from the
+dashboard activity view. Translations, player language preferences, provider keys,
+price settings and saved placements are preserved. Cleanup does not revive dead
+creatures or move them. Start the demo again when finished.
+
+Do not include the private recovery folder or `.demo` in a release. The package
+builder uses authored source files only.
 
 ## Fresh test instances
 
@@ -82,7 +116,15 @@ permissions before publicly distributing your revised world.
 
 ## Investigation module
 
-The supplied world already includes Role Weaver and investigation hooks. Keep `scenario: "investigation"` in `demo/content.json`; setup recompiles those scripts for the demo namespace while retaining your area edits. The four placed witnesses have `spawn: false`; the King is summoned by the story. Only the innkeeper and merchant use the additional demo spawn entries. After moving landmarks in Aurora, update the coordinates in `controlled_actions.destinations` and the two spawned NPC entries in `demo/content.json`, then stop, rebuild and apply-content. Back up `.demo/rw_demo` before applying content because it replaces supplied authoring profiles and lore, while retaining memories.
+The supplied world already includes Role Weaver and investigation hooks. Keep `scenario: "investigation"` in `demo/content.json`; setup recompiles those scripts for the demo namespace while retaining your area edits. The four placed witnesses have `spawn: false`; the King is summoned by the story. The innkeeper, merchant and four encounter actors use additional demo spawn entries. An NPC's optional `area_tag` selects its area; omitting it uses the top-level area. After moving landmarks in Aurora, update `controlled_actions.destinations` and the affected NPC coordinates in `demo/content.json`, then stop, rebuild and apply-content. Back up `.demo/rw_demo` before applying content because it replaces supplied authoring profiles and lore, while retaining memories.
+
+The optional `encounters` list defines the forest robbery and cave hostage scenes
+described in [ENCOUNTER_AREAS.md](ENCOUNTER_AREAS.md). Setup arms enabled scenes in
+a fresh database. Reimporting content updates their templates but preserves existing
+run snapshots and progress. To use a changed template for an existing run, cancel
+and arm it again through Persistent Encounters. Each actor's `combatant` flag
+controls whether the encounter may order that actor to attack the player; keep it
+`false` for the hostage. This requires bridge encounter protocol 7 or newer.
 
 ## Saved dashboard setup
 

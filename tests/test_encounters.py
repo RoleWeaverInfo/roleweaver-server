@@ -268,7 +268,7 @@ class EncounterTests(unittest.TestCase):
         cmd = self.app.redis.last()
         self.assertEqual(cmd["kind"], "encounter_arm")
         self.assertTrue(cmd["policy"]["attack"])
-        self.assertEqual(cmd["actors"], [dict(npc="mira", epoch=1)])
+        self.assertEqual(cmd["actors"], [dict(npc="mira", epoch=1, combatant=True)])
         count = len(self.app.redis.commands)
         self.app.sync_encounter_reactions(dict(session="game"))
         self.assertEqual(len(self.app.redis.commands), count)
@@ -277,6 +277,34 @@ class EncounterTests(unittest.TestCase):
         self.app.encounter_sync_at.clear()
         self.app.sync_encounter_reactions(dict(session="game"))
         self.assertEqual(len(self.app.redis.commands), count)
+
+    def test_noncombatant_requires_updated_bridge_and_is_in_arm_payload(self):
+        d = self.scene()
+        d["actors"][0]["combatant"] = False
+        d["reaction"] = dict(encounters.DEFAULT_REACTION, enabled=True)
+        self.save(d)
+        self.state["encounter_protocol"] = 6
+        with self.assertRaisesRegex(ValueError, "protocol 7"):
+            self.control("start")
+        self.state["encounter_protocol"] = 7
+        self.control("start")
+        self.app.sync_encounter_reactions(dict(session="game"))
+        import json
+
+        commands = [
+            json.loads(c[-1]) for c in self.app.redis.commands if c[0] == "RPUSH"
+        ]
+        arm = next(c for c in commands if c["kind"] == "encounter_arm")
+        self.assertFalse(arm["actors"][0]["combatant"])
+        self.state["encounter_protocol"] = 6
+        self.app.encounter_sync_at.clear()
+        count = len(self.app.redis.commands)
+        self.app.sync_encounter_reactions(dict(session="game"))
+        self.assertEqual(len(self.app.redis.commands), count)
+        for invalid in ("false", 0, None):
+            d["actors"][0]["combatant"] = invalid
+            with self.assertRaises(ValueError):
+                encounters.definition(d)
 
     def test_reaction_events_are_scoped_and_backed_up(self):
         self.save(self.scene())

@@ -135,7 +135,12 @@ def package(output, kind="demo"):
             p
             for p in paths
             if p.name
-            not in ("test_demo.py", "test_distributions.py", "package_demo.py")
+            not in (
+                "test_demo.py",
+                "test_demo_cleanup.py",
+                "test_distributions.py",
+                "package_demo.py",
+            )
         ]
     if any(
         not source_file(p) or (kind == "addon" and p.suffix == ".mod") for p in paths

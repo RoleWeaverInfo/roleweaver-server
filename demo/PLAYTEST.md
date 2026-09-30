@@ -3,6 +3,7 @@
 For DM tests, start the NWN DM client (`-dmc`) and use the game port with password `roleweaver` on a newly prepared demo. For an older instance, follow the password reset instructions in START_HERE.md.
 
 Use a disposable local character. Tests are optional; report failures as well as successes.
+For the forest robbery and troll hostage scenes, see [ENCOUNTER_AREAS.md](ENCOUNTER_AREAS.md).
 Start with an online provider that passes the dashboard connection test. Keep near the NPC and use
 Talk To/Speak to establish the conversation. Wait for each reply before sending another line.
 

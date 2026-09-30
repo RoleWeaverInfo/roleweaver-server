@@ -167,12 +167,22 @@ def definition(value):
         clean = []
         seen = set()
         for row in rows:
-            if not isinstance(row, dict) or set(row) != set(fields):
+            optional = {"combatant"} if key == "actors" else set()
+            if (
+                not isinstance(row, dict)
+                or not set(fields) <= set(row) <= set(fields) | optional
+            ):
                 raise ValueError("Invalid encounter " + key)
             item = {
                 k: text(row[k], limit, k in ("npc", "id", "name", "role"))
                 for k, limit in fields.items()
             }
+            if key == "actors":
+                if type(row.get("combatant", True)) is not bool:
+                    raise ValueError(
+                        "Actor combat permission must be enabled or disabled"
+                    )
+                item["combatant"] = row.get("combatant", True)
             identity = identifier(item["npc"] if key == "actors" else item["id"])
             if identity in seen:
                 raise ValueError("Duplicate encounter " + key)
@@ -499,6 +509,13 @@ class EncounterService:
             self.store.get(npc)
             s = self.states.get(npc, {})
             if (
+                any(not a.get("combatant", True) for a in d["actors"])
+                and s.get("encounter_protocol", 0) < 7
+            ):
+                raise ValueError(
+                    "Install the noncombatant encounter bridge (protocol 7): " + npc
+                )
+            if (
                 d["automation"]["enabled"]
                 or d["checks"]["enabled"]
                 or d["reaction"]["combat_mode"] == "conversation"
@@ -758,6 +775,10 @@ class EncounterService:
             if any(
                 now - s.get("seen", 0) > 3
                 or s.get("encounter_protocol", 0) < 2
+                or (
+                    any(not a.get("combatant", True) for a in cast)
+                    and s.get("encounter_protocol", 0) < 7
+                )
                 or s.get("mode") != "auto"
                 or s.get("possessed")
                 or s.get("dead")
@@ -774,7 +795,11 @@ class EncounterService:
                     token=str(run["started"]),
                     policy=policy,
                     actors=[
-                        dict(npc=a["npc"], epoch=s["epoch"])
+                        dict(
+                            npc=a["npc"],
+                            epoch=s["epoch"],
+                            combatant=a.get("combatant", True),
+                        )
                         for a, s in zip(cast, states)
                     ],
                     persistent_owner=run.get("owner", ""),
