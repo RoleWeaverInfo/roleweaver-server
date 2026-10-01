@@ -21,6 +21,7 @@ from . import (
     safeguards,
 )
 from .store import DEFAULT_NPC
+from .companion_visits import CompanionVisitService, policy as visit_policy
 
 PERSONALITIES = {
     "cat": "Proud, curious and quietly affectionate. Dry wit; values comfort and loyalty.",
@@ -66,8 +67,9 @@ def make_profile(npc, event):
     )
 
 
-class CompanionService:
+class CompanionService(CompanionVisitService):
     def init_companions(self):
+        self.init_companion_visits()
         self.companion_generation = secrets.token_hex(12)
         self.companion_states = {}
         self.companion_work = set()
@@ -89,6 +91,12 @@ class CompanionService:
                 expires=event["tick"] + 4,
                 enabled=int(bool(self.config.get("companions_enabled", False))),
                 preferences_generation=self.companion_generation,
+                visits=dict(
+                    visit_policy(self.config),
+                    enabled=int(visit_policy(self.config)["enabled"]),
+                    players=int(visit_policy(self.config)["players"]),
+                    receivers=self.companion_visit_receivers(),
+                ),
                 inventory=dict(
                     companion_inventory.configured(self.config),
                     enabled=int(companion_inventory.configured(self.config)["enabled"]),
@@ -182,6 +190,7 @@ class CompanionService:
                     self.store.message(
                         pending["npc"], pending["npc"], "npc", pending["text"]
                     )
+                    self.companion_visit_started(event["request"], pending)
                 return
             if not self.config.get("companions_enabled", False):
                 return
@@ -253,8 +262,14 @@ class CompanionService:
                 else dict(available=False, reason="No game observation", objects=[])
             )
             cargo, cargo_choices = companion_inventory.context(event, config)
+            with self.lock:
+                visits = self.companion_visit_choices(event)
             preference = companion_preferences.settings(event)
             choices = (CHOICES if preference["movement"] else []) + cargo_choices
+            choices += [
+                dict(id=row["id"], description=row["description"])
+                for row in visits.values()
+            ]
             speech = safeguards.scrub(event["text"], policy)[0]
             if guardrails.input_reason(speech) or self.validation.check(
                 speech, "input"
@@ -327,6 +342,12 @@ class CompanionService:
             with self.lock:
                 if not self.companion_valid(npc, event) or not text.strip():
                     return
+                if action in visits and action not in self.companion_visit_choices(
+                    event
+                ):
+                    # The recipient or DM permissions may change while the model
+                    # is thinking. Do not announce a visit that is no longer offered.
+                    return
                 self.store.message(
                     npc,
                     npc,
@@ -358,7 +379,12 @@ class CompanionService:
                     action=action,
                 )
                 self.companion_pending[request] = dict(
-                    npc=npc, event=event, text=text[:900], sent=time.monotonic()
+                    npc=npc,
+                    event=event,
+                    text=text[:900],
+                    sent=time.monotonic(),
+                    visit=visits.get(action),
+                    topic=speech,
                 )
                 self.companion_send(command)
         except Exception as exc:

@@ -107,7 +107,7 @@ void main()
         string raw = NWNX_Redis_GetResultAsString(result);
         if (resultType == NWNX_REDIS_RESULT_NULL || raw == "") break;
         json cmd = JsonParse(raw);
-        if(RWS(cmd,"kind")=="companion_config" || RWS(cmd,"kind")=="companion_reply" || RWS(cmd,"kind")=="companion_preferences_reply"){RWCPReply(cmd);continue;}
+        if(RWS(cmd,"kind")=="companion_config" || RWS(cmd,"kind")=="companion_reply" || RWS(cmd,"kind")=="companion_preferences_reply" || RWS(cmd,"kind")=="companion_visit_reply"){RWCPReply(cmd);continue;}
         if(RWS(cmd,"kind")=="translation_dialogue_reply"){if(RWI(cmd,"on_demand"))RWTrNodeReply(cmd);continue;}
         if(RWS(cmd,"kind")=="translation_names_reply"){RWTrNamesReply(cmd);continue;}
         if(RWS(cmd,"kind")=="translation_reply"){RWTrReply(cmd);continue;}

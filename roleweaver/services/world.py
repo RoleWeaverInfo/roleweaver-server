@@ -39,6 +39,7 @@ class WorldService:
             self.companion_generation = secrets.token_hex(12)
             self.companion_states.clear()
             self.companion_pending.clear()
+            self.companion_visits.clear()
             for npc in self.states:
                 self.generations[npc] = self.generations.get(npc, 0) + 1
         try:

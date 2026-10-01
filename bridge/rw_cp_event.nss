@@ -6,6 +6,7 @@ void main()
     object owner=OBJECT_SELF,familiar=RWCPFind(owner);
     // Satchel contents already belong to the saved character. Lifecycle hooks
     // cancel work; they never recreate or move a second copy of possessions.
+    RWCPVCancel(familiar,"Familiar control or presence changed.",FALSE);
     RWCPICancel(familiar,"Familiar control or presence changed.",FALSE);
     RWCPEndTalk(owner);RWCPInvalidate(owner);
     if(NWNX_Events_GetCurrentEvent()=="NWNX_ON_CLIENT_DISCONNECT_BEFORE")

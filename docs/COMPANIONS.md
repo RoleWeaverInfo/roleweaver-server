@@ -41,7 +41,10 @@ Use the **Talk chat channel**, not the debug console or a tell.
 7. In chat, try `What are you carrying?`, `Pick up that potion`, or `Fetch that
    dagger and bring it to me`. It can also deliver a named satchel item to a
    nearby player or an AI NPC whose item permissions allow receiving it.
-8. Use `/rw companion off` to stop AI conversation. This does not dismiss the familiar.
+8. Try `Whiskers, ask Mira about the bridge, then come back and tell me what she said`.
+   Use a nearby, willing AI NPC's name. To allow a longer visit, say `Stay and chat
+   for a bit, then report back` (up to three short exchanges).
+9. Use `/rw companion off` to stop AI conversation. This does not dismiss the familiar.
 
 For an in-game control panel, type `/rw companion settings` (or `/rw companion menu`).
 Opening the menu and changing settings do not call the LLM or require dashboard access.
@@ -75,7 +78,7 @@ The familiar settings window provides these player controls:
 | Reply length | Brief, natural or detailed replies, with a corresponding maximum length. |
 | Tone | Character default, warm, playful, reserved or serious. This changes delivery without replacing the DM's character profile, memories or lore. |
 | Follow-up conversation | Allow nearby Talk without repeating the familiar's name after addressing it. |
-| AI movement | Allow Role Weaver follow/stay commands and movement for item errands. Native game commands and combat remain available. |
+| AI movement | Allow Role Weaver follow/stay commands, item errands and conversation visits. Native game commands and combat remain available. |
 | Satchel exchanges | Allow the normal familiar inventory exchange window. |
 | Collect/fetch | Allow eligible pickups and approved-container errands; also requires movement and satchel exchanges. |
 | Give/barter with others | Allow delivery or barter with eligible nearby recipients; also requires movement and satchel exchanges. Other players still confirm receipt. |
@@ -132,6 +135,72 @@ observation is marked unavailable instead of refreshed by lifecycle heartbeats.
 These observations are not saved as automatic long-term memories. Delivered
 conversation still follows the normal history and backup behavior.
 
+## Send your familiar to ask someone
+
+Owner-directed visits let a familiar walk to a visible AI NPC or another player,
+ask about a topic, and return to its owner. Examples in nearby Talk:
+
+- `Whiskers, ask Mira what happened to the caravan, then report back to me.`
+- `Whiskers, go talk to the innkeeper about the village. Stay and chat for a bit,
+  then come back.`
+- `Whiskers, ask the traveler ahead whether they saw the caravan.`
+
+The familiar must already be enabled, with **AI movement** on. Visits select
+from the creatures visible in its current area, normally within 20 metres.
+It walks to the actual creature, rather than a saved location associated with it.
+There is no search through other areas. Ambiguous recipient names are withheld;
+move closer or identify a uniquely described recipient.
+
+For AI NPCs, the DM must enable **Controlled Actions → Nearby behaviour → Accept
+these nearby check-ins** on the recipient. It must be idle in AUTO and outside
+an active encounter. Its reply uses its own personality and permitted lore.
+The familiar cannot acquire that NPC's actions, private profile or unspoken
+knowledge. A brief visit pauses idle patrol scheduling; player conversations
+and DM control still take priority.
+
+For another player, the opening question is ordinary nearby chat, not a forced
+dialogue menu. A private helper notice explains that their answer will be
+reported to the familiar's owner. They can answer in Talk using the familiar's
+name (`Whiskers: I saw it heading east.`), use `/rw companion reply <answer>`, or
+decline with `/rw companion decline`. The reply helper also speaks the answer
+publicly in nearby chat. Ignoring the question causes a timeout; unrelated chat,
+tells and private conversation history are never treated as an answer. A visitor
+cannot be given movement, inventory or other owner commands by its recipient.
+
+**Ask and report** returns after one answer. **Stay and chat** permits up to
+three short exchanges, then returns automatically. Each wait/movement phase has
+a 45-second timeout and the conversation has a three-minute overall deadline,
+followed by a bounded return/report attempt. The owner must remain in the same
+area and within the visit radius plus two metres. Reports quote actual delivered
+answers; no reply produces an honest no-answer report. Questions, answers and
+the returned report are normal nearby speech.
+
+Use `/rw companion cancel` or **Cancel current errand** to end the visit.
+A new message or order from the owner, changed settings, combat, possession,
+dismissal or separation also interrupts it. The previous follow/stand-ground
+mode is restored when native control permits. Active visits do not resume after
+a service/game restart; delivered conversation is retained in normal backups.
+
+### Visit settings for server owners
+
+Visits default to enabled when the companion feature is enabled. They have
+their own optional `config.json` policy, independent of inventory permissions:
+
+```json
+"companion_visits": {
+  "enabled": true,
+  "players": true,
+  "radius": 20
+}
+```
+
+Restart Role Weaver after editing it. Set `players` to false to allow AI NPC
+recipients only, or `enabled` to false to disable all visits. Radius must be an
+integer from 3 to 40 metres; invalid settings disable visits. There are at most
+eight offered recipients per request, four active visits admitted by the service,
+and two companion model requests at a time. The normal usage panel records these
+requests as `companion_visit`. Returning a report does not require another LLM call.
+
 ## Familiar satchel and item errands
 
 Enabling your familiar prepares a **Familiar Satchel** in your character's
@@ -152,6 +221,11 @@ carrying limits or new familiar equipment controls.
 - Plot, cursed, non-droppable, unidentified, equipped and over-limit items, plus
   bags themselves, are excluded from familiar transfers. A changed selection is
   rejected; refresh the window rather than repeating a stale transfer.
+- If the player list is empty, check for loose, identified, unequipped items.
+  A character carrying only equipped gear and the familiar satchel has nothing
+  eligible to give. Unequip an eligible item or pick up an ordinary potion, then
+  refresh. **Recover satchel items** intentionally hides the player's list;
+  use **Open inventory** for deposits.
 - Pickup and delivery require reaching the visible target. Combat, possession,
   changed ownership, native commands, disabled permissions or an expired errand
   interrupt the task. Collected items stay in the satchel. A full bag, blocked
@@ -192,6 +266,13 @@ on a loose item or container excludes it. No theft, lockpicking or scripted ques
 containers are enabled by these settings. Invalid settings disable inventory
 actions while leaving familiar chat available.
 
+For the supplied throne-room demo chest, add `"rq_testchest"` to `containers`
+and restart the Role Weaver service. This approves that chest only; it does not
+require an NWN restart. With AI movement, satchel exchanges and collect/fetch
+enabled, stand near the chest and ask the familiar to inspect it. Once it reaches
+the chest, ask what is inside, then choose an item to fetch. Other worlds should
+use their own approved chest tags.
+
 The default bag blueprint is `nw_it_contain001`; a PW can set module string local
 `rw_cp_pack_resref` to a suitable **empty** inventory-bag blueprint. Newly created
 satchels are plot/non-droppable. Existing native bag access remains available.
@@ -219,8 +300,9 @@ should test that integration before enabling the feature for players.
 
 ## Scope and limits
 
-- Only the owner can address or command their own familiar through this layer.
-- AI actions include follow/stand ground and the currently offered item errands.
+- Only the owner can command their familiar. Invited recipients can answer its
+  questions, but cannot take control.
+- AI actions include follow/stand ground, offered item errands and owner-directed visits.
   Native combat remains native; no new attack permissions are introduced.
 - A familiar's initial personality uses its creature blueprint where recognized;
   unknown/custom creatures receive a general loyal-familiar personality.
@@ -229,6 +311,8 @@ should test that integration before enabling the feature for players.
 - At most two companion generations run at once, sharing existing provider limits
   and safeguards. Busy requests may be skipped; there is no unbounded chat queue.
 - No ambient interjections, unattended gathering, scouting, or newly authorized attacks.
+- Visits require an explicit owner request and a willing recipient. They do not
+  enable autonomous social visits or conversations with other player familiars.
 - Menu commands, ownership changes and possession invalidate pending AI commands.
   A repeated identical radial command may not be distinguishable through NWN's
   last-associate-command value; `/rw companion off` always cancels pending AI work.
@@ -250,7 +334,7 @@ state flags and follow action. A server may set the module string local
 `rw_cp_order_ok` to TRUE only if it accepts the order. The bridge clears these
 locals afterwards. The LLM cannot supply a script name or target creature.
 
-Inventory errands additionally use `companion:task_move`,
+Inventory errands and conversation visits additionally use `companion:task_move`,
 `companion:task_continue` and `companion:task_end`. The validated destination is
 provided in object local `rw_cp_order_target` for movement. The adapter must
 preserve the prior movement mode at task start and restore it at task end. An
@@ -276,9 +360,18 @@ safeguards and acknowledged history. It does not use the ordinary world-NPC
 action queue or its 32 creature slots. State is bounded to 64 recently observed
 companions; profiles share the existing 1,000-profile backup limit.
 
+`bridge/rw_cp_visit.nss` owns visit targets, physical movement, recipient consent,
+timeouts and speech acknowledgements. `roleweaver/companion_visits.py` coordinates
+short exchanges and reports from the acknowledged speech ledger. Opaque offered
+action IDs reach the model; engine object IDs and UUIDs do not. Visit transcripts
+are separated from the owner's private conversation. Recipient NPCs receive only
+the familiar's actual spoken question and their own lore/memories. The native
+reservation used by `RWHasConversation` expires or becomes invalid when its owner
+or familiar is unavailable, so a lost visitor cannot permanently stop a patrol.
+
 ## Tests before expanding support
 
-Run `python -m unittest tests.test_companions tests.test_companion_inventory tests.test_companion_preferences` and
+Run `python -m unittest tests.test_companions tests.test_companion_inventory tests.test_companion_preferences tests.test_companion_visits` and
 the normal regression suite.
 Compile `tests/companions_native.nss` as `invtest` in an isolated module/userdata
 directory. It checks native protocol rejection and absence of world bindings;
@@ -288,6 +381,8 @@ module/userdata directory. It creates temporary items and a campaign save to
 verify native transfers, stale selections, owner isolation and saved-bag contents.
 `tests/companion_controls_native.nss` checks preference validation, effective
 permissions, recovery and stale-cache rejection in the same isolated setup.
+`tests/companion_visits_native.nss` checks receiver restrictions, bounded turns,
+return/cancellation, orphaned reservations and forged visit commands.
 Never install these fixtures as a live module's load script.
 
 With a real wizard/sorcerer, check follow/stay, original menu commands, a slow
@@ -327,6 +422,22 @@ For player-control playtesting:
 4. Reconnect and resummon. Preferences should remain saved, while AI starts off
    until you opt in. Repeat after a service restart or a database restore.
 5. Use a second character to check independent preferences and owner-only access.
+
+For conversation-visit playtesting:
+
+1. Enable a nearby AI NPC's receive check-in permission. Ask the familiar to get
+   one answer and return. Check physical arrival, both speakers' chat and the
+   report beside the owner. Ask about something only the recipient's lore covers.
+2. Ask it to stay and chat. It should finish after no more than three replies.
+   Check that the recipient's idle patrol can resume after the visit.
+3. Invite a second player: answer by name, then with the reply helper. Decline a
+   separate visit, then ignore another. Unrelated Talk and tells must not enter
+   the report; the recipient must not be able to command the familiar.
+4. Cancel while walking or awaiting a slow model. Repeat with revoked movement
+   permission, paused recipient, combat, dismissal, possession and an area change.
+   No delayed reply should continue an interrupted conversation.
+5. Place a wall between the familiar and recipient, or move the recipient away.
+   It must not report a conversation that did not happen or remain stuck forever.
 
 ## Next development steps
 

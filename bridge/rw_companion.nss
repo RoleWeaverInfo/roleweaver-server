@@ -33,7 +33,7 @@ void RWCPBeginTalk(object owner,object familiar)
 }
 // Read-only awareness is sampled only for an owner's actual message. Heartbeats
 // carry lifecycle state, not repeated area scans or autonomous model requests.
-json RWCPObserve(json e,object familiar)
+json RWCPObserve(json e,object familiar,string instruction="")
 {
     object owner=GetMaster(familiar);
     // A new turn must not reuse an observation from before crossing an area edge.
@@ -46,19 +46,7 @@ json RWCPObserve(json e,object familiar)
     e=JsonObjectSet(e,"area",JsonString(GetName(GetArea(familiar))));
     e=JsonObjectSet(e,"companion_preferences",RWCPPreferences(owner));
     e=JsonObjectSet(e,"companion_preferences_protocol",JsonInt(1));
-    return RWCPIObserve(e,owner,familiar);
-}
-json RWCPEvent(string kind,object owner,object familiar)
-{
-    json e=RWBase(kind,OBJECT_INVALID);
-    e=JsonObjectSet(e,"owner",JsonString(RWCPOwnerKey(owner)));
-    e=JsonObjectSet(e,"object",JsonString(ObjectToString(familiar)));
-    e=JsonObjectSet(e,"name",JsonString(GetName(familiar)));
-    e=JsonObjectSet(e,"creature",JsonString("familiar:"+IntToString(GetFamiliarCreatureType(owner))));
-    e=JsonObjectSet(e,"species",JsonString(GetResRef(familiar)));
-    e=JsonObjectSet(e,"token",JsonString(GetLocalString(owner,"rw_cp_token")));
-    e=JsonObjectSet(e,"sequence",JsonInt(GetLocalInt(owner,"rw_cp_sequence")));
-    return JsonObjectSet(e,"active",JsonInt(RWCPReady(owner,familiar)));
+    return RWCPVObserve(RWCPIObserve(e,owner,familiar),owner,familiar,instruction);
 }
 void RWCPTick(object owner)
 {
@@ -77,12 +65,13 @@ void RWCPTick(object owner)
         SetLocalInt(owner,"rw_cp_last_order",GetLastAssociateCommand(familiar));
     }
     RWCPCurrentTalk(owner,familiar);
-    if(GetIsObjectValid(familiar))RWCPITaskTick(owner,familiar);
+    if(GetIsObjectValid(familiar)){RWCPITaskTick(owner,familiar);RWCPVTick(familiar);}
     if(GetIsObjectValid(familiar))RWEmit(RWCPEvent("companion_state",owner,familiar));
 }
 int RWCPOrder(object owner,object familiar,string verb)
 {
     if(!RWCPReady(owner,familiar) || !RWCPPreference(owner,"movement") || (verb!="companion:follow" && verb!="companion:stay"))return FALSE;
+    RWCPVCancel(familiar,"Visit cancelled by a new owner command.",FALSE);
     RWCPICancel(familiar,"Errand cancelled by a new owner command.",FALSE);
     // This adapter uses the stock associate state flags. PW owners may substitute
     // their own adapter script and explicitly return rw_cp_order_ok=TRUE.
@@ -157,9 +146,9 @@ int RWCPChat(object owner,string text)
     if(command && (lower=="settings" || lower=="menu"))
     {RWCPRequestPrefs(owner);if(!RWCPMenu(owner))SendMessageToPC(owner,"Companion settings could not open.");return TRUE;}
     if(command && lower=="cancel")
-    {RWCPICancel(familiar,"Errand cancelled by the owner.",TRUE);RWCPEndTalk(owner);RWCPInvalidate(owner);SendMessageToPC(owner,"Companion errand cancelled. Collected belongings remain in your satchel.");return TRUE;}
+    {RWCPVCancel(familiar,"Visit cancelled by the owner.",TRUE);RWCPICancel(familiar,"Errand cancelled by the owner.",TRUE);RWCPEndTalk(owner);RWCPInvalidate(owner);SendMessageToPC(owner,"Companion errand cancelled. Collected belongings remain in your satchel.");return TRUE;}
     if(command && lower=="off")
-    {RWCPICancel(familiar,"Familiar inventory task disabled.",TRUE);SetLocalInt(owner,"rw_cp_on",FALSE);RWCPEndTalk(owner);RWCPInvalidate(owner);SendMessageToPC(owner,"Role Weaver companion disabled. Your familiar satchel stays in your inventory.");return TRUE;}
+    {RWCPVCancel(familiar,"Companion AI disabled.",TRUE);RWCPICancel(familiar,"Familiar inventory task disabled.",TRUE);SetLocalInt(owner,"rw_cp_on",FALSE);RWCPEndTalk(owner);RWCPInvalidate(owner);SendMessageToPC(owner,"Role Weaver companion disabled. Your familiar satchel stays in your inventory.");return TRUE;}
     if(command && lower=="recover")
     {
         object pack=RWCPIPack(owner);
@@ -185,6 +174,7 @@ int RWCPChat(object owner,string text)
     if(GetStringLength(body)>1000){SendMessageToPC(owner,"Please use a shorter message.");return TRUE;}
     // Refresh lifecycle before creating a turn so the next heartbeat cannot
     // accidentally invalidate a legitimate request after an area transition.
+    RWCPVCancel(familiar,"Visit interrupted by a new owner message.",TRUE);
     RWCPTick(owner);RWCPInvalidate(owner);RWCPBeginTalk(owner,familiar);
     if(lower=="inventory" || lower=="show your inventory" || lower=="open exchange")
     {
@@ -201,7 +191,7 @@ int RWCPChat(object owner,string text)
         else SendMessageToPC(owner,"Your familiar cannot accept that command now.");
         return TRUE;
     }
-    json e=RWCPObserve(RWCPEvent("companion_chat",owner,familiar),familiar);
+    json e=RWCPObserve(RWCPEvent("companion_chat",owner,familiar),familiar,body);
     e=JsonObjectSet(e,"text",JsonString(body));RWEmit(e);
     return TRUE;
 }
@@ -211,7 +201,7 @@ void RWCPReply(json cmd)
     if(RWS(cmd,"world")!=RWWorld() || RWS(cmd,"session")!=GetLocalString(m,"rw_session")
         || RWI(cmd,"expires")<tick || RWI(cmd,"expires")>tick+5)return;
     if(RWS(cmd,"kind")=="companion_config")
-    {SetLocalInt(m,"rw_cp_enabled",RWI(cmd,"enabled")==1);SetLocalString(m,"rw_cpp_generation",RWS(cmd,"preferences_generation"));RWCPIConfig(cmd);return;}
+    {SetLocalInt(m,"rw_cp_enabled",RWI(cmd,"enabled")==1);SetLocalString(m,"rw_cpp_generation",RWS(cmd,"preferences_generation"));RWCPIConfig(cmd);RWCPVConfig(cmd);return;}
     if(RWS(cmd,"kind")=="companion_preferences_reply")
     {
         if(RWCPAcceptPrefs(cmd))
@@ -222,6 +212,7 @@ void RWCPReply(json cmd)
         }
         return;
     }
+    if(RWS(cmd,"kind")=="companion_visit_reply"){RWCPVReply(cmd);return;}
     object familiar=StringToObject(RWS(cmd,"object"));object owner=GetMaster(familiar);
     int ok=RWCPCurrentTalk(owner,familiar) && RWCPOwnerKey(owner)==RWS(cmd,"owner")
         && GetLocalString(owner,"rw_cp_token")==RWS(cmd,"token")
@@ -231,8 +222,10 @@ void RWCPReply(json cmd)
         && GetLocalString(owner,"rw_cp_ack")!=RWS(cmd,"request");
     string verb=RWS(cmd,"action"),text=RWS(cmd,"text");
     int inventory=GetStringLeft(verb,6)=="cpinv:";
-    if(text=="" || GetStringLength(text)>1000 || (verb!="" && verb!="companion:follow" && verb!="companion:stay" && !inventory))ok=FALSE;
-    if(ok && verb!="")ok=inventory?RWCPIStart(owner,familiar,verb):RWCPOrder(owner,familiar,verb);
+    int visit=GetStringLeft(verb,8)=="cpvisit:";
+    if(text=="" || GetStringLength(text)>1000 || (verb!="" && verb!="companion:follow" && verb!="companion:stay" && !inventory && !visit))ok=FALSE;
+    if(ok && verb!="")
+    {if(visit)ok=RWCPVStart(owner,familiar,verb,RWS(cmd,"request"));else ok=inventory?RWCPIStart(owner,familiar,verb):RWCPOrder(owner,familiar,verb);}
     if(ok)
     {
         SetLocalString(owner,"rw_cp_ack",RWS(cmd,"request"));

@@ -139,6 +139,15 @@ prevent retries from generating extra rolls.
 
 ### Player companions
 
+Owner-directed conversations live in `roleweaver/companion_visits.py` and
+`bridge/rw_cp_visit.nss`. The game owns movement, recipient eligibility, phase
+timeouts and delivered-speech acknowledgements; the service generates bounded
+questions/answers and quotes the actual replies in the return report. Recipient
+NPCs use their own lore. Player responses require an explicit addressed reply;
+their ambient chat and the owner's private memories are not shared. See
+[the familiar guide](COMPANIONS.md#send-your-familiar-to-ask-someone) for examples,
+server permissions and the isolated `companion_visits_native.nss` fixture.
+
 See [Familiar prototype](COMPANIONS.md) for the opt-in chat workflow, owner-bound
 protocol, stock associate adapter and PW extension points. This layer has no
 world-NPC placement or respawn behavior. `rw_address.nss` shares conservative

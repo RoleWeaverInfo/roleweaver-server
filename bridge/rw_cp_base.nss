@@ -29,3 +29,16 @@ int RWCPReady(object owner,object familiar)
         && !IsInConversation(owner) && !IsInConversation(familiar)
         && GetArea(familiar)==GetArea(owner);
 }
+
+json RWCPEvent(string kind,object owner,object familiar)
+{
+    json e=RWBase(kind,OBJECT_INVALID);
+    e=JsonObjectSet(e,"owner",JsonString(RWCPOwnerKey(owner)));
+    e=JsonObjectSet(e,"object",JsonString(ObjectToString(familiar)));
+    e=JsonObjectSet(e,"name",JsonString(GetName(familiar)));
+    e=JsonObjectSet(e,"creature",JsonString("familiar:"+IntToString(GetFamiliarCreatureType(owner))));
+    e=JsonObjectSet(e,"species",JsonString(GetResRef(familiar)));
+    e=JsonObjectSet(e,"token",JsonString(GetLocalString(owner,"rw_cp_token")));
+    e=JsonObjectSet(e,"sequence",JsonInt(GetLocalInt(owner,"rw_cp_sequence")));
+    return JsonObjectSet(e,"active",JsonInt(RWCPReady(owner,familiar)));
+}

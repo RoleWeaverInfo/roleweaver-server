@@ -77,7 +77,11 @@ int RWCPIWindow(object pc,object owner,object familiar,object pack,object offere
     {
         outItems=RWCPIOptions(pc,pack,"out",maximum);
         if(!recovery)inItems=RWCPIOptions(pc,pc,"in",maximum,pack);else SetLocalInt(pc,"rw_cpt_incount",0);
-        col=JsonArrayInsert(col,NuiWidth(NuiHeight(NuiLabel(JsonString(recovery?"Recover belongings from your familiar's satchel.":"Choose belongings to give or receive, then confirm."),JsonInt(0),JsonInt(1)),35.0),800.0));
+        string help="Choose belongings to give or receive, then confirm. Equipped gear is not listed; unequip it first.";
+        if(recovery)help="Recovery only: take belongings back from the familiar satchel. Your inventory is hidden here. Use Open inventory to give items.";
+        else if(JsonGetLength(inItems)==0)help="No eligible player items to give. Unequip gear or carry a loose item, then refresh. Bags, protected, unidentified and over-limit items are excluded.";
+        if(JsonGetLength(outItems)==0)help+=" The familiar satchel has no eligible items to take back.";
+        col=JsonArrayInsert(col,NuiWidth(NuiHeight(NuiText(JsonString(help),FALSE,0),72.0),800.0));
         json panels=JsonArray();panels=JsonArrayInsert(panels,RWInvPanel("Familiar satchel - receive from","out"));
         panels=JsonArrayInsert(panels,RWInvPanel("Your inventory - give to familiar","in"));col=JsonArrayInsert(col,NuiRow(panels));
         json buttons=JsonArray();buttons=JsonArrayInsert(buttons,NuiWidth(NuiId(NuiButton(JsonString("Confirm transfer")),"confirm"),390.0));
@@ -85,7 +89,7 @@ int RWCPIWindow(object pc,object owner,object familiar,object pack,object offere
         col=JsonArrayInsert(col,NuiHeight(NuiRow(buttons),35.0));
         col=JsonArrayInsert(col,NuiWidth(NuiHeight(NuiLabel(JsonString("Whole stacks; up to 32 eligible items per list. Select one side for a gift. Two-sided swaps require non-stackable items. Your satchel stays with your saved character."),JsonInt(0),JsonInt(1)),65.0),800.0));
     }
-    json window=NuiWindow(NuiCol(col),JsonString("Role Weaver - Familiar Inventory"),NuiRect(-1.0,-1.0,pc==owner?860.0:650.0,pc==owner?560.0:240.0),JSON_FALSE,JSON_FALSE,JSON_TRUE,JSON_FALSE,JSON_TRUE);
+    json window=NuiWindow(NuiCol(col),JsonString("Role Weaver - Familiar Inventory"),NuiRect(-1.0,-1.0,pc==owner?860.0:650.0,pc==owner?600.0:240.0),JSON_FALSE,JSON_FALSE,JSON_TRUE,JSON_FALSE,JSON_TRUE);
     int token=NuiCreate(pc,window,"rwcpinventory","rw_cp_trade");if(!token)return FALSE;
     SetLocalInt(pc,"rw_cpt_token",token);
     if(GetIsObjectValid(familiar))DeleteLocalInt(familiar,"rw_cpi_trade_done");

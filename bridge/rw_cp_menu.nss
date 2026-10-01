@@ -1,5 +1,5 @@
 // In-game player controls. Explicit dimensions avoid narrow default NUI columns.
-#include "rw_cp_items"
+#include "rw_cp_visit"
 
 json RWCPMenuButton(string label,string id,float width=300.0,string enabled="")
 {
@@ -32,6 +32,7 @@ void RWCPMenuRefresh(object owner,string notice="")
     else if(!RWCPReady(owner,familiar))status="AI is ON, but paused by combat, possession, conversation or separation.";
     else if(!nearby)status="AI is ON. Approach your familiar within hearing range and line of sight to give commands.";
     else status=GetStringLeft(GetName(familiar),60)+": ready. Replies appear in nearby Talk chat.";
+    if(GetLocalString(familiar,"rw_cpv_id")!="")status=GetLocalString(familiar,"rw_cpv_status");
     NuiSetBind(owner,token,"status",JsonString(status));NuiSetBind(owner,token,"notice",JsonString(notice));
     NuiSetBind(owner,token,"can_preferences",JsonBool(RWCPPreferencesReady(owner)));
     NuiSetBind(owner,token,"toggle_label",JsonString(enabled?"Disable AI for this login":"Enable AI for this login"));

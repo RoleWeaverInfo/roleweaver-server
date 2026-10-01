@@ -143,6 +143,7 @@ class Service(
             self.companion_generation = secrets.token_hex(12)
             self.companion_states.clear()
             self.companion_pending.clear()
+            self.companion_visits.clear()
             self.config = self.llm.save(body)
             self.usage.configure(self.config)
             for npc in self.busy:
@@ -307,6 +308,14 @@ class Service(
             return
         if kind in ("companion_preferences_get", "companion_preferences_set"):
             self.companion_preferences_event(event)
+            return
+        if kind in (
+            "companion_visit_state",
+            "companion_visit_ack",
+            "companion_visit_player",
+            "companion_visit_end",
+        ):
+            self.companion_visit_event(event)
             return
         if kind in (
             "translation_player",

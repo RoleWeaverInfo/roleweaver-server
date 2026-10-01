@@ -17,6 +17,7 @@ void main()
     if(preference)
     {
         if(!RWCPPreferencesReady(owner)){RWCPMenuRefresh(owner,"Wait for the service to confirm your preferences.");return;}
+        RWCPVCancel(RWCPFind(owner),"Preferences changed; visit cancelled.",TRUE);
         RWCPICancel(RWCPFind(owner),"Preferences changed; previous errand cancelled.",TRUE);
         if(!RWCPStorePrefs(owner,p)){RWCPMenuRefresh(owner,"Preferences could not be saved. Existing limits still apply; ask the DM to check the character's saved settings.");return;}
         RWCPEndTalk(owner);RWCPInvalidate(owner);RWCPTick(owner);

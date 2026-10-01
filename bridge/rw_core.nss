@@ -33,8 +33,20 @@ json RWBase(string kind, object npc)
 }
 
 // Perception is bounded and deliberately excludes player names, inventory and secrets.
+int RWCompanionVisitHeld(object npc)
+{
+    object visitor=GetLocalObject(npc,"rw_cpv_visitor");
+    object owner=GetMaster(visitor);
+    return GetIsObjectValid(visitor) && GetIsPC(owner) && GetAssociate(ASSOCIATE_TYPE_FAMILIAR,owner)==visitor
+        && GetLocalInt(owner,"rw_cp_on") && !GetIsDead(visitor) && !GetIsInCombat(visitor)
+        && !GetIsDMPossessed(visitor) && !GetIsPossessedFamiliar(visitor)
+        && GetLocalString(visitor,"rw_cpv_id")!=""
+        && GetLocalString(visitor,"rw_cpv_generation")==GetLocalString(GetModule(),"rw_cpp_generation")
+        && GetLocalInt(visitor,"rw_cpv_until")>GetLocalInt(GetModule(),"rw_tick");
+}
 int RWHasConversation(object npc)
 {
+    if(RWCompanionVisitHeld(npc))return TRUE;
     object pc=GetFirstPC();
     while(GetIsObjectValid(pc))
     {
