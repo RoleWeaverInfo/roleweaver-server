@@ -136,7 +136,9 @@ NPC actions. confirmed_payments are native receipts; dialogue alone is never pay
     for attempt in range(2):
         value = request(config, system, context, retry_format=True)
         try:
-            return validate(value, context["actors"], progression, context.get("npc_actions"))
+            return validate(
+                value, context["actors"], progression, context.get("npc_actions")
+            )
         except ValueError as exc:
             if attempt:
                 raise

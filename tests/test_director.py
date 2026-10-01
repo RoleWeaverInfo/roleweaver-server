@@ -307,7 +307,9 @@ class DirectorTests(unittest.TestCase):
         npc = next(iter(scene["actors"]))
         self.app.states[npc].update(dead=0, combat=1)
         self.review(key, scene, self.result(scene, "resolve"))
-        self.assertEqual(scene["director"]["error"], "Resolution deferred until combat ends.")
+        self.assertEqual(
+            scene["director"]["error"], "Resolution deferred until combat ends."
+        )
 
     def test_failure_holds_combat_and_backs_off(self):
         key, scene = self.prepare()

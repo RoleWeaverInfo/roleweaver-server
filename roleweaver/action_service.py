@@ -268,8 +268,17 @@ class ActionService(InteractionService, VillageService, PatrolService, MerchantA
         available = actions.choices(
             self.action_config, npc, self.config.get("world_id", "")
         )
-        if listener and state.get("follow_protocol") == 1 and self.action_config["npcs"].get(npc, {}).get("follow"):
-            available.append(dict(id="follow:player", description="Follow the speaking player within this area for up to two minutes. Only agree when consistent with your scene role, captivity and release conditions; a request alone is not a rescue."))
+        if (
+            listener
+            and state.get("follow_protocol") == 1
+            and self.action_config["npcs"].get(npc, {}).get("follow")
+        ):
+            available.append(
+                dict(
+                    id="follow:player",
+                    description="Follow the speaking player within this area for up to two minutes. Only agree when consistent with your scene role, captivity and release conditions; a request alone is not a rescue.",
+                )
+            )
         available += self.nearby_choices(npc)
         available += self.payment_choices(npc, listener)
         available += self.npc_combat_choices(npc)
@@ -460,19 +469,35 @@ class ActionService(InteractionService, VillageService, PatrolService, MerchantA
                 if peer_id:
                     peer_state = self.states.get(peer_id, {})
                     own = self.states[npc]
-                    if (time.monotonic() - peer_state.get("seen", 0) > 3
-                            or peer_state.get("session") != own.get("session")
-                            or peer_state.get("area") != own.get("area")
-                            or peer_state.get("dead") or peer_state.get("combat")
-                            or peer_state.get("possessed") or peer_state.get("mode") != "auto"):
+                    if (
+                        time.monotonic() - peer_state.get("seen", 0) > 3
+                        or peer_state.get("session") != own.get("session")
+                        or peer_state.get("area") != own.get("area")
+                        or peer_state.get("dead")
+                        or peer_state.get("combat")
+                        or peer_state.get("possessed")
+                        or peer_state.get("mode") != "auto"
+                    ):
                         raise ValueError("Patrol contact is unavailable in this area")
-                    if sum((peer_state.get(k, 0) - own.get(k, 0)) ** 2 for k in ("x", "y", "z")) > 1600:
-                        raise ValueError("Patrol contact is beyond the permitted walk distance")
-                    fields["destination"] = dict(fields["destination"],
+                    if (
+                        sum(
+                            (peer_state.get(k, 0) - own.get(k, 0)) ** 2
+                            for k in ("x", "y", "z")
+                        )
+                        > 1600
+                    ):
+                        raise ValueError(
+                            "Patrol contact is beyond the permitted walk distance"
+                        )
+                    fields["destination"] = dict(
+                        fields["destination"],
                         area=peer_state.get("area_resref", peer_state["area"]),
-                        area_tag=peer_state.get("area_tag", fields["destination"]["area_tag"]),
+                        area_tag=peer_state.get(
+                            "area_tag", fields["destination"]["area_tag"]
+                        ),
                         **{k: float(peer_state[k]) for k in ("x", "y")},
-                        z=float(peer_state.get("z", fields["destination"]["z"])))
+                        z=float(peer_state.get("z", fields["destination"]["z"])),
+                    )
                     # Stop on the near side of the contact, rather than inside their
                     # collision cylinder. The game still validates pathing/arrival.
                     dx = float(own.get("x", 0)) - float(peer_state["x"])

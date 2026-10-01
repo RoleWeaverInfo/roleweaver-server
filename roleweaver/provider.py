@@ -470,7 +470,7 @@ def reply(config, profile, memories, transcript):
         )
     if profile.get("controlled_actions"):
         if profile.get("action_format_retry"):
-            system += '\nThe previous answer was invalid. Return ONLY a JSON object with string keys speech and action. No Markdown or plain text. Use an offered action ID or empty string.'
+            system += "\nThe previous answer was invalid. Return ONLY a JSON object with string keys speech and action. No Markdown or plain text. Use an offered action ID or empty string."
         if profile.get("planned_action"):
             system += (
                 "\nThis turn's validated operation is "

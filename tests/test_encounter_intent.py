@@ -48,14 +48,35 @@ class EncounterIntentTests(unittest.TestCase):
             )
             request.assert_not_called()
 
+
 class DirectorCorrectionTests(unittest.TestCase):
     def test_stage_mismatch_retries_without_applying_invalid_decision(self):
         from roleweaver import director
-        context = {"actors": {}, "progression": {"current":"first", "stages":[{"id":"first"},{"id":"second"}], "outcomes":[]}}
-        bad = dict(summary="Waiting", phase="negotiating", reason="Advance", goals={}, operation="continue", stage="second", outcome="")
-        with patch("roleweaver.director.request", side_effect=[bad, dict(bad, operation="stage")]) as request:
-            self.assertEqual(director.evaluate({},context)["operation"],"stage")
-            self.assertEqual(request.call_count,2)
+
+        context = {
+            "actors": {},
+            "progression": {
+                "current": "first",
+                "stages": [{"id": "first"}, {"id": "second"}],
+                "outcomes": [],
+            },
+        }
+        bad = dict(
+            summary="Waiting",
+            phase="negotiating",
+            reason="Advance",
+            goals={},
+            operation="continue",
+            stage="second",
+            outcome="",
+        )
+        with patch(
+            "roleweaver.director.request",
+            side_effect=[bad, dict(bad, operation="stage")],
+        ) as request:
+            self.assertEqual(director.evaluate({}, context)["operation"], "stage")
+            self.assertEqual(request.call_count, 2)
         with patch("roleweaver.director.request", return_value=bad) as request:
-            with self.assertRaises(ValueError): director.evaluate({},context)
-            self.assertEqual(request.call_count,2)
+            with self.assertRaises(ValueError):
+                director.evaluate({}, context)
+            self.assertEqual(request.call_count, 2)

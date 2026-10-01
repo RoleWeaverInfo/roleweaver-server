@@ -78,12 +78,16 @@ class PatrolTests(ActionsTests):
         duty["checkins"] = {"inn": "contact"}
         self.app.patrol_tick("mira", self.state)
         destination = self.app.redis.last()["destination"]
-        self.assertAlmostEqual(((destination["x"]-19)**2 + (destination["y"]-12)**2)**0.5, 2.0)
+        self.assertAlmostEqual(
+            ((destination["x"] - 19) ** 2 + (destination["y"] - 12) ** 2) ** 0.5, 2.0
+        )
         self.assertEqual(self.app.action_config["destinations"]["inn"]["x"], 1)
 
     def test_missing_contact_does_not_walk_to_old_marker(self):
         self.prepare()
-        self.app.action_config["npcs"]["mira"]["patrol"]["checkins"] = {"inn": "missing"}
+        self.app.action_config["npcs"]["mira"]["patrol"]["checkins"] = {
+            "inn": "missing"
+        }
         before = len(self.app.redis.commands)
         self.app.patrol_tick("mira", self.state)
         self.assertEqual(len(self.app.redis.commands), before)
@@ -93,7 +97,9 @@ class PatrolTests(ActionsTests):
         self.prepare()
         self.state.update(area="inn", x=0, y=0, z=0)
         self.app.states["contact"] = dict(self.state, x=19, y=12)
-        self.app.action_config["npcs"]["mira"]["patrol"]["checkins"] = {"inn": "contact"}
+        self.app.action_config["npcs"]["mira"]["patrol"]["checkins"] = {
+            "inn": "contact"
+        }
         self.app.patrol_tick("mira", self.state)
         self.app.action_jobs["mira"]["status"] = "completed"
         self.app.patrol_tick("mira", self.state)
@@ -104,7 +110,9 @@ class PatrolTests(ActionsTests):
         self.prepare()
         self.state.update(area="The Inn", area_resref="inn", area_tag="inn", x=0, y=0)
         self.app.states["contact"] = dict(self.state, x=19, y=12)
-        self.app.action_config["npcs"]["mira"]["patrol"]["checkins"] = {"inn": "contact"}
+        self.app.action_config["npcs"]["mira"]["patrol"]["checkins"] = {
+            "inn": "contact"
+        }
         self.app.patrol_tick("mira", self.state)
         dest = self.app.redis.last()["destination"]
         self.assertEqual(dest["area"], "inn")
@@ -113,7 +121,9 @@ class PatrolTests(ActionsTests):
 
     def test_unavailable_contact_advances_route(self):
         self.prepare()
-        self.app.action_config["npcs"]["mira"]["patrol"]["checkins"] = {"inn": "missing"}
+        self.app.action_config["npcs"]["mira"]["patrol"]["checkins"] = {
+            "inn": "missing"
+        }
         self.app.patrol_tick("mira", self.state)
         self.assertEqual(self.app.patrol_runtime["mira"]["index"], 1)
 
@@ -121,7 +131,9 @@ class PatrolTests(ActionsTests):
         self.prepare()
         self.state.update(area="inn", x=0, y=0, z=0)
         self.app.states["contact"] = dict(self.state, x=19, y=12)
-        self.app.action_config["npcs"]["mira"]["patrol"]["checkins"] = {"inn": "contact"}
+        self.app.action_config["npcs"]["mira"]["patrol"]["checkins"] = {
+            "inn": "contact"
+        }
         self.app.patrol_tick("mira", self.state)
         self.app.action_jobs["mira"]["status"] = "timed out"
         self.app.patrol_tick("mira", self.state)

@@ -292,14 +292,25 @@ class DialogueService:
                     )
                 if profile.get("controlled_actions"):
                     try:
-                        text, action_choice = actions.parse_reply(text, available_actions)
+                        text, action_choice = actions.parse_reply(
+                            text, available_actions
+                        )
                     except ValueError:
                         # Retry formatting once, without relaxing action validation.
                         retry_profile = dict(profile)
                         retry_profile["action_format_retry"] = True
-                        with provider.observe_requests(self.usage.recorder(npc, "dialogue", request_config)):
-                            corrected = provider.reply(request_config, retry_profile, memories, guardrails.clean_history(history))
-                        text, action_choice = actions.parse_reply(corrected, available_actions)
+                        with provider.observe_requests(
+                            self.usage.recorder(npc, "dialogue", request_config)
+                        ):
+                            corrected = provider.reply(
+                                request_config,
+                                retry_profile,
+                                memories,
+                                guardrails.clean_history(history),
+                            )
+                        text, action_choice = actions.parse_reply(
+                            corrected, available_actions
+                        )
                     if planned_action:
                         action_choice = planned_action
                 if profile.get("merchant"):

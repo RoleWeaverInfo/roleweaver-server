@@ -135,14 +135,21 @@ class PatrolService(CheckinService):
                 stop = duty["route"][runtime["index"]]
                 peer = duty.get("checkins", {}).get(stop)
                 other = self.states.get(peer, {})
-                if (job["status"] == "completed" and peer and time.monotonic() - other.get("seen", 0) < 3
-                        and other.get("area") == event.get("area")
-                        and (other.get("x", 0) - event.get("x", 0)) ** 2
-                        + (other.get("y", 0) - event.get("y", 0)) ** 2 > 25
-                        and runtime.get("reapproaches", 0) < 2):
+                if (
+                    job["status"] == "completed"
+                    and peer
+                    and time.monotonic() - other.get("seen", 0) < 3
+                    and other.get("area") == event.get("area")
+                    and (other.get("x", 0) - event.get("x", 0)) ** 2
+                    + (other.get("y", 0) - event.get("y", 0)) ** 2
+                    > 25
+                    and runtime.get("reapproaches", 0) < 2
+                ):
                     runtime["reapproaches"] = runtime.get("reapproaches", 0) + 1
                     runtime["next"] = now + 20
-                    runtime["status"] = "Contact moved; approaching their current position"
+                    runtime["status"] = (
+                        "Contact moved; approaching their current position"
+                    )
                     return
                 runtime.pop("reapproaches", None)
                 runtime["index"] = (runtime["index"] + 1) % len(duty["route"])
@@ -167,13 +174,17 @@ class PatrolService(CheckinService):
         except ValueError:
             # A missing, busy, or distant contact must not trap the entire route.
             runtime.pop("reapproaches", None)
-            runtime.update(index=(runtime["index"] + 1) % len(duty["route"]),
-                           next=now + duty["dwell_seconds"],
-                           status="Skipped unavailable patrol contact; continuing route")
+            runtime.update(
+                index=(runtime["index"] + 1) % len(duty["route"]),
+                next=now + duty["dwell_seconds"],
+                status="Skipped unavailable patrol contact; continuing route",
+            )
             return
         except OSError:
             # Delivery is uncertain. Do not issue overlapping movement commands.
-            runtime.update(halted=True, status="Command delivery uncertain; patrol stopped")
+            runtime.update(
+                halted=True, status="Command delivery uncertain; patrol stopped"
+            )
             return
         self.action_jobs[npc]["patrol"] = True
         runtime.update(

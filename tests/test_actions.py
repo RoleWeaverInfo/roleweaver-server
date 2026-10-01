@@ -69,13 +69,25 @@ class ActionsTests(unittest.TestCase):
         )
 
     def test_follow_requires_permission_player_and_new_bridge(self):
-        self.app.save_action_policy("mira", dict(actions.DEFAULT_POLICY, enabled=True, follow=True))
-        self.assertNotIn("follow:player", [a["id"] for a in self.app.action_choices("mira", "pc")])
+        self.app.save_action_policy(
+            "mira", dict(actions.DEFAULT_POLICY, enabled=True, follow=True)
+        )
+        self.assertNotIn(
+            "follow:player", [a["id"] for a in self.app.action_choices("mira", "pc")]
+        )
         self.state["follow_protocol"] = 1
-        self.assertIn("follow:player", [a["id"] for a in self.app.action_choices("mira", "pc")])
-        self.assertNotIn("follow:player", [a["id"] for a in self.app.action_choices("mira", "")])
-        self.app.save_action_policy("mira", dict(actions.DEFAULT_POLICY, enabled=True, follow=False))
-        self.assertNotIn("follow:player", [a["id"] for a in self.app.action_choices("mira", "pc")])
+        self.assertIn(
+            "follow:player", [a["id"] for a in self.app.action_choices("mira", "pc")]
+        )
+        self.assertNotIn(
+            "follow:player", [a["id"] for a in self.app.action_choices("mira", "")]
+        )
+        self.app.save_action_policy(
+            "mira", dict(actions.DEFAULT_POLICY, enabled=True, follow=False)
+        )
+        self.assertNotIn(
+            "follow:player", [a["id"] for a in self.app.action_choices("mira", "pc")]
+        )
 
     def test_disabled_by_default_and_strict_allowlist(self):
         self.assertEqual(self.app.action_choices("mira"), [])
