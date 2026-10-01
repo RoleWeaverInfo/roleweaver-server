@@ -20,6 +20,7 @@ from . import (
     perception,
     nearby,
 )
+from .companions import CompanionService
 from .action_service import ActionService
 from .services.dialogue import DialogueService
 from .services.npcs import NPCService
@@ -40,6 +41,7 @@ from .knowledge import inspect_knowledge
 
 
 class Service(
+    CompanionService,
     DialogueService,
     NPCService,
     WorldService,
@@ -112,6 +114,7 @@ class Service(
         self.set_setting("conversation_revision", self.conversation_revision)
         self.conversation_hello = {}
         self.conversation_sent = 0
+        self.init_companions()
         self.init_actions()
         self.init_encounters()
         self.init_live_encounters()
@@ -137,6 +140,9 @@ class Service(
         with self.lock:
             if self.restoring:
                 raise ValueError("Wait for restore to finish")
+            self.companion_generation = secrets.token_hex(12)
+            self.companion_states.clear()
+            self.companion_pending.clear()
             self.config = self.llm.save(body)
             self.usage.configure(self.config)
             for npc in self.busy:
@@ -293,6 +299,12 @@ class Service(
             return
         kind = event.get("kind")
         npc = event.get("npc", "")
+        if kind == "hello":
+            with self.lock:
+                self.companion_hello(event)
+        if kind in ("companion_state", "companion_chat", "companion_ack"):
+            self.companion_event(event)
+            return
         if kind in (
             "translation_player",
             "translation_preference",

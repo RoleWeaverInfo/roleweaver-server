@@ -19,6 +19,12 @@ ENTRIES = tuple(name for name in ENTRY_SCRIPTS if name != "rw_load")
 INCLUDES = (
     "rw_inc",
     "rw_core",
+    "rw_companion",
+    "rw_cp_base",
+    "rw_cp_items",
+    "rw_cp_pack",
+    "rw_cp_ui",
+    "rw_address",
     "rw_shopcore",
     "rw_chat_inc",
     "rw_creature",

@@ -136,3 +136,24 @@ protocol 5 boundary. It resolves Intimidate, Persuade and Bluff before dialogue;
 combat remains separate. The game reads effective skills and rolls dice, while
 the model can only identify intent. The persisted attempt ledger and native cache
 prevent retries from generating extra rolls.
+
+### Player companions
+
+See [Familiar prototype](COMPANIONS.md) for the opt-in chat workflow, owner-bound
+protocol, stock associate adapter and PW extension points. This layer has no
+world-NPC placement or respawn behavior. `rw_address.nss` shares conservative
+name-address parsing between familiar and world-NPC chat. `rw_talk_inc.nss`
+owns the small focus-cancellation seam so click-to-talk can cancel a pending
+familiar turn immediately. `RWCPObserve` samples the same read-only visibility
+checks as world NPCs; `roleweaver.perception.snapshot` removes private transport
+metadata and rejects stale observations before they enter provider context.
+
+Familiar cargo is a native, owner-carried satchel rather than a second serialized
+inventory. `rw_cp_pack` handles bag ownership and native transfer rules;
+`rw_cp_items` offers bounded errands and validates movement; `rw_cp_ui` handles
+owner confirmation and recipient consent. `companion_inventory.py` projects only
+eligible item labels and offered action IDs into model context. Inventory
+snapshots are not persisted in the Role Weaver database. Native character saves
+and PW world persistence remain responsible for the actual items; database
+backups alone cannot restore these possessions. See the companion guide for
+configuration, lifecycle limits and isolated native test fixtures.

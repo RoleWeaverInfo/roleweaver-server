@@ -55,6 +55,23 @@ int RWApplyConversationPolicy(json p, string revision)
     return TRUE;
 }
 
+// Shared cancellation lets click-to-talk immediately supersede a familiar turn,
+// without introducing a dependency on companion transport in the world router.
+void RWCPInvalidate(object owner)
+{
+    SetLocalString(owner,"rw_cp_token",IntToString(Random(2000000000))+"_"+IntToString(Random(2000000000)));
+    SetLocalInt(owner,"rw_cp_sequence",GetLocalInt(owner,"rw_cp_sequence")+1);
+}
+void RWCPEndTalk(object owner)
+{
+    if(GetLocalInt(owner,"rw_cp_talk_until"))RWCPInvalidate(owner);
+    DeleteLocalObject(owner,"rw_cp_talk_target");
+    DeleteLocalObject(owner,"rw_cp_talk_area");
+    DeleteLocalInt(owner,"rw_cp_talk_until");
+    DeleteLocalString(owner,"rw_cp_talk_session");
+    DeleteLocalString(owner,"rw_cp_talk_policy");
+}
+
 // A conversation belongs to one player, never to everyone near an NPC.
 void RWEndTalk(object pc)
 {
@@ -77,6 +94,7 @@ int RWCanHear(object pc, object npc, float range)
 
 int RWBeginTalk(object pc, object npc)
 {
+    RWCPEndTalk(pc);
     int followUntil=0;
     if (GetLocalObject(pc,"rw_talk_target")==npc) followUntil=GetLocalInt(pc,"rw_talk_follow_until");
     RWEndTalk(pc);

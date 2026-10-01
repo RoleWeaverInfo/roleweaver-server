@@ -12,5 +12,12 @@
   "recovery_backups": true,
   "recovery_interval_seconds": 300,
   "recovery_keep_recent": 12,
-  "recovery_keep_daily": 7
+  "recovery_keep_daily": 7,
+  "companions_enabled": false,
+  "companion_inventory": {
+    "enabled": true,
+    "radius": 20,
+    "max_value": 10000,
+    "containers": []
+  }
 }

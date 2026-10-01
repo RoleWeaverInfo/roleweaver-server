@@ -1,4 +1,5 @@
 #include "rw_inc"
+#include "rw_companion"
 #include "nwnx_chat"
 #include "rw_actions"
 #include "rw_encounter"
@@ -27,6 +28,7 @@ void main()
     object participant = GetFirstPC();
     while (GetIsObjectValid(participant))
     {
+        RWCPTick(participant);
         RWCurrentTalk(participant);
         RWTrLoad(participant);
         // A standard dialogue NPC is not in rw_slot_, so also clean up via its player.
@@ -41,6 +43,7 @@ void main()
     hello = JsonObjectSet(hello,"actions_protocol",JsonInt(6));
     hello=JsonObjectSet(hello,"live_protocol",JsonInt(1));
     hello=JsonObjectSet(hello,"inventory_protocol",JsonInt(NWNX_Core_PluginExists("NWNX_Item") ? 1 : 0));
+    hello=JsonObjectSet(hello,"companion_protocol",JsonInt(1));
     RWEmit(RWHealth(hello));
     if (GetLocalInt(m, "rw_allow_dm_spawn"))
     {
@@ -104,6 +107,7 @@ void main()
         string raw = NWNX_Redis_GetResultAsString(result);
         if (resultType == NWNX_REDIS_RESULT_NULL || raw == "") break;
         json cmd = JsonParse(raw);
+        if(RWS(cmd,"kind")=="companion_config" || RWS(cmd,"kind")=="companion_reply"){RWCPReply(cmd);continue;}
         if(RWS(cmd,"kind")=="translation_dialogue_reply"){if(RWI(cmd,"on_demand"))RWTrNodeReply(cmd);continue;}
         if(RWS(cmd,"kind")=="translation_names_reply"){RWTrNamesReply(cmd);continue;}
         if(RWS(cmd,"kind")=="translation_reply"){RWTrReply(cmd);continue;}

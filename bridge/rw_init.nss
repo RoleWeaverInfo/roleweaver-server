@@ -16,6 +16,13 @@ void main()
     NWNX_Events_SubscribeEvent("NWNX_ON_STORE_REQUEST_SELL_AFTER","rw_shop_evt");
     NWNX_Events_SubscribeEvent("NWNX_ON_EXAMINE_OBJECT_BEFORE", "rw_tr_event");
     NWNX_Events_SubscribeEvent("NWNX_ON_CLIENT_DISCONNECT_BEFORE", "rw_tr_event");
+    NWNX_Events_SubscribeEvent("NWNX_ON_ADD_ASSOCIATE_AFTER", "rw_cp_event");
+    NWNX_Events_SubscribeEvent("NWNX_ON_REMOVE_ASSOCIATE_BEFORE", "rw_cp_event");
+    NWNX_Events_SubscribeEvent("NWNX_ON_POSSESS_FAMILIAR_BEFORE", "rw_cp_event");
+    NWNX_Events_SubscribeEvent("NWNX_ON_UNPOSSESS_FAMILIAR_BEFORE", "rw_cp_event");
+    NWNX_Events_SubscribeEvent("NWNX_ON_CLIENT_DISCONNECT_BEFORE", "rw_cp_event");
+    NWNX_Events_SubscribeEvent("NWNX_ON_INVENTORY_ADD_ITEM_AFTER", "rw_cp_save");
+    NWNX_Events_SubscribeEvent("NWNX_ON_INVENTORY_REMOVE_ITEM_AFTER", "rw_cp_save");
     ExecuteScript("rw_tick", m);
     WriteTimestampedLogEntry("ROLEWEAVER: bridge initialized; NPCs require explicit DM binding and resume.");
 }
