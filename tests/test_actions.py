@@ -202,7 +202,7 @@ class ActionsTests(unittest.TestCase):
             ),
         )
         data = self.app.backup_data()
-        self.assertEqual(data["version"], 12)
+        self.assertEqual(data["version"], 13)
         checked = backup.validate(data)
         self.assertEqual(checked["controlled_actions"], self.app.action_config)
         with self.assertRaises(ValueError):

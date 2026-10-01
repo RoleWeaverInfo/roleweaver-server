@@ -12,7 +12,7 @@ spell summons are future adapters, not supported by this first version.
 2. Update the Role Weaver Python service and rebuild/install the bridge using the
    normal add-on preparation procedure. The bundle now includes `rw_companion.nss`,
    the `rw_cp_*` includes and entry scripts (`rw_cp_order`, `rw_cp_event`,
-   `rw_cp_trade`, `rw_cp_save`), plus updated `rw_init`, `rw_tick`, `rw_chat` and
+   `rw_cp_trade`, `rw_cp_save`, `rw_cp_menu_evt`), plus updated `rw_init`, `rw_tick`, `rw_chat` and
    `rw_modulechat`. Install the complete generated scripts/compiled bundle, not
    just the new entry scripts. Keep the world's existing hooks and handlers.
 3. In the instance's `config.json` add `"companions_enabled": true` (with the
@@ -43,6 +43,9 @@ Use the **Talk chat channel**, not the debug console or a tell.
    nearby player or an AI NPC whose item permissions allow receiving it.
 8. Use `/rw companion off` to stop AI conversation. This does not dismiss the familiar.
 
+For an in-game control panel, type `/rw companion settings` (or `/rw companion menu`).
+Opening the menu and changing settings do not call the LLM or require dashboard access.
+
 Responses and command emotes now appear in **normal nearby chat under the familiar's name**.
 The player's addressed Talk also remains visible. Nearby players can hear both sides;
 only the owner can issue commands. `/rw companion` slash commands and setup notices
@@ -61,6 +64,42 @@ voice and curated memories there. They will appear unconnected in the ordinary
 world-NPC status display: do not use Spawn at DM to create them as world NPCs.
 Familiar profiles and conversation histories are included in existing backups.
 No familiar placements are saved or restored.
+
+## In-game settings
+
+The familiar settings window provides these player controls:
+
+| Control | Effect |
+| --- | --- |
+| AI on/off | Enable or disable AI for this login. Opening the menu does not enable it. |
+| Reply length | Brief, natural or detailed replies, with a corresponding maximum length. |
+| Tone | Character default, warm, playful, reserved or serious. This changes delivery without replacing the DM's character profile, memories or lore. |
+| Follow-up conversation | Allow nearby Talk without repeating the familiar's name after addressing it. |
+| AI movement | Allow Role Weaver follow/stay commands and movement for item errands. Native game commands and combat remain available. |
+| Satchel exchanges | Allow the normal familiar inventory exchange window. |
+| Collect/fetch | Allow eligible pickups and approved-container errands; also requires movement and satchel exchanges. |
+| Give/barter with others | Allow delivery or barter with eligible nearby recipients; also requires movement and satchel exchanges. Other players still confirm receipt. |
+
+Buttons also provide **Follow me**, **Stand ground**, **Open inventory**,
+**Recover satchel items**, **End conversation**, **Cancel current errand**,
+**Refresh**, and **Reset preferences**. `/rw companion cancel` cancels an errand
+directly. If AI movement is off, stand close to the familiar before opening its
+inventory. Recovery remains available even when the familiar or AI is unavailable.
+
+Player choices can restrict server permissions; they cannot grant actions the
+server has disabled. Changing preferences cancels pending familiar work. Controls
+wait for the service to confirm loading or saving settings before accepting more
+changes or AI work. Reopen the menu after changing familiar, resummoning, or its
+ten-minute window timeout.
+
+Preferences are saved in the Role Weaver database for this world, character
+identity and familiar type. They survive reconnects, resummoning and restarts,
+and are included in database recovery snapshots and portable backups (format 13).
+Older portable backups use default preferences. The character identity follows
+the existing public-CD-key and character-name scheme, so renaming a character
+changes its identity. Preference records use a hashed ID, and the raw identity
+is not sent to the model. Resetting preferences does not erase memories or items.
+AI opt-in is separate: enable it again after each login.
 
 ## Follow-up conversation and awareness
 
@@ -224,6 +263,14 @@ bag changes. `roleweaver/companion_inventory.py` filters model context and polic
 it never moves, saves or recreates native items. No player inventory lists,
 object references or arbitrary action targets cross into the model.
 
+`rw_cp_prefs` requests and caches service-confirmed preferences; `rw_cp_menu` and
+`rw_cp_menu_evt` implement the owner-only settings window. `companion_preferences.py`
+validates finite choices and builds temporary model instructions without editing
+the stored NPC profile. Preference requests and replies bind to the owner,
+familiar type, game session, service generation and request nonce. Native locals
+are only a cache. A service restart or database restore invalidates that cache;
+actions wait for fresh settings rather than assuming the old permissions apply.
+
 `roleweaver/companions.py` handles profile identity, provider calls, usage,
 safeguards and acknowledged history. It does not use the ordinary world-NPC
 action queue or its 32 creature slots. State is bounded to 64 recently observed
@@ -231,7 +278,7 @@ companions; profiles share the existing 1,000-profile backup limit.
 
 ## Tests before expanding support
 
-Run `python -m unittest tests.test_companions tests.test_companion_inventory` and
+Run `python -m unittest tests.test_companions tests.test_companion_inventory tests.test_companion_preferences` and
 the normal regression suite.
 Compile `tests/companions_native.nss` as `invtest` in an isolated module/userdata
 directory. It checks native protocol rejection and absence of world bindings;
@@ -239,7 +286,9 @@ it cannot substitute for testing with a real player familiar.
 Also compile/run `tests/companion_inventory_native.nss` in an isolated test
 module/userdata directory. It creates temporary items and a campaign save to
 verify native transfers, stale selections, owner isolation and saved-bag contents.
-Never install either fixture as a live module's load script.
+`tests/companion_controls_native.nss` checks preference validation, effective
+permissions, recovery and stale-cache rejection in the same isolated setup.
+Never install these fixtures as a live module's load script.
 
 With a real wizard/sorcerer, check follow/stay, original menu commands, a slow
 response interrupted by possession, dismissal and resummoning, reconnect, area
@@ -265,3 +314,24 @@ For inventory playtesting:
    takes over and any collected cargo remains recoverable.
 6. Dismiss, resummon and reconnect with items in the satchel. Restart the test
    server, then verify counts and `/rw companion recover` without a familiar.
+
+For player-control playtesting:
+
+1. Open `/rw companion settings`. Check that the layout fits the window and each
+   setting remains visible after saving and reopening.
+2. Change reply length and tone, then converse. Confirm the familiar retains its
+   identity and the dashboard profile has not been overwritten.
+3. Turn follow-ups off, then movement and item permissions off in turn. Confirm
+   disallowed commands are unavailable, including a delayed AI reply after a
+   setting changes. Cancel an active errand and recover any collected items.
+4. Reconnect and resummon. Preferences should remain saved, while AI starts off
+   until you opt in. Repeat after a service restart or a database restore.
+5. Use a second character to check independent preferences and owner-only access.
+
+## Next development steps
+
+The settings window is the first step of the companion roadmap. Protection
+commands, optional social participation, adapters for other companion types,
+equipment and practical assistance, improved following/recovery, and stronger
+personal continuity remain future work. The controls above do not enable those
+unimplemented behaviors.

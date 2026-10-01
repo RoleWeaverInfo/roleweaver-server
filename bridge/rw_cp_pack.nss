@@ -1,6 +1,6 @@
 // Familiar cargo uses one real, owner-carried bag per world and familiar type.
 // There is no serialized item mirror and nothing is recreated on resummoning.
-#include "rw_cp_base"
+#include "rw_cp_prefs"
 #include "rw_inventory"
 
 int RWCPIEnabled()

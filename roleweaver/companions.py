@@ -11,7 +11,15 @@ import json
 import secrets
 import time
 
-from . import actions, companion_inventory, guardrails, perception, provider, safeguards
+from . import (
+    actions,
+    companion_inventory,
+    companion_preferences,
+    guardrails,
+    perception,
+    provider,
+    safeguards,
+)
 from .store import DEFAULT_NPC
 
 PERSONALITIES = {
@@ -80,6 +88,7 @@ class CompanionService:
                 session=event["session"],
                 expires=event["tick"] + 4,
                 enabled=int(bool(self.config.get("companions_enabled", False))),
+                preferences_generation=self.companion_generation,
                 inventory=dict(
                     companion_inventory.configured(self.config),
                     enabled=int(companion_inventory.configured(self.config)["enabled"]),
@@ -90,6 +99,50 @@ class CompanionService:
 
     def companion_send(self, command):
         self.redis.call("RPUSH", self.prefix + ":commands", json.dumps(command))
+
+    def companion_preferences_event(self, event):
+        """Only game menu events save settings; model responses cannot reach this path."""
+        with self.lock:
+            if (
+                self.restoring
+                or event.get("world") != self.config.get("world_id")
+                or event.get("session") != self.world_session
+                or event.get("generation") != self.companion_generation
+                or type(event.get("tick")) is not int
+            ):
+                return
+            fields = ("owner", "creature", "player", "request", "session")
+            if not all(
+                isinstance(event.get(k), str) and 0 < len(event[k]) <= 128
+                for k in fields
+            ):
+                return
+            npc = profile_id(
+                self.salt, event["world"], event["owner"], event["creature"]
+            )
+            saved = companion_preferences.records(
+                self.setting("companion_preferences", {})
+            )
+            if event["kind"] == "companion_preferences_set":
+                try:
+                    value = companion_preferences.validate(event.get("preferences"))
+                except ValueError:
+                    return
+                if npc not in saved and len(saved) >= 1000:
+                    return
+                saved[npc] = value
+                self.set_setting("companion_preferences", saved)
+            else:
+                value = saved.get(npc, dict(companion_preferences.DEFAULT))
+            # A get creates no profiles or persistent records and never enables AI.
+            self.companion_send(
+                dict(
+                    {k: event[k] for k in (*fields, "world", "generation")},
+                    kind="companion_preferences_reply",
+                    preferences=value,
+                    expires=event["tick"] + 4,
+                )
+            )
 
     def companion_valid(self, npc, event):
         state = self.companion_states.get(npc, {})
@@ -200,7 +253,8 @@ class CompanionService:
                 else dict(available=False, reason="No game observation", objects=[])
             )
             cargo, cargo_choices = companion_inventory.context(event, config)
-            choices = CHOICES + cargo_choices
+            preference = companion_preferences.settings(event)
+            choices = (CHOICES if preference["movement"] else []) + cargo_choices
             speech = safeguards.scrub(event["text"], policy)[0]
             if guardrails.input_reason(speech) or self.validation.check(
                 speech, "input"
@@ -215,7 +269,13 @@ class CompanionService:
                 profile = safeguards.scrub_tree(
                     dict(
                         profile,
-                        controlled_actions=choices,
+                        # Keep the structured speech envelope when the owner has
+                        # disabled every action; empty ID means speech only.
+                        controlled_actions=choices
+                        or [dict(id="", description="Speak only; no action.")],
+                        voice=companion_preferences.voice(
+                            profile.get("voice", ""), preference
+                        ),
                         perception=view,
                         inventory=cargo,
                         last_action=dict(status=cargo.get("status", "")),
@@ -246,7 +306,9 @@ class CompanionService:
                                 guardrails.clean_history(history),
                             )
                             text, action = actions.parse_reply(raw, choices)
-                text = provider.game_speech(safeguards.scrub(text, policy)[0])
+                text = companion_preferences.limit_reply(
+                    provider.game_speech(safeguards.scrub(text, policy)[0]), preference
+                )
                 if self.validation.check(text, "output", profile):
                     text, action = guardrails.FALLBACK, ""
                 decision = self.review_dialogue(
@@ -261,6 +323,7 @@ class CompanionService:
                     return
                 if decision == "fallback":
                     text, action = guardrails.FALLBACK, ""
+            text = companion_preferences.limit_reply(text, preference)
             with self.lock:
                 if not self.companion_valid(npc, event) or not text.strip():
                     return

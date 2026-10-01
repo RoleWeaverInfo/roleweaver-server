@@ -305,6 +305,9 @@ class Service(
         if kind in ("companion_state", "companion_chat", "companion_ack"):
             self.companion_event(event)
             return
+        if kind in ("companion_preferences_get", "companion_preferences_set"):
+            self.companion_preferences_event(event)
+            return
         if kind in (
             "translation_player",
             "translation_preference",

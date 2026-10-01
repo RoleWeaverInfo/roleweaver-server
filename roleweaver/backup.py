@@ -7,7 +7,14 @@ import time
 import secrets
 from .store import DEFAULT_NPC
 from .authoring import BUILD_DEFAULTS, creature_build, faction_ids, validate_lore
-from . import safeguards, conversation, actions, merchants, encounters
+from . import (
+    safeguards,
+    conversation,
+    actions,
+    merchants,
+    encounters,
+    companion_preferences,
+)
 from .lore_documents import validate_documents, combined
 
 LIMIT = 32 * 1024 * 1024
@@ -17,7 +24,7 @@ def validate(data):
     if (
         not isinstance(data, dict)
         or data.get("format") != "roleweaver-backup"
-        or data.get("version") not in (1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12)
+        or data.get("version") not in (1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13)
     ):
         raise ValueError("Unsupported Role Weaver backup")
 
@@ -59,6 +66,11 @@ def validate(data):
     )
     if data["version"] >= 5 and "world_documents" not in data:
         raise ValueError("Missing world documents")
+    if data["version"] >= 13 and "companion_preferences" not in data:
+        raise ValueError("Missing companion preferences")
+    result["companion_preferences"] = companion_preferences.records(
+        data.get("companion_preferences", {})
+    )
     result["world_documents"] = validate_documents(
         data.get(
             "world_documents",
@@ -199,9 +211,15 @@ def export(store, salt):
         merchant_row = store.db.execute(
             "SELECT value FROM backup_settings WHERE key='merchant_configs'"
         ).fetchone()
+        companion_row = store.db.execute(
+            "SELECT value FROM backup_settings WHERE key='companion_preferences'"
+        ).fetchone()
         return dict(
             format="roleweaver-backup",
-            version=12,
+            version=13,
+            companion_preferences=companion_preferences.records(
+                json.loads(companion_row[0]) if companion_row else {}
+            ),
             encounters=encounters.settings(
                 json.loads(row[0])
                 if (
@@ -238,6 +256,14 @@ def export(store, salt):
 
 def replace(store, data):
     with store.lock, store.db:
+        store.db.execute(
+            "INSERT OR REPLACE INTO backup_settings VALUES ('companion_preferences',?)",
+            (
+                json.dumps(
+                    companion_preferences.records(data.get("companion_preferences", {}))
+                ),
+            ),
+        )
         store.db.execute(
             "INSERT OR REPLACE INTO backup_settings VALUES ('encounters',?)",
             (json.dumps(encounters.settings(data.get("encounters"))),),

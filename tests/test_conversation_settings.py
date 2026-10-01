@@ -128,7 +128,7 @@ class ConversationSettingsTests(unittest.TestCase):
         p = dict(conversation.DEFAULTS, timeout=90)
         self.app.save_conversation(p)
         data = backup.export(self.app.store, self.app.salt)
-        self.assertEqual(data["version"], 12)
+        self.assertEqual(data["version"], 13)
         checked = backup.validate(data)
         self.assertEqual(checked["conversation"], p)
         self.app.save_conversation(conversation.DEFAULTS)

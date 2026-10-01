@@ -25,7 +25,7 @@ json RWCPIItemRow(object item,int index)
 json RWCPIObserve(json payload,object owner,object familiar)
 {
     object pack=RWCPIPack(owner);json view=JsonObject(),options=JsonArray(),rows=JsonArray(),ground=JsonArray(),boxes=JsonArray();
-    int available=RWCPIEnabled() && RWCPReady(owner,familiar) && RWCPIPackOwned(owner,pack);
+    int available=RWCPIEnabled() && RWCPPreference(owner,"inventory") && RWCPReady(owner,familiar) && RWCPIPackOwned(owner,pack);
     view=JsonObjectSet(view,"available",JsonInt(available));
     if(available)
     {
@@ -104,7 +104,15 @@ json RWCPIObserve(json payload,object owner,object familiar)
             o=GetNextObjectInArea(GetArea(familiar));scanned++;
         }
     }
-    SetLocalString(familiar,"rw_cpi_choices",JsonDump(options));
+    json permitted=JsonArray();int j;
+    for(j=0;j<JsonGetLength(options);j++)
+    {
+        json candidate=JsonArrayGet(options,j);
+        if(RWCPIWorkAllowed(owner,candidate)
+            && (RWS(candidate,"verb")!="exchange" || RWCPPreference(owner,"movement") || GetDistanceBetween(owner,familiar)<=2.5))
+            permitted=JsonArrayInsert(permitted,candidate);
+    }
+    options=permitted;SetLocalString(familiar,"rw_cpi_choices",JsonDump(options));
     json publicOptions=JsonArray();int i;
     for(i=0;i<JsonGetLength(options);i++)
     {json row=JsonArrayGet(options,i),p=JsonObject();p=JsonObjectSet(p,"id",JsonObjectGet(row,"id"));p=JsonObjectSet(p,"description",JsonObjectGet(row,"description"));publicOptions=JsonArrayInsert(publicOptions,p);}
@@ -125,14 +133,16 @@ void RWCPICancel(object familiar,string status,int restore=TRUE)
     int active=GetLocalString(familiar,"rw_cpi_task")!="";
     DeleteLocalString(familiar,"rw_cpi_task");SetLocalInt(familiar,"rw_cpi_epoch",GetLocalInt(familiar,"rw_cpi_epoch")+1);
     if(status!="")RWCPIStatus(familiar,status);
-    if(active && restore && RWCPReady(GetMaster(familiar),familiar)
+    if(active && restore && GetLocalInt(familiar,"rw_cpi_moving") && RWCPReady(GetMaster(familiar),familiar)
         && GetLastAssociateCommand(familiar)==GetLocalInt(familiar,"rw_cpi_order"))RWCPIAdapter(familiar,"companion:task_end");
+    DeleteLocalInt(familiar,"rw_cpi_moving");
 }
 int RWCPITaskStart(object owner,object familiar,json work)
 {
     object pack=RWCPIPack(owner),target=StringToObject(RWS(work,"target"));
-    if(!RWCPIEnabled() || !RWCPReady(owner,familiar) || !RWCPIPackOwned(owner,pack)
+    if(!RWCPIEnabled() || !RWCPIWorkAllowed(owner,work) || !RWCPReady(owner,familiar) || !RWCPIPackOwned(owner,pack)
         || !GetIsObjectValid(target) || GetArea(target)!=GetArea(familiar) || GetDistanceBetween(familiar,target)>RWCPIRadius() || !LineOfSightObject(familiar,target))return FALSE;
+    if(!RWCPPreference(owner,"movement") && GetDistanceBetween(familiar,target)>2.5)return FALSE;
     RWCPICancel(familiar,"",TRUE);
     SetLocalObject(familiar,"rw_cpi_owner",owner);SetLocalObject(familiar,"rw_cpi_pack",pack);
     SetLocalInt(familiar,"rw_cpi_type",GetFamiliarCreatureType(owner));SetLocalInt(familiar,"rw_cpi_order",GetLastAssociateCommand(familiar));
@@ -140,8 +150,11 @@ int RWCPITaskStart(object owner,object familiar,json work)
     SetLocalInt(familiar,"rw_cpi_deadline",GetLocalInt(GetModule(),"rw_tick")+120);
     SetLocalString(familiar,"rw_cpi_task_session",GetLocalString(GetModule(),"rw_session"));
     SetLocalString(familiar,"rw_cpi_task",JsonDump(work));SetLocalInt(familiar,"rw_cpi_phase",0);DeleteLocalInt(familiar,"rw_cpi_trade_done");
-    RWCPIAdapter(familiar,"companion:task_move",target);
-    if(!GetLocalInt(familiar,"rw_cp_order_ok")){RWCPICancel(familiar,"The familiar movement adapter refused this errand.",TRUE);return FALSE;}
+    if(RWCPPreference(owner,"movement"))
+    {
+        SetLocalInt(familiar,"rw_cpi_moving",TRUE);RWCPIAdapter(familiar,"companion:task_move",target);
+        if(!GetLocalInt(familiar,"rw_cp_order_ok")){RWCPICancel(familiar,"The familiar movement adapter refused this errand.",TRUE);return FALSE;}
+    }
     RWCPIStatus(familiar,"Errand started; no transfer has happened yet.");return TRUE;
 }
 int RWCPIStart(object owner,object familiar,string id)
@@ -165,7 +178,8 @@ void RWCPITaskTick(object owner,object familiar)
 {
     string raw=GetLocalString(familiar,"rw_cpi_task");if(raw=="")return;
     object pack=GetLocalObject(familiar,"rw_cpi_pack");int tick=GetLocalInt(GetModule(),"rw_tick");
-    if(!RWCPIEnabled() || !RWCPReady(owner,familiar) || GetLocalObject(familiar,"rw_cpi_owner")!=owner
+    if(!RWCPIEnabled() || !RWCPIWorkAllowed(owner,JsonParse(raw)) || !RWCPReady(owner,familiar) || GetLocalObject(familiar,"rw_cpi_owner")!=owner
+        || (GetLocalInt(familiar,"rw_cpi_moving") && !RWCPPreference(owner,"movement"))
         || GetLocalInt(familiar,"rw_cpi_type")!=GetFamiliarCreatureType(owner) || !RWCPIPackOwned(owner,pack)
         || GetLocalString(familiar,"rw_cpi_task_session")!=GetLocalString(GetModule(),"rw_session")
         || GetLocalInt(familiar,"rw_cpi_task_revision")!=GetLocalInt(GetModule(),"rw_cpi_revision")

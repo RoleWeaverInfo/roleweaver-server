@@ -21,6 +21,8 @@ INCLUDES = (
     "rw_core",
     "rw_companion",
     "rw_cp_base",
+    "rw_cp_prefs",
+    "rw_cp_menu",
     "rw_cp_items",
     "rw_cp_pack",
     "rw_cp_ui",

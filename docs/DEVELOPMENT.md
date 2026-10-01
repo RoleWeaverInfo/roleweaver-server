@@ -157,3 +157,13 @@ snapshots are not persisted in the Role Weaver database. Native character saves
 and PW world persistence remain responsible for the actual items; database
 backups alone cannot restore these possessions. See the companion guide for
 configuration, lifecycle limits and isolated native test fixtures.
+
+Player settings live in `backup_settings` under `companion_preferences`, keyed by
+the existing hashed companion profile identity. `companion_preferences.py`
+validates records and adds reply-length/tone instructions to a temporary profile;
+it never rewrites the DM's saved profile. Portable backup format 13 includes
+these preferences; older formats import defaults. `rw_cp_prefs` maintains only a
+session/service-generation-bound native cache. The owner-only `rw_cp_menu` and
+`rw_cp_menu_evt` UI waits for service acknowledgement before using permissions.
+Player restrictions are applied both to offered actions and at native execution;
+satchel recovery remains independent of AI opt-in and normal inventory permission.

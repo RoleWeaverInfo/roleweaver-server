@@ -7,7 +7,7 @@ satchel ownership, native snapshots and character saves stay outside AI storage.
 import re
 import time
 
-from . import inventory, perception
+from . import companion_preferences, inventory, perception
 
 DEFAULT = dict(enabled=True, radius=20, max_value=10000, containers=[])
 
@@ -53,6 +53,7 @@ def context(event, config):
     raw = event.get("companion_inventory")
     if (
         not configured(config)["enabled"]
+        or not companion_preferences.settings(event)["inventory"]
         or event.get("companion_inventory_protocol") != 1
         or not isinstance(raw, dict)
         or raw.get("available") != 1

@@ -39,7 +39,9 @@ int RWCPIWindowValid(object pc)
         || GetLocalInt(pc,"rw_cpt_until")<=GetLocalInt(GetModule(),"rw_tick") || NWNX_Creature_GetIsBartering(pc))return FALSE;
     // Recovery is owner-only, withdraw-only, and does not need a living familiar.
     if(GetLocalInt(pc,"rw_cpt_recover"))return owner==pc;
-    return RWCPIEnabled() && RWCPReady(owner,familiar) && RWCPIRecipient(familiar,pc)
+    return RWCPIEnabled() && RWCPPreference(owner,"inventory")
+        && (pc==owner || (RWCPPreference(owner,"deliver") && RWCPPreference(owner,"movement")))
+        && RWCPReady(owner,familiar) && RWCPIRecipient(familiar,pc)
         && GetDistanceBetween(familiar,pc)<=3.0
         && GetLocalInt(pc,"rw_cpt_type")==GetFamiliarCreatureType(owner)
         && GetLocalInt(pc,"rw_cpt_revision")==GetLocalInt(GetModule(),"rw_cpi_revision")
