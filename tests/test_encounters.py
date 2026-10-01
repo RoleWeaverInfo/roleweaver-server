@@ -268,7 +268,7 @@ class EncounterTests(unittest.TestCase):
         cmd = self.app.redis.last()
         self.assertEqual(cmd["kind"], "encounter_arm")
         self.assertTrue(cmd["policy"]["attack"])
-        self.assertEqual(cmd["actors"], [dict(npc="mira", epoch=1, combatant=True)])
+        self.assertEqual(cmd["actors"], [dict(npc="mira", epoch=1, combatant=True, opening="")])
         count = len(self.app.redis.commands)
         self.app.sync_encounter_reactions(dict(session="game"))
         self.assertEqual(len(self.app.redis.commands), count)

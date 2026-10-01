@@ -161,6 +161,8 @@ void RWState(object npc)
     }
     v=JsonObjectSet(v,"nearby_npcs",peers);
     v=JsonObjectSet(v,"checkins_protocol",JsonInt(1));
+    v=JsonObjectSet(v,"scene_speech_protocol",JsonInt(1));
+    v=JsonObjectSet(v,"scene_speech_status",JsonString(GetLocalString(npc,"rw_enc_status")));
     v=JsonObjectSet(v,"retreat_protocol",JsonInt(1));
     v=JsonObjectSet(v,"encounter_protocol",JsonInt(7));
     v=JsonObjectSet(v,"live_owner",JsonString(GetLocalString(npc,"rw_live_owner")));
@@ -179,6 +181,7 @@ void RWState(object npc)
     v=JsonObjectSet(v,"surroundings",RWSurroundings(npc));
     v=JsonObjectSet(v,"perception_protocol",JsonInt(3));
     v=JsonObjectSet(v,"nearby_protocol",JsonInt(1));
+    v=JsonObjectSet(v,"follow_protocol",JsonInt(1));
     v=JsonObjectSet(v,"inventory_protocol",JsonInt(GetLocalString(npc,"rw_inventory_revision")!="" ? 1 : 0));
     v=JsonObjectSet(v,"inventory_revision",JsonString(GetLocalString(npc,"rw_inventory_revision")));
     v=JsonObjectSet(v,"inventory",JsonParse(GetLocalString(npc,"rw_inventory_snapshot")));
@@ -210,7 +213,7 @@ void RWState(object npc)
     v = JsonObjectSet(v,"npc_class",JsonInt(GetClassByPosition(1,npc)));
     v=JsonObjectSet(v,"merchant_enabled",JsonInt(GetLocalInt(npc,"rw_merchant_enabled")));
     v=JsonObjectSet(v,"merchant_revision",JsonString(GetLocalString(npc,"rw_merchant_revision")));
-    v=JsonObjectSet(v,"combat",JsonInt(GetIsInCombat(npc)));
+    v=JsonObjectSet(v,"combat",JsonInt(!GetIsDead(npc) && GetIsInCombat(npc)));
     v=JsonObjectSet(v,"action_request",JsonString(GetLocalString(npc,"rw_action_request")));
     v=JsonObjectSet(v,"action_status",JsonString(GetLocalString(npc,"rw_action_status")));
     RWEmit(v);

@@ -131,9 +131,14 @@ allowed here. Ordering an attack does not establish a wound or death. The earlie
 and later-reply requirements concern attacks against PLAYERS, not these separately approved
 NPC actions. confirmed_payments are native receipts; dialogue alone is never payment.
 """
-    return validate(
-        request(config, system, context),
-        context["actors"],
-        progression,
-        context.get("npc_actions"),
-    )
+    # One bounded correction for schema mismatches; never silently apply an
+    # unapproved stage or turn an invalid decision into combat permission.
+    for attempt in range(2):
+        value = request(config, system, context, retry_format=True)
+        try:
+            return validate(value, context["actors"], progression, context.get("npc_actions"))
+        except ValueError as exc:
+            if attempt:
+                raise
+            system += "\nYour previous decision failed validation: " + str(exc)
+            system += "\nReturn a fresh complete decision. To change stages use operation stage; otherwise keep progression.current exactly."

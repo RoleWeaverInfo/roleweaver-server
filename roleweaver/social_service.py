@@ -75,7 +75,7 @@ class SocialCheckService:
                 "encounter_protocol", 0
             ) < 5 or not turn.get("event_id"):
                 raise ValueError("Social checks need the updated bridge")
-            if not self.request_budget.admit(player):
+            if not self.request_budget.admit("social:" + player):
                 raise ValueError("Social check request limit reached")
             context = dict(
                 speech=speech,

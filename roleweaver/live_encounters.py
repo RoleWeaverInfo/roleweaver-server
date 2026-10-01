@@ -48,6 +48,10 @@ class LiveEncounterService:
                 label="Accept a peaceful resolution and end this activation without combat",
             ),
         ]
+        # A dialogue model cannot unilaterally waive the director's unresolved
+        # demand. Automated scenes conclude through the director's outcome checks.
+        if scene.get("director", {}).get("enabled"):
+            choices = [a for a in choices if a["id"] != "encounter:stand_down"]
         if turn.get("attack_ready") is True:
             choices = [a for a in choices if a["id"] != "encounter:warn"]
             choices.append(

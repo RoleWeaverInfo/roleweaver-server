@@ -27,6 +27,15 @@ void RWActionTick(object npc)
     if (GetIsDMPossessed(npc) || GetIsDead(npc) || (GetIsInCombat(npc) && GetLocalString(npc,"rw_action_kind")!="retreat") || GetLocalString(npc,"rw_mode")!="auto"
         || GetLocalInt(npc,"rw_action_epoch")!=GetLocalInt(npc,"rw_epoch"))
         RWActionEnd(npc,"interrupted");
+    else if(GetLocalString(npc,"rw_action_kind")=="follow")
+    {
+        object pc=GetLocalObject(npc,"rw_action_player");
+        if(!GetIsObjectValid(pc) || !GetIsPC(pc) || GetIsDead(pc) || GetIsDM(pc) || GetArea(pc)!=GetArea(npc) || GetDistanceBetween(pc,npc)>20.0)
+        {RWActionEnd(npc,"player unavailable");return;}
+        if(tick>=GetLocalInt(npc,"rw_action_deadline")){RWActionEnd(npc,"completed");return;}
+        if(tick>=GetLocalInt(npc,"rw_follow_update") && GetDistanceBetween(pc,npc)>3.0)
+        {SetLocalInt(npc,"rw_follow_update",tick+3);AssignCommand(npc,ClearAllActions(TRUE));AssignCommand(npc,ActionMoveToLocation(GetLocation(pc),FALSE));}
+    }
     else if(RWInvKind(GetLocalString(npc,"rw_action_kind")))
     { string outcome=RWInvTaskTick(npc); if(outcome!="")RWActionEnd(npc,outcome); }
     else if(RWNearbyKind(GetLocalString(npc,"rw_action_kind")))
@@ -111,6 +120,12 @@ int RWStartAction(object npc,json cmd)
         }
         else if(activity!="home")return FALSE;
     }
+    else if(kind=="follow")
+    {
+        object pc=StringToObject(listener);
+        if(RWS(cmd,"target")!="player" || !GetIsObjectValid(pc) || !GetIsPC(pc) || GetIsDM(pc) || GetIsDMPossessed(pc) || GetIsDead(pc) || GetIsEnemy(pc,npc) || !RWCanHear(pc,npc,6.0))return FALSE;
+        SetLocalObject(npc,"rw_action_player",pc);
+    }
     else if (kind=="retreat" || kind=="walk" || kind=="lead" || kind=="home")
     {
         json d=JsonObjectGet(cmd,"destination"); object area=GetArea(npc);
@@ -169,7 +184,12 @@ int RWStartAction(object npc,json cmd)
     SetLocalInt(npc,"rw_action_next",tick+((RWI(cmd,"village") && RWI(cmd,"village_delay")==5)?5:20));
     SetLocalInt(npc,"rw_action_deadline",tick+3);
     AssignCommand(npc,ClearAllActions(TRUE));
-    if (kind=="village" || kind=="retreat" || kind=="walk" || kind=="lead" || kind=="home")
+    if(kind=="follow")
+    {
+        SetLocalInt(npc,"rw_action_deadline",tick+120);
+        AssignCommand(npc,ActionMoveToLocation(GetLocation(GetLocalObject(npc,"rw_action_player")),FALSE));
+    }
+    else if (kind=="village" || kind=="retreat" || kind=="walk" || kind=="lead" || kind=="home")
     {
         SetLocalLocation(npc,"rw_action_destination",dest);
         SetLocalInt(npc,"rw_action_deadline",tick+30);

@@ -192,13 +192,14 @@ json RWInvPanel(string title,string side)
     col=JsonArrayInsert(col,NuiHeight(NuiList(cells,NuiBind(side+"_items"),38.0),250.0));
     col=JsonArrayInsert(col,NuiHeight(NuiLabel(NuiBind(side+"_selected"),JsonInt(0),JsonInt(1)),38.0));
     col=JsonArrayInsert(col,NuiHeight(NuiId(NuiButton(JsonString("Clear selection")),"clear_"+side),30.0));
-    return NuiCol(col);
+    json sized=JsonArray();int j;for(j=0;j<JsonGetLength(col);j++)sized=JsonArrayInsert(sized,NuiWidth(JsonArrayGet(col,j),390.0));
+    return NuiCol(sized);
 }
 int RWInvExchange(object npc,object pc)
 {
     int payment=RWPaymentPending(npc,pc);
     int items=RWInvFlag(npc,"give") || RWInvFlag(npc,"receive") || RWInvFlag(npc,"exchange");
-    if(!RWInvReady(npc) || (!payment && !RWInvRecipientOK(npc,pc)) || !GetIsPC(pc) || GetDistanceBetween(npc,pc)>3.0 || !LineOfSightObject(npc,pc)
+    if(!RWInvReady(npc) || (!payment && !RWInvRecipientOK(npc,pc)) || !GetIsPC(pc) || GetDistanceBetween(npc,pc)>(payment?10.0:3.0) || !LineOfSightObject(npc,pc)
         || (!items && !payment))return FALSE;
     if(NWNX_Creature_GetIsBartering(pc))return FALSE;
     int old=NuiFindWindow(pc,"rwexchange");if(old)NuiDestroy(pc,old);
@@ -212,8 +213,8 @@ int RWInvExchange(object npc,object pc)
     panels=JsonArrayInsert(panels,RWInvPanel("Your inventory - give to NPC","in"));col=JsonArrayInsert(col,NuiRow(panels));
     col=JsonArrayInsert(col,NuiHeight(NuiLabel(JsonString("Eligible items only (up to 32 each). Click Look to examine. Values are not shop prices."),JsonInt(0),JsonInt(1)),25.0));
     col=JsonArrayInsert(col,NuiHeight(NuiLabel(JsonString("Select one side for a gift, both for barter. Barter requires single non-stackable items."),JsonInt(0),JsonInt(1)),25.0));
-    json buttons=JsonArray();buttons=JsonArrayInsert(buttons,NuiId(NuiButton(JsonString("Confirm transfer / barter")),"confirm"));
-    buttons=JsonArrayInsert(buttons,NuiId(NuiButton(JsonString("Refresh inventories")),"refresh"));col=JsonArrayInsert(col,NuiHeight(NuiRow(buttons),35.0));
+    json buttons=JsonArray();buttons=JsonArrayInsert(buttons,NuiWidth(NuiId(NuiButton(JsonString("Confirm transfer / barter")),"confirm"),390.0));
+    buttons=JsonArrayInsert(buttons,NuiWidth(NuiId(NuiButton(JsonString("Refresh inventories")),"refresh"),390.0));col=JsonArrayInsert(col,NuiHeight(NuiRow(buttons),35.0));
     if(payment)
     {
         string purpose=RWS(JsonParse(GetLocalString(npc,"rw_payment_policy")),"purpose");
@@ -221,6 +222,13 @@ int RWInvExchange(object npc,object pc)
         col=JsonArrayInsert(col,NuiHeight(NuiId(NuiButton(JsonString("Confirm payment: "+IntToString(GetLocalInt(pc,"rw_pay_amount"))+" gold to "+GetStringLeft(GetName(npc),40))),"pay"),35.0));
         col=JsonArrayInsert(col,NuiHeight(NuiLabel(JsonString("Gold payment is separate from selected items. Close to decline. Offer expires after 120 seconds."),JsonInt(0),JsonInt(1)),28.0));
     }
+    else if(GetLocalInt(npc,"rw_interaction_enabled") && JsonDump(JsonObjectGet(JsonParse(GetLocalString(npc,"rw_payment_policy")),"enabled"))=="true")
+    {
+        int amount=RWI(JsonParse(GetLocalString(npc,"rw_payment_policy")),"amount");
+        col=JsonArrayInsert(col,NuiHeight(NuiId(NuiButton(JsonString("Request gold payment offer (up to "+IntToString(amount)+" gold)")),"request_payment"),35.0));
+        col=JsonArrayInsert(col,NuiHeight(NuiLabel(JsonString("Gold is separate from items. Request an offer, then confirm the amount. No gold moves on request."),JsonInt(0),JsonInt(1)),28.0));
+    }
+    json wide=JsonArray();int widthIndex;for(widthIndex=0;widthIndex<JsonGetLength(col);widthIndex++){json child=JsonArrayGet(col,widthIndex);if(widthIndex!=1 && widthIndex!=4)child=NuiWidth(child,800.0);wide=JsonArrayInsert(wide,child);}col=wide;
     json window=NuiWindow(NuiCol(col),JsonString("Role Weaver - Exchange"),NuiRect(-1.0,-1.0,860.0,640.0),JSON_FALSE,JSON_FALSE,JSON_TRUE,JSON_FALSE,JSON_TRUE);
     int token=NuiCreate(pc,window,"rwexchange","rw_trade_evt");if(!token)return FALSE;
     NuiSetBind(pc,token,"payment_offer",JsonString(GetLocalString(pc,"rw_pay_offer")));

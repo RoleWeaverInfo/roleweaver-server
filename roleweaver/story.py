@@ -44,6 +44,8 @@ def facts(value):
     return {
         key: value[key]
         for key in (
+            "rescue_status",
+            "rewarded",
             "appointed",
             "completed",
             "king_present",

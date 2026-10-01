@@ -150,10 +150,13 @@ class DirectorTests(unittest.TestCase):
             choices = [a["id"] for a in profile["controlled_actions"]]
             self.assertIn("encounter:attack", choices)
             self.assertNotIn("encounter:warn", choices)
-            return '{"speech":"Defend yourself.","action":"encounter:attack"}'
+            return '{"speech":"Defend yourself.","action":""}'
 
         with (
             patch("roleweaver.director.evaluate", side_effect=evaluate),
+            patch(
+                "roleweaver.encounter_intent.choose", return_value="encounter:attack"
+            ),
             patch("roleweaver.provider.reply", side_effect=reply),
         ):
             self.app.generate(
@@ -288,6 +291,23 @@ class DirectorTests(unittest.TestCase):
             )
         )
         self.assertTrue(scene["director"]["resolved"])
+
+    def test_dead_actor_combat_flag_does_not_block_resolution(self):
+        key, scene = self.prepare()
+        npc = next(iter(scene["actors"]))
+        self.app.states[npc].update(dead=1, combat=1)
+        context, _ = self.app.director_context(key, scene)
+        self.assertFalse(context["actors"][npc]["combat"])
+        self.review(key, scene, self.result(scene, "resolve"))
+        self.assertEqual(self.app.redis.last()["kind"], "encounter_end")
+        self.assertFalse(scene["director"]["resolved"])
+
+    def test_living_actor_combat_still_blocks_resolution(self):
+        key, scene = self.prepare()
+        npc = next(iter(scene["actors"]))
+        self.app.states[npc].update(dead=0, combat=1)
+        self.review(key, scene, self.result(scene, "resolve"))
+        self.assertEqual(scene["director"]["error"], "Resolution deferred until combat ends.")
 
     def test_failure_holds_combat_and_backs_off(self):
         key, scene = self.prepare()

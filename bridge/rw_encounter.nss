@@ -161,6 +161,7 @@ int RWEncounterArm(object leader,json cmd)
         string combatant=JsonDump(JsonObjectGet(JsonArrayGet(cast,permissionIndex),"combatant"));
         // Missing means legacy combatant; a supplied value must be a real boolean.
         if(combatant!="null" && combatant!="true" && combatant!="false")return FALSE;
+        if(GetStringLength(RWS(JsonArrayGet(cast,permissionIndex),"opening"))>300)return FALSE;
     }
     location anchor=GetLocation(leader);
     string owner=RWS(cmd,"live_owner");
@@ -365,6 +366,24 @@ object RWEncounterNearbyPlayer(object leader,json p,location anchor)
         return pc;
 }
 // The director may end an activation, never initiate combat or choose a target.
+// Cast banter cannot spend gold, choose targets, or advance a conversation turn.
+// Authenticate both actors against the current scene and require a visible player.
+int RWSceneSpeech(object npc,object peer,json cmd)
+{
+    object leader=RWFind(RWS(cmd,"leader"));
+    if(!GetIsObjectValid(leader) || !RWEncounterOwner(leader,cmd) || !RWEncounterOwner(npc,cmd) || !RWEncounterOwner(peer,cmd)
+        || RWS(cmd,"token")!=GetLocalString(leader,"rw_enc_token")
+        || GetLocalInt(GetModule(),"rw_tick")>GetLocalInt(leader,"rw_enc_lease") || GetLocalInt(leader,"rw_director_hold"))return FALSE;
+    string status=GetLocalString(leader,"rw_enc_status");
+    if(status!="engaged" && status!="negotiating")return FALSE;
+    json cast=JsonParse(GetLocalString(leader,"rw_enc_cast"));int i,a=FALSE,b=FALSE;
+    for(i=0;i<JsonGetLength(cast);i++)
+    {json row=JsonArrayGet(cast,i);object o=RWFind(RWS(row,"npc"));if(GetLocalInt(o,"rw_epoch")==RWI(row,"epoch")){if(o==npc)a=TRUE;if(o==peer)b=TRUE;}}
+    if(!a || !b)return FALSE;
+    object pc=GetFirstPC();while(GetIsObjectValid(pc))
+    {if(RWEncounterPlayer(pc,GetArea(npc)) && GetDistanceBetween(pc,npc)<=15.0 && LineOfSightObject(npc,pc))return TRUE;pc=GetNextPC();}
+    return FALSE;
+}
 int RWEncounterEnd(object leader,json cmd)
 {
     if(RWS(cmd,"world")!=RWWorld() || RWS(cmd,"token")!=GetLocalString(leader,"rw_enc_token")
@@ -377,7 +396,7 @@ int RWEncounterEnd(object leader,json cmd)
     {
         json row=JsonArrayGet(cast,i);object actor=RWFind(RWS(row,"npc"));
         if(!GetIsObjectValid(actor) || !RWEncounterOwner(actor,cmd)
-            || GetIsDMPossessed(actor) || GetIsInCombat(actor)
+            || GetIsDMPossessed(actor) || (!GetIsDead(actor) && GetIsInCombat(actor))
             || GetLocalInt(actor,"rw_epoch")!=RWI(row,"epoch"))return FALSE;
     }
     SetLocalInt(leader,"rw_enc_repeat",FALSE);
@@ -405,6 +424,24 @@ void RWDirectorObserve(object leader)
     e=JsonObjectSet(e,"encounter",JsonString(GetLocalString(leader,"rw_enc_id")));
     e=JsonObjectSet(e,"token",JsonString(GetLocalString(leader,"rw_enc_token")));
     e=JsonObjectSet(e,"players",players);RWEmit(e);
+}
+void RWCastOpening(object leader,object pc,string token,int index,int generation)
+{
+    if(!GetIsObjectValid(leader) || GetLocalString(leader,"rw_mode")!="auto" || GetIsDead(leader) || GetIsDMPossessed(leader) || GetIsInCombat(leader) || token!=GetLocalString(leader,"rw_enc_token")
+        || generation!=GetLocalInt(leader,"rw_cast_opening_generation")
+        || GetLocalInt(GetModule(),"rw_tick")>GetLocalInt(leader,"rw_enc_lease"))return;
+    string status=GetLocalString(leader,"rw_enc_status");
+    if(status!="engaged" && status!="negotiating")return;
+    json row=JsonArrayGet(JsonParse(GetLocalString(leader,"rw_enc_cast")),index);
+    object npc=RWFind(RWS(row,"npc"));string speech=RWS(row,"opening");
+    if(speech=="" || !GetIsObjectValid(npc) || GetLocalInt(npc,"rw_epoch")!=RWI(row,"epoch")
+        || GetLocalString(npc,"rw_mode")!="auto" || GetIsDead(npc) || GetIsDMPossessed(npc) || GetIsInCombat(npc)
+        || !RWEncounterPlayer(pc,GetArea(npc)) || GetDistanceBetween(pc,npc)>20.0 || !LineOfSightObject(npc,pc))return;
+    if(NWNX_Chat_SendMessage(NWNX_CHAT_CHANNEL_PLAYER_TALK,speech,npc))
+    {
+        json e=RWBase("scene_line",npc);e=JsonObjectSet(e,"encounter",JsonString(GetLocalString(leader,"rw_enc_id")));
+        e=JsonObjectSet(e,"token",JsonString(token));e=JsonObjectSet(e,"text",JsonString(speech));RWEmit(e);
+    }
 }
 void RWEncounterTick(object leader)
 {
@@ -434,7 +471,18 @@ void RWEncounterTick(object leader)
             {RWEncounterEvent(leader,"warning_failed");return;}
             SetLocalObject(leader,"rw_enc_target",pc);
             RWBeginTalk(pc,leader);
-            RWEncounterEvent(leader,"engaged");return;
+            RWEncounterEvent(leader,"engaged");
+            int generation=GetLocalInt(leader,"rw_cast_opening_generation")+1;SetLocalInt(leader,"rw_cast_opening_generation",generation);
+            json cast=JsonParse(GetLocalString(leader,"rw_enc_cast"));int i,pass,slot=1;
+            // Witnesses/captives speak first. These DM-authored lines don't wait
+            // for an LLM and do not steal the player's selected conversation.
+            for(pass=0;pass<2;pass++)for(i=1;i<JsonGetLength(cast);i++)
+            {
+                json actor=JsonArrayGet(cast,i);int captive=JsonDump(JsonObjectGet(actor,"combatant"))=="false";
+                if(RWS(actor,"opening")!="" && ((pass==0 && captive) || (pass==1 && !captive)))
+                {DelayCommand(IntToFloat(slot*3),RWCastOpening(leader,pc,GetLocalString(leader,"rw_enc_token"),i,generation));slot++;}
+            }
+            return;
         }
         if((status=="engaged" || status=="negotiating") && (!RWEncounterPlayer(pc,GetAreaFromLocation(anchor))
             || GetDistanceBetweenLocations(GetLocation(pc),anchor)>=IntToFloat(RWI(p,"leave_radius"))))

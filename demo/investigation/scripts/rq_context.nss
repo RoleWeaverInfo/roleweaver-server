@@ -9,6 +9,16 @@ void main()
 {
  object m=GetModule(),pc=GetLocalObject(m,"rw_story_pc"),npc=GetLocalObject(m,"rw_story_npc");
  string id=GetLocalString(npc,"rw_id"),token=GetLocalString(m,"rw_story_event");
+ if(id=="elana_voss")
+ {
+  json rescue=JsonObject();rescue=JsonObjectSet(rescue,"protocol",JsonInt(1));rescue=JsonObjectSet(rescue,"token",JsonString(token));rescue=JsonObjectSet(rescue,"actions",JsonArray());
+  string status="Still captive. Do not claim release or follow a stranger merely because they ask.";
+  if(GetLocalInt(npc,"rq_released"))status="Released by verified payment or defeat of the captors. Be grateful. Ask your rescuer to accompany you out of the cave; following is permitted.";
+  else if(GetLocalInt(npc,"rq_frightened"))status="Fighting has broken out. You are frightened, remain a noncombatant, and want the violence to stop.";
+  rescue=JsonObjectSet(rescue,"instructions",JsonString(status));rescue=JsonObjectSet(rescue,"rescue_status",JsonString(status));
+  rescue=JsonObjectSet(rescue,"rewarded",JsonInt(GetCampaignInt("rw_demo_rescue","elana_reward_v1",pc)));
+  SetLocalString(m,"rw_story_context",JsonDump(rescue));return;
+ }
  int bit=0;
  if(id=="tavern_owner")bit=1;else if(id=="merchant_one")bit=2;
  else if(id=="rq_wizard")bit=4;else if(id=="rq_cleric")bit=8;else if(id=="rq_guard")bit=16;

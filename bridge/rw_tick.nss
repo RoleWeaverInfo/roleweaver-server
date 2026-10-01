@@ -226,12 +226,14 @@ void main()
             {
                 object peer=RWFind(RWS(cmd,"peer"));
                 string speech=RWS(cmd,"text");
+                int scene=RWS(cmd,"encounter")!="";
                 if(GetIsObjectValid(peer) && peer!=npc && !GetIsPC(peer) && !GetIsPC(npc)
                     && GetLocalString(npc,"rw_mode")=="auto" && GetLocalString(peer,"rw_mode")=="auto"
                     && !GetIsDMPossessed(npc) && !GetIsDMPossessed(peer) && !GetIsDead(npc) && !GetIsDead(peer)
-                    && !GetIsInCombat(npc) && !GetIsInCombat(peer) && !RWHasConversation(npc) && !RWHasConversation(peer)
+                    && !GetIsInCombat(npc) && !GetIsInCombat(peer)
+                    && ((scene && RWSceneSpeech(npc,peer,cmd)) || (!scene && !RWHasConversation(npc) && !RWHasConversation(peer)))
                     && GetLocalInt(peer,"rw_epoch")==RWI(cmd,"peer_epoch") && GetArea(peer)==GetArea(npc)
-                    && GetDistanceBetween(npc,peer)<=6.0 && LineOfSightObject(npc,peer)
+                    && GetDistanceBetween(npc,peer)<=(scene?15.0:6.0) && LineOfSightObject(npc,peer)
                     && GetObjectSeen(peer,npc) && GetObjectSeen(npc,peer)
                     && GetLocalString(npc,"rw_action_status")!="running" && GetLocalString(peer,"rw_action_status")!="running"
                     && RWS(cmd,"request")!=GetLocalString(npc,"rw_checkin_last") && GetStringLength(speech)>0 && GetStringLength(speech)<=1000)

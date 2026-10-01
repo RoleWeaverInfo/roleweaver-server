@@ -101,13 +101,15 @@ class LiveDirectorService:
         )
 
     def director_before_reply(self, npc, turn, generation, started):
-        """Prioritize an eligible confrontation before composing this same reply.
+        """Review a current encounter turn before composing this same reply.
 
         Reuse the single director slot, budgets and stale-snapshot validation.
         Never hold the service lock during the provider request.
+        Even a first refusal or payment offer must clear an earlier no-player
+        hold; waiting until attack eligibility would prevent the warning itself.
         """
         with self.lock:
-            if not turn.get("attack_ready") or self.restoring:
+            if not turn.get("event_id") or self.restoring:
                 return
             scene = next(
                 (s for s in self.director_scenes().values() if npc in s["actors"]), None
@@ -127,7 +129,8 @@ class LiveDirectorService:
                 or state.get("epoch") != started.get("epoch")
                 or observed.get("event_id") != turn.get("event_id")
                 or observed.get("activation") != scene["run"]["started"]
-                or not observed.get("observation", {}).get("attack_ready")
+                or observed.get("observation", {}).get("attack_ready")
+                != turn.get("attack_ready")
                 or time.monotonic() - observed.get("seen", 0) >= 120
             ):
                 return
@@ -274,7 +277,7 @@ class LiveDirectorService:
                 name=scene["actors"][n]["name"],
                 connected=time.monotonic() - s.get("seen", 0) < 4,
                 dead=bool(s.get("dead")),
-                combat=bool(s.get("combat")),
+                combat=bool(s.get("combat")) and not bool(s.get("dead")),
                 mode=s.get("mode"),
                 action=dict(choice=job.get("choice"), status=job.get("status")),
             )
@@ -488,7 +491,9 @@ class LiveDirectorService:
                     if scene.get("scope") == "persistent":
                         d["pending_outcome"] = result["outcome"]
                     if any(
-                        self.states.get(n, {}).get("combat") for n in scene["actors"]
+                        self.states.get(n, {}).get("combat")
+                        and not self.states.get(n, {}).get("dead")
+                        for n in scene["actors"]
                     ):
                         d["error"] = "Resolution deferred until combat ends."
                     elif scene["run"]["template"]["reaction"]["enabled"]:
@@ -516,7 +521,10 @@ class LiveDirectorService:
                         + "; awaiting game confirmation.",
                     )
                 self.persist_director(scene)
-        except Exception:
+        except Exception as exc:
+            from .diagnostics_log import record
+
+            record(self, "provider_failed", exc, phase="director")
             with self.lock:
                 scene = self.director_scenes().get(key)
                 if (

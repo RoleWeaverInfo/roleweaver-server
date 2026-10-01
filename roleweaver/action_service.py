@@ -257,16 +257,23 @@ class ActionService(InteractionService, VillageService, PatrolService, MerchantA
             in ("pending", "running", "waiting for player")
             and time.monotonic() - self.action_jobs[npc]["started"] < 140
         ):
+            # A payment offer may replace an open item exchange, but never interrupt movement.
+            job = self.action_jobs[npc]
+            if (
+                job.get("status") == "waiting for player"
+                and job.get("choice") == "exchange:player"
+            ):
+                return self.payment_choices(npc, listener)
             return []
         available = actions.choices(
             self.action_config, npc, self.config.get("world_id", "")
         )
+        if listener and state.get("follow_protocol") == 1 and self.action_config["npcs"].get(npc, {}).get("follow"):
+            available.append(dict(id="follow:player", description="Follow the speaking player within this area for up to two minutes. Only agree when consistent with your scene role, captivity and release conditions; a request alone is not a rescue."))
         available += self.nearby_choices(npc)
         available += self.payment_choices(npc, listener)
         available += self.npc_combat_choices(npc)
-        if not self.encounter_for(npc) and state.get(
-            "inventory_revision"
-        ) == self.inventory_revision(npc):
+        if state.get("inventory_revision") == self.inventory_revision(npc):
             available += inventory.choices(
                 self.action_config["npcs"].get(npc, {}),
                 state,
@@ -438,7 +445,7 @@ class ActionService(InteractionService, VillageService, PatrolService, MerchantA
             listener=listener,
             conversation_revision=self.conversation_revision,
         )
-        if kind in ("lead", "shop") and not listener:
+        if kind in ("lead", "shop", "follow") and not listener:
             raise ValueError(
                 "This action needs a player: ask the NPC in game to lead you or show its shop"
             )
@@ -446,6 +453,35 @@ class ActionService(InteractionService, VillageService, PatrolService, MerchantA
             raise ValueError("Shop stock is not ready; check merchant status")
         if kind in ("walk", "lead", "home"):
             fields["destination"] = self.action_config["destinations"][target]
+            if patrol and kind == "walk":
+                # A DM-linked check-in stop follows the assigned NPC, not its old marker.
+                duty = self.action_config["npcs"][npc].get("patrol", {})
+                peer_id = duty.get("checkins", {}).get(target)
+                if peer_id:
+                    peer_state = self.states.get(peer_id, {})
+                    own = self.states[npc]
+                    if (time.monotonic() - peer_state.get("seen", 0) > 3
+                            or peer_state.get("session") != own.get("session")
+                            or peer_state.get("area") != own.get("area")
+                            or peer_state.get("dead") or peer_state.get("combat")
+                            or peer_state.get("possessed") or peer_state.get("mode") != "auto"):
+                        raise ValueError("Patrol contact is unavailable in this area")
+                    if sum((peer_state.get(k, 0) - own.get(k, 0)) ** 2 for k in ("x", "y", "z")) > 1600:
+                        raise ValueError("Patrol contact is beyond the permitted walk distance")
+                    fields["destination"] = dict(fields["destination"],
+                        area=peer_state.get("area_resref", peer_state["area"]),
+                        area_tag=peer_state.get("area_tag", fields["destination"]["area_tag"]),
+                        **{k: float(peer_state[k]) for k in ("x", "y")},
+                        z=float(peer_state.get("z", fields["destination"]["z"])))
+                    # Stop on the near side of the contact, rather than inside their
+                    # collision cylinder. The game still validates pathing/arrival.
+                    dx = float(own.get("x", 0)) - float(peer_state["x"])
+                    dy = float(own.get("y", 0)) - float(peer_state["y"])
+                    distance = (dx * dx + dy * dy) ** 0.5
+                    if distance:
+                        offset = min(2.0, distance)
+                        fields["destination"]["x"] += dx / distance * offset
+                        fields["destination"]["y"] += dy / distance * offset
         peer = ""
         if kind in nearby.KINDS:
             row = self.states[npc]["nearby_targets"][target]

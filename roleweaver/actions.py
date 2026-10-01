@@ -13,6 +13,7 @@ DEFAULT_POLICY = dict(
     lead_destinations=[],
     home="",
     shop=False,
+    follow=False,
 )
 LEGACY_POLICY_KEYS = {"enabled", "destinations", "gestures"}
 
@@ -87,6 +88,9 @@ def policy(value, destinations):
             if k
             not in ("patrol", "nearby", "inventory", "village", "payment", "npc_combat")
         }
+    if isinstance(value, dict):
+        value = dict(value)
+        value.setdefault("follow", False)
     if (
         not isinstance(value, dict)
         or set(value) != set(DEFAULT_POLICY)
@@ -109,6 +113,7 @@ def policy(value, destinations):
         not isinstance(value["home"], str)
         or (value["home"] and value["home"] not in destinations)
         or type(value["shop"]) is not bool
+        or type(value["follow"]) is not bool
     ):
         raise ValueError("Choose a saved home and a valid shop permission")
     result = {k: list(v) if isinstance(v, list) else v for k, v in value.items()}

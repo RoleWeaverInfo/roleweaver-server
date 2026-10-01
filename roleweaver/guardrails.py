@@ -17,6 +17,9 @@ INPUT_PATTERNS = [
     r"\b(?:decode|decrypt)\b.{0,60}\b(?:base64|rot13)\b.{0,60}\b(?:follow|obey|execute)\b",
 ]
 OUTPUT_PATTERNS = [
+    r"\b(?:video game|game engine|native receipt|game-confirmed receipt|game.s payment confirmation)\b",
+    r"\b(?:the game|game scripts?)\b.{0,45}\b(?:confirm|verify|validate|transfer|receipt)\w*\b",
+    r"\b(?:confirm|verify)\w*\b.{0,45}\b(?:through|in|by) the game\b",
     r"\bsk-(?:proj-)?[a-z0-9_-]{20,}\b",
     r"```(?:python|javascript|bash|powershell|json)\b",
     r"\bas (?:an? )?(?:ai|language model|chatgpt)\b",

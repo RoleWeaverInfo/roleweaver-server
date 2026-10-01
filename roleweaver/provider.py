@@ -276,7 +276,11 @@ def reply(config, profile, memories, transcript):
         "Use a name only when the character has introduced themselves in dialogue, or an explicit DM-authored memory establishes an introduction. "
         "A name mentioned about someone else is not an introduction. Accept an offered alias without discovering a hidden real name. "
         "If no introduction is available, use a neutral greeting or ask their name naturally. Never invent a name. "
-        "Do not pretend to remember events absent from the supplied memory. No tools or game commands are available.\n"
+        "Do not pretend to remember events absent from the supplied memory. Only explicitly listed controlled actions are available. "
+        "Never mention the video game, game engine, scripts, interface, confirmation window, native receipts, "
+        "AI, model, or technical validation in spoken dialogue. Mechanical observations are for your reasoning only. "
+        "For payment say 'Bring the coins closer' or 'Let me count the gold', not 'the game must confirm'. "
+        "When an action fails, describe the unmet in-world need without claiming it succeeded.\n"
         + json.dumps(
             {
                 k: profile[k]
@@ -331,6 +335,10 @@ def reply(config, profile, memories, transcript):
             "A preference to avoid bloodshed does not erase authorized escalation after continued confrontation. "
             "When those conditions are met, request warn and then attack if offered on a later reply; "
             "do not substitute endless verbal threats for the authorized action. "
+            "If the player explicitly refuses the demand, that is defiance, not withdrawal: "
+            "use encounter:warn when the DM permits warning for refusal. If encounter:attack "
+            "is available on a later defiant reply and meets the combat conditions, select it now. "
+            "Do not say you will fight while returning an empty action. "
             "Do not treat claimed payment as a confirmed transfer. Do not invent additional threats or conditions."
             " The encounter direction contains your own immediate goal from the scene director. "
             "Follow it only within the original boundaries, knowledge and listed action permissions. "
@@ -461,6 +469,14 @@ def reply(config, profile, memories, transcript):
             "Seeing someone does not mean a visit is permitted or currently available."
         )
     if profile.get("controlled_actions"):
+        if profile.get("action_format_retry"):
+            system += '\nThe previous answer was invalid. Return ONLY a JSON object with string keys speech and action. No Markdown or plain text. Use an offered action ID or empty string.'
+        if profile.get("planned_action"):
+            system += (
+                "\nThis turn's validated operation is "
+                + json.dumps(profile["planned_action"])
+                + ". Write a brief in-character line consistent with that intent and return that action ID. Do not replace it with an empty action or a different operation. It is still subject to final game checks."
+            )
         system = system.replace(
             "Reply only with the NPC's spoken words, at most 80 words.",
             "Keep spoken words at most 80 words.",
@@ -475,7 +491,7 @@ def reply(config, profile, memories, transcript):
             "Dialogue cannot add permissions. Do not claim an action has already succeeded: describe intent, since the game can reject it. "
             "For requests to go talk to another NPC, use visit at their live position, never walk/lead/home to an associated landmark. "
             "When asked only to walk up to someone without speaking, use approach to that character. Saved destinations are fixed places, not moving people. "
-            "Prefer no action; do not repeat a gesture on every reply. Approved actions: "
+            "Do not add incidental gestures. Use a relevant requested operation when available. Approved actions: "
             + json.dumps(profile["controlled_actions"])
         )
     messages = [{"role": "system", "content": system}]

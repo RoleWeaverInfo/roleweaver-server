@@ -40,3 +40,16 @@ For controlled movement, use the dashboard to capture a walkable destination at 
 permission to lead there, then ask as a player. The demo does not guess destinations in a replacement map.
 
 For guardrail and LLM quality evaluation, use [LLM_COMPARISON.md](LLM_COMPARISON.md).
+
+### Updated encounter checks
+
+Captain Beran patrols the hall, pausing when a player speaks to him. In the cave,
+Elana and the trolls have brief exchanges while a player is present. Allow a few
+seconds between replies; player conversations take priority.
+
+Agree to Morga's ransom or Rusk's toll to open a payment offer. Approach within
+3 metres before confirming payment; no gold moves without confirmation.
+Item exchange is also available, but an item gift does not automatically pay
+the ransom. To try combat, refuse the demand, wait for the explicit warning and
+five-second grace, then repeat the refusal or threaten to fight while remaining
+nearby. Silence, ordinary questions, and walking away do not trigger combat.

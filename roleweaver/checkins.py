@@ -11,11 +11,120 @@ from . import provider, safeguards, guardrails, perception
 
 
 class CheckinService:
+    def scene_exchange_valid(self, item):
+        """Scene speech shares cast authority, never a player's identity or turn."""
+        scene = self.director_scenes().get(item.get("scene"))
+        if (
+            not scene
+            or scene["run"]["status"] != "active"
+            or not scene.get("director", {}).get("enabled")
+        ):
+            return False
+        run = scene["run"]
+        leader = next(iter(scene["actors"]))
+        if self.states.get(leader, {}).get("scene_speech_status") not in (
+            "engaged",
+            "negotiating",
+        ):
+            return False
+        if run["started"] != item["activation"] or run["revision"] != item["revision"]:
+            return False
+        if any(n not in scene["actors"] for n in item["pair"]):
+            return False
+        direction = self.director_npc_context(item["pair"][0])
+        presence = self.director_presence.get(item["scene"], {})
+        if (
+            direction.get("holding")
+            or direction.get("finished")
+            or not presence.get("players")
+            or time.monotonic() - presence.get("seen", 0) > 12
+        ):
+            return False
+        for n in item["pair"]:
+            near = self.action_config["npcs"].get(n, {}).get("nearby", {})
+            if not near.get("talk") or not near.get("receive"):
+                return False
+            if self.states.get(n, {}).get("scene_speech_protocol") != 1:
+                return False
+        return True
+
+    def scene_exchange_tick(self):
+        """At most two short exchanges per player turn, with no recursive chatter.
+
+        First let a noncombatant speak, then another supporting actor. Fresh
+        player input permits another exchange; idle scenes cannot talk forever.
+        """
+        if (
+            self.checkin
+            or self.checkin_working
+            or self.restoring
+            or len(self.busy) >= 3
+        ):
+            return
+        now = time.monotonic()
+        if now < getattr(self, "scene_cast_poll_at", 0):
+            return
+        self.scene_cast_poll_at = now + 2
+        for key, scene in self.director_scenes().items():
+            cast = scene["run"]["template"]["actors"]
+            if len(cast) < 2 or scene["run"]["status"] != "active":
+                continue
+            runtime = self.director_runtime.setdefault(key, {})
+            if now < runtime.get("cast_next", 0):
+                continue
+            with self.store.lock:
+                ids = list(scene["actors"])
+                latest = self.store.db.execute(
+                    "SELECT COALESCE(MAX(id),0) FROM messages WHERE npc IN ("
+                    + ",".join("?" for _ in ids)
+                    + ") AND speaker='player' AND player NOT LIKE 'npc:%' AND created>=?",
+                    (*ids, scene["run"]["started"]),
+                ).fetchone()[0]
+            mark = (scene["run"]["started"], latest)
+            if runtime.get("cast_mark") != mark:
+                runtime.update(cast_mark=mark, cast_count=0)
+            if runtime.get("cast_count", 0) >= 2:
+                continue
+            supporting = sorted(cast[1:], key=lambda a: a.get("combatant", True))
+            actor = supporting[runtime.get("cast_count", 0) % len(supporting)]["npc"]
+            leader = cast[0]["npc"]
+            item = dict(
+                id=secrets.token_hex(12),
+                pair=[actor, leader],
+                turn=0,
+                scene=key,
+                activation=scene["run"]["started"],
+                revision=scene["run"]["revision"],
+                purpose="Act out your own role in the current encounter. React to your partner and the nearby visitor. A captive may plead for help; captors may answer or disagree. Reveal only your own motives and knowledge.",
+                deadline=now + 90,
+                stamps={},
+            )
+            for n in item["pair"]:
+                s = self.states.get(n, {})
+                item["stamps"][n] = (
+                    s.get("session"),
+                    s.get("epoch"),
+                    self.generations.get(n, 0),
+                )
+            if not self.checkin_valid(item) or not self.request_budget.admit(
+                "npc-checkins"
+            ):
+                continue
+            runtime["cast_count"] = runtime.get("cast_count", 0) + 1
+            runtime["cast_next"] = now + 25
+            self.checkin = item
+            self.checkin_working += 1
+            self.pool.submit(self.generate_checkin, item)
+            return
+
     def checkin_valid(self, item):
         if time.monotonic() > item["deadline"] or self.restoring:
             return False
+        scene_exchange = bool(item.get("scene"))
+        if scene_exchange and not self.scene_exchange_valid(item):
+            return False
         for npc, stamp in item["stamps"].items():
-            if self.encounter_for(npc):
+            if self.encounter_for(npc) and not scene_exchange:
                 return False
             s = self.states.get(npc, {})
             if (
@@ -26,7 +135,7 @@ class CheckinService:
                 or s.get("dead")
                 or s.get("combat")
                 or s.get("possessed")
-                or s.get("conversation_active")
+                or (s.get("conversation_active") and not scene_exchange)
                 or npc in self.busy
                 or s.get("checkins_protocol") != 1
             ):
@@ -38,6 +147,17 @@ class CheckinService:
             ):
                 return False
         a, b = (self.states[n] for n in item["pair"])
+        if scene_exchange:
+            radius = min(
+                self.action_config["npcs"][n]["nearby"].get("radius", 8)
+                for n in item["pair"]
+            )
+            return (
+                a.get("area") == b.get("area")
+                and (a.get("x", 0) - b.get("x", 0)) ** 2
+                + (a.get("y", 0) - b.get("y", 0)) ** 2
+                <= radius * radius
+            )
         # IDs in this list are emitted only for nearby, visible bound NPCs.
         return item["pair"][1] in a.get("nearby_npcs", []) and item["pair"][0] in b.get(
             "nearby_npcs", []
@@ -63,6 +183,7 @@ class CheckinService:
         if self.checkin and not self.checkin_valid(self.checkin):
             self.checkin_notice = "Check-in ended: player conversation, control change, distance or timeout."
             self.checkin = None
+        self.scene_exchange_tick()
 
     def start_checkin(self, npc, stop, duty):
         target = duty.get("checkins", {}).get(stop)
@@ -131,6 +252,8 @@ class CheckinService:
                 profile["perception"] = perception.snapshot(self.states[speaker])
                 profile["surroundings"] = profile["perception"]["objects"]
                 profile["checkin_reports"] = self.checkin_reports(speaker)
+                if item.get("scene"):
+                    profile["encounter"] = self.encounter_context(speaker)
                 config = dict(self.config)
                 policy = safeguards.settings(self.safeguard_policy)
                 history = self.store.transcript(speaker, "npc:" + listener, 8)
@@ -153,6 +276,11 @@ class CheckinService:
                         + "Introduce information your neighbour may not know, but do not invent world events, completed actions, possessions or private lore you cannot share. Use only one thought or question, ideally 8–15 words, never more than 20 words."
                     )
                 history.append(dict(speaker="player", text=prompt))
+                if item.get("scene"):
+                    history[-1]["text"] = (
+                        "Speak one short in-character sentence for this scene, reacting to your partner's last words and your own current role. You may address the nearby rescuer. Do not greet captors as friends or invent actions. "
+                        + item["purpose"]
+                    )
                 memories = self.store.memories(speaker, "npc:" + listener)
             profile = safeguards.scrub_tree(profile, policy)
             memories = safeguards.scrub_tree(memories, policy)
@@ -195,6 +323,15 @@ class CheckinService:
                 if self.checkin is not item or not self.checkin_valid(item):
                     return
                 peer = self.states[listener]
+                authority = {}
+                if item.get("scene"):
+                    scene = self.director_scenes()[item["scene"]]
+                    authority = dict(
+                        encounter=item["scene"],
+                        token=str(item["activation"]),
+                        leader=next(iter(scene["actors"])),
+                        **self.scene_authority(scene),
+                    )
                 item["request"] = self.command(
                     speaker,
                     "checkin_say",
@@ -203,6 +340,7 @@ class CheckinService:
                     peer_epoch=peer["epoch"],
                     checkin_id=item["id"],
                     world=self.config["world_id"],
+                    **authority,
                 )
                 self.checkin_notice = "Waiting for game confirmation"
         except Exception as exc:

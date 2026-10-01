@@ -56,6 +56,23 @@ class InteractionTests(unittest.TestCase):
         self.assertEqual(self.app.payment_context("mira")[0]["amount"], 100)
         self.assertNotIn("payer", self.app.payment_receipts[0])
 
+    def test_exchange_payment_request_opens_offer_without_receipt(self):
+        self.ready()
+        event = dict(
+            kind="payment_request",
+            npc="mira",
+            world="test",
+            session=self.state["session"],
+            epoch=self.state["epoch"],
+            listener="pc",
+        )
+        self.app.event(dict(event, epoch=999))
+        self.assertEqual(self.app.payment_offers, {})
+        self.app.event(event)
+        self.assertEqual(len(self.app.payment_offers), 1)
+        self.assertEqual(self.app.payment_receipts, [])
+        self.assertEqual(self.app.action_jobs["mira"]["choice"], "payment:100")
+
     def test_invalid_limits_and_targets(self):
         for changes in [dict(minimum=101), dict(amount=True), dict(minimum=0)]:
             with self.assertRaises(ValueError):

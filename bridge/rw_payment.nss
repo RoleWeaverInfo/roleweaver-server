@@ -21,17 +21,17 @@ int RWInteractionReady(object npc,string revision)
   && GetLocalInt(npc,"rw_interaction_enabled") && revision==GetLocalString(npc,"rw_interaction_revision")
   && GetLocalInt(GetModule(),"rw_tick")<=GetLocalInt(npc,"rw_interaction_lease");
 }
-int RWPaymentPlayer(object pc,object npc)
+int RWPaymentPlayer(object pc,object npc,float distance=3.0)
 {
  return GetIsObjectValid(pc) && GetIsPC(pc) && !GetIsDM(pc) && !GetIsDMPossessed(pc) && !GetIsDead(pc)
   && !GetIsInCombat(pc) && !GetIsInCombat(npc) && GetArea(pc)==GetArea(npc)
-  && GetDistanceBetween(pc,npc)<=3.0 && LineOfSightObject(pc,npc);
+  && GetDistanceBetween(pc,npc)<=distance && LineOfSightObject(pc,npc);
 }
 // A window binds this offer ID, so an old button cannot accept new terms.
 int RWPaymentPending(object npc,object pc)
 {
  return GetLocalString(pc,"rw_pay_offer")!="" && GetLocalObject(pc,"rw_pay_npc")==npc
-  && RWInteractionReady(npc,GetLocalString(pc,"rw_pay_revision")) && RWPaymentPlayer(pc,npc)
+  && RWInteractionReady(npc,GetLocalString(pc,"rw_pay_revision")) && RWPaymentPlayer(pc,npc,10.0)
   && GetLocalInt(pc,"rw_pay_epoch")==GetLocalInt(npc,"rw_epoch")
   && GetLocalInt(GetModule(),"rw_tick")<=GetLocalInt(pc,"rw_pay_until");
 }
@@ -40,7 +40,7 @@ int RWPaymentOffer(object npc,json cmd)
  json p=JsonParse(GetLocalString(npc,"rw_payment_policy"));
  object pc=StringToObject(RWS(cmd,"listener"));int amount=RWI(cmd,"amount");
  if(RWS(cmd,"world")!=RWWorld() || !RWInteractionReady(npc,RWS(cmd,"revision"))
-  || JsonDump(JsonObjectGet(p,"enabled"))!="true" || !RWPaymentPlayer(pc,npc)
+  || JsonDump(JsonObjectGet(p,"enabled"))!="true" || !RWPaymentPlayer(pc,npc,10.0)
   || amount<RWI(p,"minimum") || amount>RWI(p,"amount") || GetStringLength(RWS(cmd,"offer"))!=24)return FALSE;
  // One outstanding offer per player. A new offer replaces the old offer.
  SetLocalObject(pc,"rw_pay_npc",npc);SetLocalInt(pc,"rw_pay_epoch",GetLocalInt(npc,"rw_epoch"));
@@ -69,15 +69,23 @@ void RWPaymentConfirm(object pc,string expectedOffer)
  object npc=GetLocalObject(pc,"rw_pay_npc");string offer=GetLocalString(pc,"rw_pay_offer");
  if(offer=="" || expectedOffer!=offer || GetStringLength(expectedOffer)!=24)
  {SendMessageToPC(pc,"No matching pending payment. Ask for a fresh offer.");return;}
- if(!RWInteractionReady(npc,GetLocalString(pc,"rw_pay_revision")) || !RWPaymentPlayer(pc,npc)
+ if(!RWInteractionReady(npc,GetLocalString(pc,"rw_pay_revision")) || !RWPaymentPlayer(pc,npc,10.0)
   || GetLocalInt(npc,"rw_epoch")!=GetLocalInt(pc,"rw_pay_epoch")
   || GetLocalInt(GetModule(),"rw_tick")>GetLocalInt(pc,"rw_pay_until"))
  {DeleteLocalString(pc,"rw_pay_offer");SendMessageToPC(pc,"Payment expired or became unavailable. No gold taken.");return;}
+ if(!RWPaymentPlayer(pc,npc))
+ {SendMessageToPC(pc,"Move within 3 metres of "+GetName(npc)+" and confirm payment again. No gold taken.");return;}
  int amount=GetLocalInt(pc,"rw_pay_amount");
  if(GetGold(pc)<amount){SendMessageToPC(pc,"Not enough gold. No payment made.");return;}
  DeleteLocalString(pc,"rw_pay_offer"); // Consume consent before any mutation; duplicate hooks cannot pay twice.
  if(!RWTransferPayment(pc,npc,amount)){SendMessageToPC(pc,"Payment could not be confirmed. Contact the DM before retrying.");return;}
  ExportSingleCharacter(pc);
+ string hook=GetLocalString(GetModule(),"rw_payment_hook");
+ if(hook!="")
+ {
+  SetLocalObject(GetModule(),"rw_paid_npc",npc);SetLocalObject(GetModule(),"rw_paid_pc",pc);SetLocalInt(GetModule(),"rw_paid_amount",amount);
+  ExecuteScript(hook,GetModule());DeleteLocalObject(GetModule(),"rw_paid_npc");DeleteLocalObject(GetModule(),"rw_paid_pc");DeleteLocalInt(GetModule(),"rw_paid_amount");
+ }
  json e=RWBase("payment_result",npc);
  e=JsonObjectSet(e,"offer",JsonString(offer));e=JsonObjectSet(e,"amount",JsonInt(amount));
  e=JsonObjectSet(e,"listener",JsonString(ObjectToString(pc)));

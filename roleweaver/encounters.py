@@ -167,7 +167,7 @@ def definition(value):
         clean = []
         seen = set()
         for row in rows:
-            optional = {"combatant"} if key == "actors" else set()
+            optional = {"combatant", "opening"} if key == "actors" else set()
             if (
                 not isinstance(row, dict)
                 or not set(fields) <= set(row) <= set(fields) | optional
@@ -183,6 +183,8 @@ def definition(value):
                         "Actor combat permission must be enabled or disabled"
                     )
                 item["combatant"] = row.get("combatant", True)
+                if "opening" in row:
+                    item["opening"] = text(row["opening"], 300)
             identity = identifier(item["npc"] if key == "actors" else item["id"])
             if identity in seen:
                 raise ValueError("Duplicate encounter " + key)
@@ -799,6 +801,7 @@ class EncounterService:
                             npc=a["npc"],
                             epoch=s["epoch"],
                             combatant=a.get("combatant", True),
+                            opening=a.get("opening", ""),
                         )
                         for a, s in zip(cast, states)
                     ],

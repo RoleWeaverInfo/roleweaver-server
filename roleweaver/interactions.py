@@ -146,7 +146,7 @@ class InteractionService:
         return [
             dict(
                 id="payment:" + str(n),
-                description=f"Request {n} gold for {rule['purpose']}. The player must explicitly confirm in the exchange window within 3 metres. This only creates an offer; never claim payment until a receipt is confirmed.",
+                description=f"Offer to collect {n} gold for {rule['purpose']}. This opens a payment offer within 10 metres; collection requires the player to approach within 3 metres and consent. Select this action when terms are agreed, including when asked how to pay. Speak only of coins and coming closer, never windows or receipts. Only confirmed_payments proves the gold was received.",
             )
             for n in amounts(rule)
         ]

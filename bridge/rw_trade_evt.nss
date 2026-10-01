@@ -7,11 +7,21 @@ void main()
     {object owner=GetLocalObject(pc,"rw_trade_npc");if(GetLocalString(owner,"rw_action_kind")=="exchange")SetLocalString(owner,"rw_action_status","exchange closed without confirmation");return;}
     if(NuiGetEventType()!="click")return;
     string element=NuiGetEventElement();
+    if(element=="request_payment")
+    {
+        object owner=GetLocalObject(pc,"rw_trade_npc");int tick=GetLocalInt(GetModule(),"rw_tick");
+        if(!RWPaymentPlayer(pc,owner,10.0) || GetLocalInt(pc,"rw_trade_epoch")!=GetLocalInt(owner,"rw_epoch")
+            || GetLocalInt(pc,"rw_trade_until")<tick || GetLocalInt(pc,"rw_pay_request_at")>tick)return;
+        SetLocalInt(pc,"rw_pay_request_at",tick+5);
+        json e=RWBase("payment_request",owner);e=JsonObjectSet(e,"listener",JsonString(ObjectToString(pc)));RWEmit(e);
+        SendMessageToPC(pc,"Requesting a gold payment offer. No gold has been taken.");return;
+    }
     if(element=="pay")
     {
         string offer=JsonGetString(NuiGetBind(pc,token,"payment_offer"));
-        NuiDestroy(pc,token);
-        RWPaymentConfirm(pc,offer);return;
+        RWPaymentConfirm(pc,offer);
+        if(!RWPaymentPending(GetLocalObject(pc,"rw_trade_npc"),pc))NuiDestroy(pc,token);
+        return;
     }
     if(element!="confirm")
     {

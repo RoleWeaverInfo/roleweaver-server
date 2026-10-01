@@ -255,7 +255,13 @@ class SocialCheckTests(unittest.TestCase):
                 )
                 return '{"speech":"You were warned. Defend yourself.","action":"encounter:attack"}'
 
-            with patch("roleweaver.provider.reply", side_effect=reply) as model:
+            with (
+                patch(
+                    "roleweaver.encounter_intent.choose",
+                    return_value="encounter:attack",
+                ),
+                patch("roleweaver.provider.reply", side_effect=reply) as model,
+            ):
                 self.app.generate(
                     npc,
                     "player",

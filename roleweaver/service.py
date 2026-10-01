@@ -431,6 +431,7 @@ class Service(
                 )
                 for field in (
                     "nearby_protocol",
+                    "follow_protocol",
                     "perception_protocol",
                     "perception_truncated",
                     "inventory_protocol",
@@ -441,6 +442,8 @@ class Service(
                     "nearby_npcs",
                     "conversation_active",
                     "checkins_protocol",
+                    "scene_speech_protocol",
+                    "scene_speech_status",
                     "retreat_protocol",
                 ):
                     self.states[npc][field] = event.get(field)
@@ -494,6 +497,47 @@ class Service(
                 if profile and profile["mode"] != event["mode"]:
                     profile["mode"] = event["mode"]
                     self.store.save(profile)
+            return
+        if kind == "scene_line":
+            with self.lock:
+                run = self.encounters["runs"].get(event.get("encounter"), {})
+                state = self.states.get(npc, {})
+                if (
+                    run.get("status") != "active"
+                    or event.get("session") != run.get("session")
+                    or event.get("epoch") != state.get("epoch")
+                    or event.get("token") != str(run.get("started"))
+                    or event.get("world") != self.config["world_id"]
+                ):
+                    return
+                actor = next(
+                    (a for a in run["template"]["actors"] if a["npc"] == npc), {}
+                )
+                if actor.get("opening") and event.get("text") == actor["opening"]:
+                    self.store.message(
+                        npc, "npc:scene:" + event["encounter"], "npc", event["text"]
+                    )
+            return
+        if kind == "payment_request":
+            with self.lock:
+                state = self.states.get(npc, {})
+                if (
+                    event.get("world") != self.config["world_id"]
+                    or event.get("session") != state.get("session")
+                    or event.get("epoch") != state.get("epoch")
+                    or not event.get("listener")
+                ):
+                    return
+                choices = self.payment_choices(npc, event["listener"])
+                amount = (
+                    self.action_config["npcs"]
+                    .get(npc, {})
+                    .get("payment", {})
+                    .get("amount")
+                )
+                choice = "payment:" + str(amount)
+                if choice in {c["id"] for c in choices}:
+                    self.run_interaction(npc, choice, event["listener"])
             return
         if kind == "ack":
             with self.lock:

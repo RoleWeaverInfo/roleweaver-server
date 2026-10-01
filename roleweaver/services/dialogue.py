@@ -15,6 +15,7 @@ from .. import (
     perception,
     nearby,
     inventory,
+    encounter_intent,
 )
 
 
@@ -153,7 +154,7 @@ class DialogueService:
             # Keep saved memories, but do not replay a previous live activation's
             # surrender/agreement as if it happened in the newly started scene.
             with self.lock:
-                live_run = self.live_for(npc)
+                live_run = self.encounter_for(npc)
                 if live_run:
                     history = [
                         r for r in history if r["created"] >= live_run["started"]
@@ -241,7 +242,10 @@ class DialogueService:
                     combat_choices, combat_command = self.live_combat_choices(npc, turn)
                     available_actions = [
                         a
-                        for a in available_actions
+                        for a in nearby.dialogue_choices(
+                            self.action_choices(npc, listener), speech
+                        )
+                        + story_context.get("actions", [])
                         if not a["id"].startswith("encounter:")
                     ] + combat_choices
                 if profile["social_check"].get("required"):
@@ -259,6 +263,24 @@ class DialogueService:
                         ]
                 if available_actions and request_config.get("provider") != "offline":
                     profile["controlled_actions"] = available_actions
+                planned_action = ""
+                if (
+                    profile.get("encounter")
+                    and request_config.get("provider") != "offline"
+                ):
+                    with provider.observe_requests(
+                        self.usage.recorder(npc, "encounter_intent", request_config)
+                    ):
+                        planned_action = encounter_intent.choose(
+                            request_config,
+                            speech,
+                            guardrails.clean_history(history),
+                            profile["encounter"],
+                            profile["social_check"],
+                            available_actions,
+                        )
+                    if planned_action:
+                        profile["planned_action"] = planned_action
                 with provider.observe_requests(
                     self.usage.recorder(npc, "dialogue", request_config)
                 ):
@@ -269,7 +291,17 @@ class DialogueService:
                         guardrails.clean_history(history),
                     )
                 if profile.get("controlled_actions"):
-                    text, action_choice = actions.parse_reply(text, available_actions)
+                    try:
+                        text, action_choice = actions.parse_reply(text, available_actions)
+                    except ValueError:
+                        # Retry formatting once, without relaxing action validation.
+                        retry_profile = dict(profile)
+                        retry_profile["action_format_retry"] = True
+                        with provider.observe_requests(self.usage.recorder(npc, "dialogue", request_config)):
+                            corrected = provider.reply(request_config, retry_profile, memories, guardrails.clean_history(history))
+                        text, action_choice = actions.parse_reply(corrected, available_actions)
+                    if planned_action:
+                        action_choice = planned_action
                 if profile.get("merchant"):
                     text, quoted = merchants.price_reply(
                         text, speech, profile["merchant"], action_choice
@@ -346,6 +378,9 @@ class DialogueService:
                 )
                 self.last_reply[npc] = time.monotonic()
         except Exception as exc:
+            from ..diagnostics_log import record
+
+            record(self, "provider_failed", exc, phase="dialogue")
             with self.lock:
                 self.diagnostics.setdefault(npc, {})["error"] = (
                     "Reply failed: "
