@@ -40,5 +40,6 @@ json RWCPEvent(string kind,object owner,object familiar)
     e=JsonObjectSet(e,"species",JsonString(GetResRef(familiar)));
     e=JsonObjectSet(e,"token",JsonString(GetLocalString(owner,"rw_cp_token")));
     e=JsonObjectSet(e,"sequence",JsonInt(GetLocalInt(owner,"rw_cp_sequence")));
+    e=JsonObjectSet(e,"opted_in",JsonInt(GetLocalInt(owner,"rw_cp_on")));
     return JsonObjectSet(e,"active",JsonInt(RWCPReady(owner,familiar)));
 }

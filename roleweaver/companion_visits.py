@@ -174,7 +174,7 @@ class CompanionVisitService:
         if (
             self.companion_visits.get(item["id"]) is not item
             or self.restoring
-            or not self.config.get("companions_enabled")
+            or not self.companions_enabled()
             or not policy(self.config)["enabled"]
             or item["generation"] != self.companion_generation
             or time.monotonic() > item["deadline"]

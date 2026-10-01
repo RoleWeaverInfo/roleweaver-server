@@ -7,7 +7,7 @@ They do not own separate worker pools or database connections.
 import json
 import secrets
 import time
-from .. import backup, safeguards, conversation
+from .. import backup, safeguards, conversation, companion_admin
 from ..knowledge import inspect_knowledge
 
 
@@ -82,6 +82,9 @@ class WorldService:
                             placement["session"] = holds[world]
                 data["restore_hold"] = holds
                 backup.replace(self.store, data)
+                self.companion_admin = companion_admin.settings(
+                    self.setting("companion_admin", None)
+                )
                 self.safeguard_policy = safeguards.settings(
                     self.setting("safeguards", None)
                 )

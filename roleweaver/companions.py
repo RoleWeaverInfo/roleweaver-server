@@ -22,6 +22,7 @@ from . import (
 )
 from .store import DEFAULT_NPC
 from .companion_visits import CompanionVisitService, policy as visit_policy
+from .companion_admin import CompanionAdminService, settings as admin_settings
 
 PERSONALITIES = {
     "cat": "Proud, curious and quietly affectionate. Dry wit; values comfort and loyalty.",
@@ -67,9 +68,11 @@ def make_profile(npc, event):
     )
 
 
-class CompanionService(CompanionVisitService):
+class CompanionService(CompanionVisitService, CompanionAdminService):
     def init_companions(self):
         self.init_companion_visits()
+        self.companion_admin = admin_settings(self.setting("companion_admin", None))
+        self.companion_admin_hello = {}
         self.companion_generation = secrets.token_hex(12)
         self.companion_states = {}
         self.companion_work = set()
@@ -77,6 +80,9 @@ class CompanionService(CompanionVisitService):
         self.companion_config_sent = 0
 
     def companion_hello(self, event):
+        if event.get("world") != self.config.get("world_id"):
+            return
+        self.companion_admin_hello = dict(event, seen=time.monotonic())
         if event.get("companion_protocol") != 1:
             return
         now = time.monotonic()
@@ -89,7 +95,7 @@ class CompanionService(CompanionVisitService):
                 world=self.config["world_id"],
                 session=event["session"],
                 expires=event["tick"] + 4,
-                enabled=int(bool(self.config.get("companions_enabled", False))),
+                enabled=int(self.companions_enabled()),
                 preferences_generation=self.companion_generation,
                 visits=dict(
                     visit_policy(self.config),
@@ -156,7 +162,9 @@ class CompanionService(CompanionVisitService):
         state = self.companion_states.get(npc, {})
         return (
             not self.restoring
-            and self.config.get("companions_enabled", False)
+            and self.companions_enabled()
+            and event.get("_profile_generation", self.generations.get(npc, 0))
+            == self.generations.get(npc, 0)
             and time.monotonic() - state.get("seen", 0) < 4
             and event.get("_generation") == self.companion_generation
             and state.get("active") == 1
@@ -192,8 +200,6 @@ class CompanionService(CompanionVisitService):
                     )
                     self.companion_visit_started(event["request"], pending)
                 return
-            if not self.config.get("companions_enabled", False):
-                return
             if not all(
                 isinstance(event.get(k), str) and 0 < len(event[k]) <= 128
                 for k in ("owner", "creature", "session", "token", "object")
@@ -213,6 +219,12 @@ class CompanionService(CompanionVisitService):
             # lifecycle heartbeats must not make an old view fresh again.
             event = dict(event, _generation=self.companion_generation, seen=now)
             self.companion_states[npc] = dict(event, seen=now)
+            try:
+                self.store.get(npc)
+            except ValueError:
+                pass
+            else:
+                self.remember_companion_owner(npc, event)
             if event["kind"] != "companion_chat" or not self.companion_valid(
                 npc, event
             ):
@@ -243,10 +255,12 @@ class CompanionService(CompanionVisitService):
                     return
                 self.store.save(make_profile(npc, event))
                 profile = self.store.get(npc)
+                self.remember_companion_owner(npc, event)
             if profile.get("guidance") == LEGACY_GUIDANCE:
                 profile = dict(profile, guidance=GUIDANCE)
                 self.store.save(profile)
             self.companion_work.add(npc)
+            event["_profile_generation"] = self.generations.get(npc, 0)
             self.pool.submit(
                 self.generate_companion, npc, dict(event), profile, dict(self.config)
             )

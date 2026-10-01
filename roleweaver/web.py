@@ -256,6 +256,14 @@ def main():
                 return self.respond(200, {"text": app.store.world_lore()})
             if parsed.path == "/api/state":
                 return self.respond(200, app.snapshot())
+            if parsed.path == "/api/companions":
+                return self.respond(200, app.companion_dashboard())
+            if parsed.path == "/companions.js":
+                return self.respond(
+                    200,
+                    (Path(__file__).parent / "static/companions.js").read_bytes(),
+                    "application/javascript; charset=utf-8",
+                )
             if parsed.path == "/api/safeguards":
                 return self.respond(200, app.safeguard_status())
             if parsed.path == "/api/detail":
@@ -291,6 +299,10 @@ def main():
                 ):
                     raise ValueError("Invalid request length")
                 body = json.loads(self.rfile.read(length))
+                if self.path == "/api/companion-settings":
+                    return self.respond(200, app.save_companion_enabled(body))
+                if self.path == "/api/companion-profile":
+                    return self.respond(200, app.save_companion_profile(body))
                 if self.path == "/api/live-assistant":
                     return self.respond(200, app.assist_live(body))
                 if self.path == "/api/encounter-assistant":

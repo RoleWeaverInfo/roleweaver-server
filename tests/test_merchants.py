@@ -119,7 +119,7 @@ class MerchantTests(unittest.TestCase):
             "mira", dict(merchants.DEFAULT_RULES, chance=75), "defaults-v2"
         )
         data = self.app.backup_data()
-        self.assertEqual(data["version"], 13)
+        self.assertEqual(data["version"], 14)
         old = data["merchant_configs"]["mira"]["revision"]
         backup.replace(self.app.store, backup.validate(data))
         self.app.init_actions()

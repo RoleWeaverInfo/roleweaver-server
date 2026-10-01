@@ -170,9 +170,16 @@ configuration, lifecycle limits and isolated native test fixtures.
 Player settings live in `backup_settings` under `companion_preferences`, keyed by
 the existing hashed companion profile identity. `companion_preferences.py`
 validates records and adds reply-length/tone instructions to a temporary profile;
-it never rewrites the DM's saved profile. Portable backup format 13 includes
-these preferences; older formats import defaults. `rw_cp_prefs` maintains only a
+it never rewrites the DM's saved profile. Portable backups include these
+preferences (since format 13); older formats import defaults. `rw_cp_prefs` maintains only a
 session/service-generation-bound native cache. The owner-only `rw_cp_menu` and
 `rw_cp_menu_evt` UI waits for service acknowledgement before using permissions.
 Player restrictions are applied both to offered actions and at native execution;
 satchel recovery remains independent of AI opt-in and normal inventory permission.
+
+The DM's Companions panel uses `companion_admin.py` and `static/companions.js`.
+Format 14 also stores its server override and public owner/type labels. The
+installation `companions_enabled` value is the fallback until an override is
+saved. Updates use the existing game-generation invalidation, and bridge hello
+messages acknowledge the actual applied value. The editor saves only character
+text fields, with revision checks to prevent silent concurrent overwrites.

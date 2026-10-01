@@ -14,6 +14,9 @@ void main()
     bad=JsonObjectSet(c,"expires",JsonInt(9));RWCPReply(bad);
     Check(!GetLocalInt(m,"rw_cp_enabled"),"expired command rejected");
     RWCPReply(c);Check(GetLocalInt(m,"rw_cp_enabled"),"current config accepted");
+    json disabled=JsonObjectSet(c,"enabled",JsonInt(0));disabled=JsonObjectSet(disabled,"preferences_generation",JsonString("dashboard-disable"));
+    RWCPReply(disabled);Check(!GetLocalInt(m,"rw_cp_enabled") && GetLocalString(m,"rw_cpp_generation")=="dashboard-disable","dashboard disable updates native permission and invalidates old preferences");
+    RWCPReply(c);
     object npc=CreateObject(OBJECT_TYPE_CREATURE,"rw_base",Location(GetFirstArea(),Vector(10.0,10.0,0.0),0.0));
     Check(GetIsObjectValid(npc),"fixture creature created");
     Check(!RWCPReady(npc,npc),"ordinary NPC cannot impersonate player owner");

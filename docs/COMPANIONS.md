@@ -15,12 +15,44 @@ spell summons are future adapters, not supported by this first version.
    `rw_cp_trade`, `rw_cp_save`, `rw_cp_menu_evt`), plus updated `rw_init`, `rw_tick`, `rw_chat` and
    `rw_modulechat`. Install the complete generated scripts/compiled bundle, not
    just the new entry scripts. Keep the world's existing hooks and handlers.
-3. In the instance's `config.json` add `"companions_enabled": true` (with the
-   necessary comma between JSON settings). It defaults to false.
-4. Restart the Role Weaver service and restart NWN to load the compiled bridge.
+3. Restart the Role Weaver service and restart NWN to load the compiled bridge.
+4. Open **Companions** in the dashboard and click **Enable companion AI**.
+   Wait for **Confirmed by the game**. Players then opt in using the command below.
 
-Setting `companions_enabled` back to false and restarting Role Weaver disables
-the feature. The game's familiar commands remain available.
+The installation setting `"companions_enabled": true` in `config.json` remains
+the default until the dashboard saves a choice. Afterwards the saved dashboard
+choice takes precedence. It persists across restarts and is included in backups.
+Use **Disable companion AI** in the dashboard to switch the service off for all
+familiars; their native game commands remain available.
+
+## DM dashboard
+
+Open **Companions** in the left sidebar. This panel is for server administrators;
+players continue to use `/rw companion settings` in game.
+
+- **Enable / Disable companion AI** controls the whole server. Changing it cancels
+  pending Role Weaver replies and errands when the game receives the new setting.
+  It does not dismiss familiars, remove satchel items, erase memories or change
+  saved player preferences. Enabling the server feature does not opt players in.
+- The confirmation line distinguishes a saved setting from one the game has
+  applied. An offline game applies it after reconnecting. Older bridge scripts
+  need an update to display confirmation; do not assume a save proves application.
+- **Companion personalities** lists familiar profiles after their first AI chat.
+  The owner name and creature type are recorded when observed, so profiles can be
+  identified and edited while offline. Earlier profiles acquire owner labels
+  when their familiar is next observed. No raw public-CD-key identity is exposed.
+- Edit role/relationship, personality, speaking style, background/personal
+  knowledge, boundaries and DM guidance, then **Save companion profile**.
+  The familiar's name, type, level and owner stay controlled by NWN. Conversations,
+  curated memories, player preferences and inventories are preserved.
+- Browser drafts can be explicitly restored or discarded. If another editor has
+  changed the saved profile, the server refuses an outdated save; reload and
+  review your draft first. Saved profile edits invalidate model replies still
+  being generated under the previous profile.
+
+This version has a server-wide AI switch, not separate DM switches for individual
+owners or familiar types. The listed status describes recent observations; an
+unavailable familiar may be switched off by its player, possessed or in combat.
 
 ## Player walkthrough
 
@@ -61,10 +93,10 @@ and blocked line of sight prevent AI replies.
 The profile is keyed to the server world, the existing character identity scheme,
 and familiar type, not its temporary object ID or current level blueprint. It
 survives dismissal and resummoning. Opt-in lasts for the current player login;
-after reconnecting, type `/rw companion on` again. Profiles appear in the dashboard
-with a `cp_` stable ID and role **Player-owned magical familiar**. Edit personality,
-voice and curated memories there. They will appear unconnected in the ordinary
-world-NPC status display: do not use Spawn at DM to create them as world NPCs.
+after reconnecting, type `/rw companion on` again. Edit profiles in **Companions**.
+They retain a `cp_` stable ID and also appear in the existing profile/history tools
+for reviewing conversations and curated memories. They appear unconnected in the
+ordinary world-NPC status display: do not use Spawn at DM to create them as world NPCs.
 Familiar profiles and conversation histories are included in existing backups.
 No familiar placements are saved or restored.
 
@@ -97,7 +129,7 @@ ten-minute window timeout.
 
 Preferences are saved in the Role Weaver database for this world, character
 identity and familiar type. They survive reconnects, resummoning and restarts,
-and are included in database recovery snapshots and portable backups (format 13).
+and are included in database recovery snapshots and portable backups (format 14).
 Older portable backups use default preferences. The character identity follows
 the existing public-CD-key and character-name scheme, so renaming a character
 changes its identity. Preference records use a hashed ID, and the raw identity
@@ -360,6 +392,14 @@ safeguards and acknowledged history. It does not use the ordinary world-NPC
 action queue or its 32 creature slots. State is bounded to 64 recently observed
 companions; profiles share the existing 1,000-profile backup limit.
 
+`roleweaver/companion_admin.py` owns the dashboard projections, server switch and
+revision-checked profile edits. Its `companion_admin` backup setting stores the
+optional server override and bounded public owner/type labels. Portable format 14
+includes it; older backups retain the installation default until a dashboard
+choice is saved. `companions.js` provides a separate editor with browser recovery
+drafts. Native hello messages report the actual switch and preference generation;
+the dashboard does not infer game confirmation from a successful HTTP save.
+
 `bridge/rw_cp_visit.nss` owns visit targets, physical movement, recipient consent,
 timeouts and speech acknowledgements. `roleweaver/companion_visits.py` coordinates
 short exchanges and reports from the acknowledged speech ledger. Opaque offered
@@ -371,7 +411,7 @@ or familiar is unavailable, so a lost visitor cannot permanently stop a patrol.
 
 ## Tests before expanding support
 
-Run `python -m unittest tests.test_companions tests.test_companion_inventory tests.test_companion_preferences tests.test_companion_visits` and
+Run `python -m unittest tests.test_companions tests.test_companion_inventory tests.test_companion_preferences tests.test_companion_visits tests.test_companion_admin` and
 the normal regression suite.
 Compile `tests/companions_native.nss` as `invtest` in an isolated module/userdata
 directory. It checks native protocol rejection and absence of world bindings;

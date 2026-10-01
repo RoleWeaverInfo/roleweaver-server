@@ -44,6 +44,9 @@ void main()
     hello=JsonObjectSet(hello,"live_protocol",JsonInt(1));
     hello=JsonObjectSet(hello,"inventory_protocol",JsonInt(NWNX_Core_PluginExists("NWNX_Item") ? 1 : 0));
     hello=JsonObjectSet(hello,"companion_protocol",JsonInt(1));
+    hello=JsonObjectSet(hello,"companion_admin_protocol",JsonInt(1));
+    hello=JsonObjectSet(hello,"companion_enabled",JsonInt(GetLocalInt(m,"rw_cp_enabled")));
+    hello=JsonObjectSet(hello,"companion_generation",JsonString(GetLocalString(m,"rw_cpp_generation")));
     RWEmit(RWHealth(hello));
     if (GetLocalInt(m, "rw_allow_dm_spawn"))
     {
