@@ -58,8 +58,11 @@ database, backup and recent provider status into one panel. Download a filtered
 support report with bounded rotating error logs; credentials and game text are
 excluded.
 
-The [guided setup launcher](docs/GUIDED_SETUP.md), `bash setup.sh`, asks for the
-paths/settings needed by the separate demo and existing-server workflows. The
+The [guided setup launcher](docs/GUIDED_SETUP.md), `bash setup.sh`, provides a
+resumable existing-server workflow with saved profiles, compatibility checks,
+path-specific module instructions, and managed software update/rollback. It
+keeps existing modules and launchers in place. The separate demo remains available.
+The
 Translations page now explains queue/rate-limit waits, cache reuse, recent errors
 and translation request usage. See [the next-alpha plan](docs/NEXT_ALPHA.md) for
 scope and explicitly deferred validation.

@@ -91,12 +91,21 @@ def install(args):
             redis_port=args.redis_port,
             web_port=args.port,
             placement_owner="world",
+            companions_enabled=bool(getattr(args, "enable_companions", False)),
+            allow_dm_spawn=bool(getattr(args, "enable_dm_spawn", False)),
+            allow_persistent_spawn=bool(
+                getattr(args, "enable_persistent_spawn", False)
+            ),
+            guardrails_ai=bool(getattr(args, "guardrails", False)),
         )
     if not re.fullmatch(r"[a-zA-Z0-9_:-]{1,80}", config["redis_prefix"]):
         raise ValueError("Invalid Redis prefix")
     if not 1024 <= int(config["web_port"]) <= 65535:
         raise ValueError("Dashboard port must be 1024-65535")
     with socket.socket() as probe:
+        # Match the HTTP server's reuse policy: recent connections can leave
+        # TIME_WAIT sockets after a clean stop. An active listener still fails.
+        probe.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         try:
             probe.bind(("127.0.0.1", int(config["web_port"])))
         except OSError:
@@ -161,9 +170,9 @@ def _install_files(root, world, unit_name, config):
         + world
         + ")\nAfter=network.target\n\n[Service]\nType=simple\nWorkingDirectory="
         + str(current)
-        + "\nEnvironmentFile="
+        + '\nEnvironmentFile="'
         + str(env)
-        + '\nExecStart="'
+        + '"\nExecStart="'
         + sys.executable
         + '" -m roleweaver.web --config "'
         + str(root / "config.json")
@@ -194,6 +203,10 @@ def main():
     parser.add_argument("--port", type=int, default=8741)
     parser.add_argument("--redis-port", type=int, default=6379)
     parser.add_argument("--redis-prefix")
+    parser.add_argument("--enable-companions", action="store_true")
+    parser.add_argument("--enable-dm-spawn", action="store_true")
+    parser.add_argument("--enable-persistent-spawn", action="store_true")
+    parser.add_argument("--guardrails", action="store_true")
     parser.add_argument(
         "--native",
         type=Path,

@@ -1,12 +1,22 @@
 # Companion operations
 
-Run commands from the extracted package folder. They read addon/setup.json.
+For the current installer, run commands from any extracted package:
 
-**If you used the guided `bash setup.sh` wizard**, reopen it and use its service
-menu instead. It reads **.local/setup-addon.json**. To use commands below with
-those choices, append `--config .local/setup-addon.json`. When upgrading, copy
-that wizard settings file to the new package's `.local/` folder rather than
-copying the unchanged sample `addon/setup.json`.
+```bash
+bash setup.sh status --world my_world
+bash setup.sh restart --world my_world
+bash setup.sh update --world my_world
+bash setup.sh rollback --world my_world
+```
+
+These reuse `~/.config/roleweaver/installations/my_world.json`. Updates preserve
+configuration/data and verify service startup; rollback restores managed software
+without rewinding player data. NWN/module deployment stays in your normal workflow.
+See [guided setup](../docs/GUIDED_SETUP.md) for recovery and older installations.
+
+The remaining commands are the **legacy/manual interface**, reading addon/setup.json.
+The older wizard file can be selected explicitly with `--config .local/setup-addon.json`.
+Do not mix this interface with the new saved-profile workflow unintentionally.
 
 ## Restart the dashboard/AI companion
 

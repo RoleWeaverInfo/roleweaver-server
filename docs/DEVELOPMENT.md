@@ -183,3 +183,19 @@ installation `companions_enabled` value is the fallback until an override is
 saved. Updates use the existing game-generation invalidation, and bridge hello
 messages acknowledge the actual applied value. The editor saves only character
 text fields, with revision checks to prevent silent concurrent overwrites.
+
+### Existing-server installation
+
+`tools/server_setup.py` coordinates the resumable terminal workflow. Its supporting
+modules separate non-secret profiles/discovery (`install_profile.py`), read-only
+module auditing and review bundles (`install_bundle.py`), and transactional systemd
+software maintenance (`manage_installation.py`). The older preparer/installer and
+demo tools remain callable independently. Profiles live outside downloaded packages;
+versioned Python environments live alongside managed application releases.
+
+No installer starts/stops NWN or guesses a custom world's approved chat path. A
+software recovery journal restores release/unit selection, never rewinds player
+data. Tests in `test_server_setup.py` cover profile reuse, import integrity, secrets
+excluded from discovery, failed startup, interruption and rollback preservation.
+Exercise systemd install/update/rollback only with a separate disposable world ID,
+namespace and dashboard port; never point installer smoke tests at the active world.

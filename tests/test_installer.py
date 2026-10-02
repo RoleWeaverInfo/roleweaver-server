@@ -4,6 +4,8 @@ import io
 import json
 from pathlib import Path
 import socket
+import shutil
+import subprocess
 import sys
 import tempfile
 from types import SimpleNamespace
@@ -76,6 +78,29 @@ class InstallTests(unittest.TestCase):
             with self.assertRaises(ValueError):
                 self.install()
         self.assertFalse(self.args.target.exists())
+
+    def test_generated_unit_is_accepted_by_systemd(self):
+        if not shutil.which("systemd-analyze"):
+            self.skipTest("systemd-analyze unavailable")
+        self.install()
+        unit = self.args.target / "roleweaver-install_probe.service"
+        result = subprocess.run(
+            ["systemd-analyze", "verify", str(unit)], capture_output=True, text=True
+        )
+        self.assertEqual(result.returncode, 0, result.stderr)
+
+    def test_recent_http_connection_does_not_block_stopped_service_install(self):
+        with socket.socket() as server:
+            server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+            server.bind(("127.0.0.1", self.args.port))
+            server.listen()
+            with socket.create_connection(("127.0.0.1", self.args.port)) as client:
+                connection, _ = server.accept()
+                connection.shutdown(socket.SHUT_WR)
+                connection.close()
+                self.assertEqual(client.recv(1), b"")
+        self.install()
+        self.assertTrue((self.args.target / "current").exists())
 
     def test_running_service_refused(self):
         with patch.object(

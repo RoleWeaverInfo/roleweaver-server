@@ -1,79 +1,119 @@
-# Guided Linux setup
+# Guided installation and maintenance
 
-Run **`bash setup.sh`** from the extracted package. The same launcher is included
-in the separate demo and existing-server distributions. Run it as the Ubuntu
-account that owns the installation, not with sudo.
+From the extracted package run `bash setup.sh`, without sudo, as the Linux server
+owner. Choose **1** for continuous existing-server setup or **2** for the separate
+Demo. The setup menu also offers configuration, checks, update, rollback and verification.
 
-The wizard asks for paths, validates world IDs/ports, and offers defaults. Paths
-can contain spaces and may begin with `~`. API keys are entered later in the
-dashboard, never into the wizard. Choose **0** or press Ctrl+C to leave.
+## One saved profile per world
 
-| Menu choice | What it does |
+Existing-server choices and progress are saved in
+`~/.config/roleweaver/installations/WORLD.json`, readable only by the owner.
+They contain paths, ports, feature choices and output locations, never API keys.
+Reopen setup from any later extracted package to resume. Use `--world` when you
+have more than one world. Reconfigure to correct paths after moving a module.
+
+The application still owns its runtime configuration, credentials, databases and
+backups under `~/.local/share/roleweaver/WORLD/`. Those files are independent of
+the installation profile. A saved feature choice describes what to prepare; it
+is not proof that the native hook, plugin or dashboard permission is active.
+
+## Commands
+
+Run these from an extracted package; replace `my_world` with your saved ID.
+
+| Command | Purpose |
 | --- | --- |
-| 1. Prepare an existing server | Saves six non-secret settings and creates an Aurora import with matching NWNX headers. Prints the next guide to read. |
-| 2. Prepare/start demo | Checks separate dependency folders, creates local links, builds a demo copy and optionally starts it. Reusing an instance starts its saved world. Available only in the demo/source package. |
-| 3. Check addon prerequisites | Uses saved settings to check Linux, systemd and the local Redis connection. |
-| 4. Install/start addon | Uses the existing installer; preserves installed configuration/data, creates a recovery point before upgrading, and refuses an active service. |
-| 5. Restart addon | Restarts only the selected Role Weaver service. Does not restart NWN. |
-| 6. Service status | Shows systemd status for the saved world. |
-| 7. Prepare dialogues | Reads an existing module and optional effective loose resource folders, compiles wrappers, and creates a new review bundle. No LLM or cache calls. |
-| 8. Build translation adapter | Builds a production plugin against administrator-selected matching NWNX sources/Core. Generates path-specific installation instructions. |
+| `bash setup.sh setup --world my_world` | Resume checks, bridge preparation, initial install and connection guidance. |
+| `bash setup.sh configure --world my_world` | Edit paths and feature choices. Existing runtime identity/ports are preserved. |
+| `bash setup.sh check --world my_world` | Read-only prerequisites and actionable corrections. |
+| `bash setup.sh prepare --world my_world` | Produce/reuse a verified integration bundle without changing server files. |
+| `bash setup.sh install --world my_world` | Install/start a new addon after confirmation. |
+| `bash setup.sh update --world my_world` | Back up data and replace existing addon software after confirmation. |
+| `bash setup.sh rollback --world my_world` | Restore the previous managed software version; retain current data/config. |
+| `bash setup.sh verify --world my_world` | Check the running addon and actual game connection without an LLM request. |
+| `bash setup.sh status --world my_world` | Show saved progress and service status. |
+| `bash setup.sh restart --world my_world` | Restart only the addon after confirmation. |
+| `bash setup.sh dialogues --world my_world` | Prepare standard dialogues using saved server paths; no translations generated. |
+| `bash setup.sh adapter --world my_world` | Build the optional multiplayer translation adapter for review. |
+| `bash setup.sh demo` | Run the separate demo setup/start helper. |
+| `bash setup.sh advanced` | Access the older individual tools for customised workflows. |
 
-## Dependencies and environment
+Setup never stops, starts or replaces NWN itself. Service operations identify the
+world and installation before confirmation. No system packages are installed by
+the helper; a missing prerequisite is explained with a suggested correction.
 
-The helper can create `.venv` and install the project's Guardrails requirements
-after asking. On Ubuntu install `python3-venv` first. Redis must be installed and
-running locally; existing authenticated/external Redis arrangements may need a
-separate private instance. See [transport compatibility](../addon/COMPATIBILITY.md).
-The helper does not alter Redis or system packages.
+## Integration and compatibility
 
-NWN and matching NWNX binaries/headers must already be installed. Use
-[new server setup](../addon/NEW_SERVER.md). The Demo download also includes a
-dedicated `demo/DEPENDENCIES.md` guide.
-The demo links your actual folders into `.local/native/INSTANCE/`; existing links
-are accepted only when they already point at the selected directories. No runtime
-files are moved. Keep the selected dependencies at those paths.
+The module is read only to report existing event assignments and resource names.
+The generated folder contains one path-specific INSTALL.md, an Aurora import,
+source scripts, compiled scripts when a compiler was chosen, matching NWNX header
+includes, blueprints and checksums. Source-only imports must be compiled in Aurora.
+A changed package, module, header or profile causes fresh preparation. Modified
+output is not silently reused.
 
-## Existing-server settings and upgrades
+Keep existing load/chat scripts, plugin configuration and resource precedence.
+Only forward approved public Talk through one chat route. HAK archives, custom
+companion frameworks, store scripts and deferred chat frameworks need administrator
+review; setup cannot infer their semantics. Installed file presence is checked
+before deployment; loaded plugin/protocol observations come from Health & Support.
+These checks do not certify arbitrary NWN/NWNX ABI compatibility.
 
-Wizard choices are saved in `.local/setup-addon.json`, with the previous copy in
-`.local/setup-addon.previous.json`. They are excluded from release packages and Git.
-The advanced `addon/setup.sh` interface still defaults to `addon/setup.json`.
-To use the wizard file from the advanced interface, pass it explicitly:
+Redis must be unauthenticated loopback on the selected port. Remote/TLS/authenticated
+Redis is not currently supported. Do not weaken or redirect shared Redis services.
+The installer uses systemd user services; other service managers need a manual
+installation workflow. Arrange user-service persistence across logout/reboot using
+your host's policy (for example administrator-configured systemd lingering).
 
-```bash
-bash addon/setup.sh check --config .local/setup-addon.json
-```
+## Optional translation
 
-When a selected world already has an installation, the wizard reads its existing
-namespace/ports and refuses different ones. The installer retains its complete
-configuration and credentials. An upgrade is not a way to rename an existing world.
+The saved translation choice adds instructions; it does not translate or index the
+world. `dialogues` prepares standard DLG resources and wrappers with preserved
+choices/conditions. Include effective loose overrides or extracted HAK resources
+in precedence order. Custom dialogue systems are not rewritten automatically.
 
-For upgrades, keep the old package available, extract the new one, copy
-`.local/setup-addon.json` into the new package's `.local/` folder, prepare its Python
-environment, and check prerequisites. Stop the intended addon service during your
-maintenance window, then choose **4**. It creates a verified database snapshot.
-Use [operations](../addon/OPERATIONS.md) for service and rollback details. Bridge
-or plugin changes still require a separate game-server maintenance restart.
+The multiplayer adapter currently targets Linux x86-64 NWN/NWNX **8193.37-17**.
+Its build helper requires matching source/Core files, `cmake` and a C++ compiler.
+The helper produces reviewable output; it does not deploy plugins or restart NWN.
+After deployment enable translation on the dashboard and test in game.
 
-## Translation integration
+## Updates, rollback and interrupted operations
 
-Use **1** to prepare the updated bridge before **7**. The dialogue helper asks for
-the real module path, generated bridge source folder, runtime, headers and compiler.
-Start with one standard dialogue resource if desired. Add effective loose override
-or extracted HAK folders in precedence order. Archives and custom conversation
-systems are not discovered automatically. Review the token range for conflicts.
+Managed Python environments are versioned under the installation's `environments/`
+folder. They do not depend on the package's `.venv`, so a later download can update
+or roll back the service. Old environments/releases are retained for rollback.
+Do not manually delete them while referenced by a current/previous service.
 
-The per-viewer adapter currently targets **Linux x86-64 NWN/NWNX 8193.37-17** only.
-Option **8** asks the administrator to confirm that exact version and checks the
-selected source/Core files. It cannot prove ABI compatibility. It needs `cmake`
-and a C++ toolchain (`sudo apt install build-essential cmake` on Ubuntu).
-It explicitly disables native test entry points in the generated production build.
+The update prepares dependencies before stopping the addon. It records the previous
+application release and service unit in a private journal, creates a consistent
+verified database recovery point, installs the new release and checks startup.
+If startup fails it attempts to restore the old software service. An interrupted
+operation keeps `setup-pending.json`; rerunning update/rollback recovers its recorded
+service state first. If recovery fails, the journal stays for diagnosis.
 
-Neither option installs into a running server. Each outputs an **INSTALL.md** with
-the next steps. Keep the module's original conditions, actions, quests and event
-handlers. After installing and restarting NWN, use **Translations** and **Health &
-Support** to check the worker, queue and actual bridge/plugin observations.
+Rollback applies to updates recorded by this installer, not arbitrary older manual
+copies. It never restores an older player database automatically. If an older
+application cannot open current data, rollback attempts to return to the current
+software. Database recovery remains a separate deliberate action. Match game
+scripts/plugins to the restored software during your normal maintenance process.
 
-Existing manually prepared demo instances are not rebuilt automatically. Use their
-documented rebuild procedure during maintenance when game scripts change.
+## Moving from the old wizard
+
+On first configure, matching `.local/setup-addon.json` choices in the current package
+are imported where possible. Existing installed ports/identity are read automatically.
+You supply server/module paths once; later packages reuse the external saved profile.
+If the legacy file is in another old package, run configure and enter those values.
+
+The old `addon/setup.sh` and `addon/setup.json` remain available for advanced scripts;
+they are not inputs to the new workflow. Avoid alternating between them. Legacy
+installations may still reference an old package's Python environment: retain that
+package until the first managed update succeeds, and retain it for rollback if the
+previous service used it.
+
+## Troubleshooting
+
+- **FIX entries:** correct the listed path/dependency and rerun setup. Saved progress stays.
+- **Compiler not selected:** choose `-` and compile the import in Aurora; dialogue preparation still needs nwnsc.
+- **Dashboard port occupied:** select another for a new world. Installed worlds keep their existing port.
+- **Game heartbeat missing:** finish the generated hooks, check matching Redis namespace/port and loaded plugins, then restart NWN through your usual controls.
+- **Service start failed:** inspect `journalctl --user -u roleweaver-my_world.service -n 50 --no-pager`. Keep raw logs private; use Health & Support for a filtered report.
+- **Need Windows dashboard access:** use the generated SSH tunnel command; never expose the administration port publicly.

@@ -65,6 +65,13 @@ class DistributionTests(unittest.TestCase):
                 self.assertIn("extensions/nwnx_translation/Translation.cpp", entries)
                 self.assertIn("setup.sh", entries)
                 self.assertIn("tools/setup_wizard.py", entries)
+                for helper in (
+                    "server_setup",
+                    "install_profile",
+                    "install_bundle",
+                    "manage_installation",
+                ):
+                    self.assertIn("tools/" + helper + ".py", entries)
                 self.assertIn("tools/gff.py", entries)
                 self.assertIn("roleweaver/static/rw_server_splash.png", entries)
                 module_path = (

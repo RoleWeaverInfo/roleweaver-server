@@ -22,6 +22,7 @@ from setup_addon import configuration, required_headers
 
 SETTINGS = ROOT / ".local/setup-addon.json"
 PYTHON = ROOT / ".venv/bin/python"
+SAVED_INSTALLATION = None  # Optional context supplied by the continuous setup flow.
 PLUGINS = (
     "Core",
     "Chat",
@@ -324,12 +325,23 @@ def dialogues():
     )
     module = ask(
         "Your existing .mod file (read only)",
-        "~/nwn-world/modules/YourWorld_Fixed.mod",
+        (
+            SAVED_INSTALLATION["paths"]["module"]
+            if SAVED_INSTALLATION
+            else "~/nwn-world/modules/YourWorld_Fixed.mod"
+        ),
         existing,
     )
     if not module.is_file() or module.suffix.lower() != ".mod":
         invalid("Choose a .mod file")
-    cfg = configuration(SETTINGS) if SETTINGS.exists() else None
+    cfg = (
+        dict(
+            output=Path(SAVED_INSTALLATION["progress"]["bundle"]),
+            nwnx_headers=Path(SAVED_INSTALLATION["paths"]["headers"]),
+        )
+        if SAVED_INSTALLATION
+        else configuration(SETTINGS) if SETTINGS.exists() else None
+    )
     bridge = ask(
         "Prepared bridge source folder (contains rw_settings.nss)",
         str(cfg["output"] / "scripts") if cfg else "builds/my_world-import-01/scripts",
@@ -338,13 +350,25 @@ def dialogues():
     for name in ("rw_settings.nss", "rw_tr_nodes.nss", "rw_tr_native.nss"):
         if not (bridge / name).is_file():
             invalid(f"Missing {name}. Prepare a current bridge first.")
-    runtime = ask("NWN dedicated server folder", "~/nwserver", existing)
+    runtime = ask(
+        "NWN dedicated server folder",
+        SAVED_INSTALLATION["paths"]["runtime"] if SAVED_INSTALLATION else "~/nwserver",
+        existing,
+    )
     headers = ask(
         "NWNX headers folder",
         str(cfg["nwnx_headers"]) if cfg else "~/nwnx/nwscripts",
         existing,
     )
-    compiler = ask("NWScript compiler executable", "~/bin/nwnsc", existing)
+    compiler = ask(
+        "NWScript compiler executable",
+        (
+            (SAVED_INSTALLATION["paths"]["compiler"] or "~/bin/nwnsc")
+            if SAVED_INSTALLATION
+            else "~/bin/nwnsc"
+        ),
+        existing,
+    )
     resource = ask(
         "One dialogue resource to begin with (blank means all supplied dialogues)"
     )
@@ -352,7 +376,9 @@ def dialogues():
         invalid(
             "Use the dialogue resource name without .dlg, up to 16 lowercase letters, digits or underscores"
         )
-    folders = []
+    folders = (
+        [Path(v) for v in SAVED_INSTALLATION["resources"]] if SAVED_INSTALLATION else []
+    )
     while True:
         extra = ask(
             "Effective loose override/extracted-HAK resource folder (blank to continue)"
@@ -413,7 +439,15 @@ def adapter():
                 "Build tools are missing. On Ubuntu run: sudo apt install build-essential cmake"
             )
     source = ask("Matching nwnxee/unified source checkout", "~/unified", existing)
-    plugins = ask("Installed NWNX plugin folder", "~/nwnx/plugins", existing)
+    plugins = ask(
+        "Installed NWNX plugin folder",
+        (
+            SAVED_INSTALLATION["paths"]["plugins"]
+            if SAVED_INSTALLATION
+            else "~/nwnx/plugins"
+        ),
+        existing,
+    )
     if (
         not (source / "NWNXLib/nwnx.hpp").is_file()
         or not (plugins / "NWNX_Core.so").is_file()
@@ -452,8 +486,7 @@ def adapter():
     print("\nNEXT: open", output / "INSTALL.md")
 
 
-def main():
-    argparse.ArgumentParser(description=__doc__).parse_args()
+def advanced_menu():
     if sys.platform != "linux":
         print(
             "Run bash setup.sh inside Ubuntu/Linux. Windows clients can connect to the resulting game server and dashboard."
@@ -496,6 +529,89 @@ def main():
             print("\nSetup stopped:", exc)
             print(
                 "Correct the reported setting/dependency and choose the option again. Existing world data is retained. Advanced guidance: START_ADDON.md, START_DEMO.md and docs/TRANSLATION.md."
+            )
+
+
+def main():
+    parser = argparse.ArgumentParser(
+        description="Resumable Role Weaver installation for an existing NWNX server"
+    )
+    parser.add_argument(
+        "action",
+        nargs="?",
+        choices=(
+            "setup",
+            "configure",
+            "check",
+            "prepare",
+            "install",
+            "update",
+            "rollback",
+            "verify",
+            "status",
+            "restart",
+            "dialogues",
+            "adapter",
+            "demo",
+            "advanced",
+        ),
+    )
+    parser.add_argument(
+        "--world", help="Saved world ID; selected interactively when needed"
+    )
+    args = parser.parse_args()
+    if sys.platform != "linux":
+        print(
+            "Run bash setup.sh inside Ubuntu/Linux as the server owner, without sudo."
+        )
+        return 1
+    if hasattr(os, "geteuid") and os.geteuid() == 0:
+        print("Run setup as the Linux account that owns NWN, not root or sudo.")
+        return 1
+    os.umask(0o077)
+    import server_setup
+
+    def execute(action):
+        if action == "demo":
+            demo_setup()
+            return 0
+        if action == "advanced":
+            return advanced_menu()
+        return server_setup.execute(action, args.world)
+
+    if args.action:
+        try:
+            return execute(args.action)
+        except (ValueError, OSError, subprocess.SubprocessError) as exc:
+            print("Setup stopped:", exc)
+            return 1
+    while True:
+        print(
+            "\nRole Weaver installation\n1. Set up / resume an existing server\n2. Prepare or start the separate demo\n3. Change saved server paths/features\n4. Check prerequisites\n5. Update Role Weaver software\n6. Roll back a managed software update\n7. Verify the game connection\n8. Advanced tools (including translation preparation)\n0. Exit"
+        )
+        choice = ask("Choose", "1")
+        if choice == "0":
+            return 0
+        actions = {
+            "1": "setup",
+            "2": "demo",
+            "3": "configure",
+            "4": "check",
+            "5": "update",
+            "6": "rollback",
+            "7": "verify",
+            "8": "advanced",
+        }
+        try:
+            (
+                execute(actions[choice])
+                if choice in actions
+                else print("Choose a listed number.")
+            )
+        except (ValueError, OSError, subprocess.SubprocessError) as exc:
+            print("Setup stopped:", exc)
+            print(
+                "Correct the reported issue and resume. Saved progress is kept; NWN is never restarted by this installer."
             )
 
 
