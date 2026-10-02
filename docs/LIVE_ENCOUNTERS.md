@@ -113,18 +113,19 @@ Review the proposed profile, purpose, limitations and combat setting. Mark locat
 with the connected DM, preview, then place and start using the existing controls.
 The manual setup remains available without an LLM.
 
-This first version creates 1–8 copies of one existing NPC profile. It does not yet
-create new profiles, mixed casts, quest mechanics, payments or rewards. Unsupported
-requests should appear in the proposal's limitations. Timed attacks can only be
+Proposals create 1–8 copies of one existing NPC profile. They do not create new
+profiles, mixed casts, quest mechanics or automatic rewards. Payment requests and
+NPC-to-NPC combat require the relevant actor permissions after placement; a
+proposal does not grant them. Unsupported requests appear in the proposal's limitations. Timed attacks can only be
 proposed when the DM checks the combat-proposal permission; existing preview/start
 confirmation still applies. Narrative text alone cannot create game mechanics.
 
 Under **Manage live scenes**, expand **Ask the assistant about this scene** for an
 on-demand assessment or direction. It sees the scene snapshot and game log and may
 suggest start, pause or cleanup. The DM clicks the suggested operation; the ordinary
-state validation and cleanup/combat confirmations still apply. It does not monitor
-continuously, read all player chats, or autonomously direct the world. World events
-remain authoritative and the assistant may be wrong about a situation.
+state validation and cleanup/combat confirmations still apply. This on-demand assessment is separate from the optional autonomous director below.
+Neither reads all player chats nor directs unrelated scenes. World events remain
+authoritative and the assistant may be wrong about a situation.
 
 Requests use the configured provider and appear in Usage as `live_assistant`.
 One assistant request runs at a time, without holding the game-processing lock.
@@ -153,7 +154,9 @@ an active scene, valid actors and a current command. DM characters and bystander
 cannot be selected by the model. Leaving the configured leave radius cancels the
 warning. Silence never causes an attack; a warning expires two minutes after the
 grace period. Existing pursuit and low-health retreat rules still apply. Successful
-negotiation should select a peaceful resolution; payment itself is not implemented.
+negotiation should select a peaceful resolution. Enabled payment offers use the
+game-confirmed exchange system; a spoken claim of payment is not a receipt.
+See [payments and NPC combat](PAYMENTS_AND_NPC_COMBAT.md).
 
 Installing this capability requires one game-script update and restart. Later live
 scenes need no restart. Existing scenes keep their saved behavior; create a new one
@@ -180,7 +183,7 @@ refusal, peaceful negotiation, walking away, silence, and another player's attem
 to interrupt. The game-confirmation log reports warning, attack, peaceful resolution,
 and rejected requests. Safeguard failures or malformed LLM output issue no decision.
 
-## Autonomous AI DM (first version)
+## Autonomous AI DM
 
 Optional Intimidate, Persuade and Bluff checks can now resolve uncertain player
 influence using server-confirmed dice before an NPC replies. Configure them under
@@ -188,9 +191,9 @@ influence using server-confirmed dice before an NPC replies. Configure them unde
 for setup, limits and playtests. They are disabled by default and work with or without
 the autonomous director.
 
-Live and persistent encounters remain separate. This director currently runs only
-live scenes; its reasoning module is independent so a persistent adapter can be
-added without changing live placement or restart rules.
+Live and persistent encounters use the same reasoning module through separate
+adapters. The controls below concern live scenes; see [Persistent encounters](ENCOUNTERS.md)
+for saved definitions and restart recovery. A live scene still expires on game restart.
 
 1. Describe, preview and place the scene as usual. For combat, choose conversation
    combat with explicit conditions; independent timed attacks cannot be directed.

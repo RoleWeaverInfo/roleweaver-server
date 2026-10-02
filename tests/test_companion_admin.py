@@ -173,7 +173,7 @@ class CompanionAdminTests(unittest.TestCase):
         self.run_chat()
         self.app.save_companion_enabled(dict(enabled=False))
         data = self.app.backup_data()
-        self.assertEqual(data["version"], 14)
+        self.assertEqual(data["version"], 15)
         self.assertNotIn("key:Wizard", json.dumps(data["companion_admin"]))
         clean = backup.validate(data)
         self.app.save_companion_enabled(dict(enabled=True))

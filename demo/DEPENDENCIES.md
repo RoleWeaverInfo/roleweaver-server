@@ -6,8 +6,8 @@ Follow this guide **inside Ubuntu 24.04 x86-64**, including when Ubuntu runs in 
 
 ## Choose your starting point
 
-- **I do not have a dedicated server, NWNX or compiler:** follow **A**, then **C**, then **D**.
-- **I already have some or all of them installed:** follow **B**, then **C**, then **D**. You can reuse your installations without moving them.
+- **Using the setup wizard (recommended):** follow **A1–A4** if dependencies are missing, or **B** to identify existing folders. Then return to [START_DEMO.md](../START_DEMO.md), step 2. The wizard creates the links and Python environment.
+- **Using manual setup instead:** follow **A** or **B**, then **C** and **D** below. Do not perform both setup methods.
 
 The demo needs the Linux **dedicated server**, not just the NWN game client. It uses its own module and saved-data folder; it does not load your production world.
 
@@ -77,7 +77,7 @@ chmod +x "$HOME/bin/nwnsc"
 ls -l "$HOME/bin/nwnsc"
 ```
 
-The compiler is now at **~/bin/nwnsc**. Continue to **C**; you do not need section B.
+The compiler is now at **~/bin/nwnsc**. Wizard users can return to [START_DEMO.md](../START_DEMO.md), step 2. Manual users continue to **C**; section B is unnecessary.
 
 ## B. Reuse an existing installation
 
@@ -92,7 +92,7 @@ Do not move your server or change its launcher. Identify these four paths:
 
 Use Ubuntu Files to locate the files if needed. The plugin folder and header folder can be in completely different locations. If all your NWNX files are directly in `~/nwnx`, use that path for the appropriate link; do not add `/plugins` or `/nwscripts` unless those folders actually exist.
 
-Required plugins: **Core, Chat, Events, Redis, Creature, Player, Item, Dialog, Util**. Dialog and Util support the development dialogue translation preview. Required headers come from the **NWScript.zip matching your installed NWNX build**, including dependencies such as `nwnx_redis_lib.nss`. If you have plugins but no headers, obtain NWScript.zip from that same release and extract it into a separate header folder.
+Required plugins: **Core, Chat, Events, Redis, Creature, Player, Item, Dialog, Util**. Dialog and Util support dialogue translation. Required headers come from the **NWScript.zip matching your installed NWNX build**, including dependencies such as `nwnx_redis_lib.nss`. If you have plugins but no headers, obtain NWScript.zip from that same release and extract it into a separate header folder.
 
 If the compiler is missing, follow **A4** (create the Downloads/roleweaver-deps folder first). If Redis/Python prerequisites are missing, follow **A1**. If using another Redis port, add `--redis-port YOUR_PORT` to the setup command in D.
 
@@ -154,7 +154,7 @@ All must find files. A link can be created successfully even when its target doe
 
 ## D. Return to the extracted demo package
 
-Open the extracted **RoleWeaver-Demo-Alpha-0.3.0** folder in Ubuntu Files, right-click empty space, and choose **Open in Terminal**. This matters: the following commands must run in the package folder, not in Downloads/roleweaver-deps or nwn-demo-deps.
+Open the extracted **RoleWeaver-Demo-1.0.0** folder in Ubuntu Files, right-click empty space, and choose **Open in Terminal**. This matters: the following commands must run in the package folder, not in Downloads/roleweaver-deps or nwn-demo-deps.
 
 If you have not already created its Python environment:
 
@@ -191,4 +191,4 @@ Continue with **Step 4 of START_HERE.md** for connecting to the game and dashboa
 | Exec format error | Use Linux x86-64 binaries. ARM/Mac/Windows binaries do not work in this reference setup. |
 | Redis connection failed | Confirm `redis-cli -h 127.0.0.1 -p 6379 ping` prints PONG and setup uses that port. |
 
-NWN binaries and dependency installations stay where you put them. The demo stores its game data and companion settings under `.demo/rw_demo/` in the extracted package; setup also creates a compiler link at `tools/nwnsc` if absent.
+NWN binaries and dependency installations stay where you put them. The demo stores its game data and Role Weaver settings under `.demo/rw_demo/` in the extracted package; setup also creates a compiler link at `tools/nwnsc` if absent.

@@ -12,6 +12,56 @@ spec.loader.exec_module(demo)
 
 
 class DemoTests(unittest.TestCase):
+    def test_fresh_demo_has_authored_content_without_player_or_translation_history(
+        self,
+    ):
+        from roleweaver.translation import TranslationCache
+
+        value = demo.content(ROOT / "demo/content.json")
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "world.sqlite3"
+            demo.seed_database(path, value, "clean_demo")
+            store = demo.Store(path)
+            translations = TranslationCache(Path(directory) / "translations.sqlite3")
+            try:
+                self.assertEqual(
+                    {npc["id"] for npc in store.list_npcs()},
+                    {npc["id"] for npc in value["npcs"]},
+                )
+                for table in (
+                    "memories",
+                    "messages",
+                    "story_visits",
+                    "seen",
+                    "placements",
+                    "safeguard_events",
+                ):
+                    with self.subTest(table=table):
+                        self.assertEqual(
+                            store.db.execute(
+                                f"SELECT COUNT(*) FROM {table}"
+                            ).fetchone()[0],
+                            0,
+                        )
+                for table, source in (
+                    ("world_documents", "world_documents"),
+                    ("access_lore", "access_lore"),
+                ):
+                    self.assertEqual(
+                        store.db.execute(f"SELECT COUNT(*) FROM {table}").fetchone()[0],
+                        len(value[source]),
+                    )
+                for table in ("entries", "current_sources", "preferences"):
+                    self.assertEqual(
+                        translations.db.execute(
+                            f"SELECT COUNT(*) FROM {table}"
+                        ).fetchone()[0],
+                        0,
+                    )
+            finally:
+                store.db.close()
+                translations.db.close()
+
     def test_encounters_spawn_in_their_areas_and_seed_without_resetting_a_run(self):
         value = demo.content(ROOT / "demo/content.json")
         script = demo.seed_script(value)

@@ -5,9 +5,11 @@ changes and verification; it is not an independent penetration test or a player-
 
 ## Deployment boundary
 
-The dashboard is an administrator interface, bound to `127.0.0.1`. It has no
-individual logins or player roles. Anyone with local access to its HTTP port has
-administrator access, including access to database exports. Use a dedicated,
+The dashboard is an administrator interface, bound to `127.0.0.1`, protected by
+one shared administrator password. The initial password is **roleweaver**;
+[change it on the server](DASHBOARD_LOGIN.md) before sharing access. It has no
+individual accounts or player roles. A signed-in administrator can access database
+exports and world controls. Use a dedicated,
 trusted OS account and an SSH tunnel; do not publish the port through a public
 proxy or router. Redis must also remain private to the trusted server processes.
 An untrusted local process is outside this isolation boundary.
@@ -15,7 +17,7 @@ An untrusted local process is outside this isolation boundary.
 The HTTP handler checks the exact local Host/port, Origin and browser fetch
 metadata. Duplicate headers and cross-site requests are refused. CLI clients
 without an Origin still work locally. These checks reduce browser-origin attacks;
-they do not authenticate a local user. Use the same local and remote dashboard
+they complement the password/session gate. Use the same local and remote dashboard
 port in an SSH tunnel so the Host check succeeds.
 
 Provider keys are stored separately from public settings, written atomically with
@@ -44,6 +46,7 @@ out-of-game private information in lore, profiles or dialogue.
 | Resource | Default / hard bound | What happens at the limit |
 | --- | --- | --- |
 | Dashboard connections | 16 active connections; listen backlog 16 | Excess connections close promptly instead of creating another thread |
+| Dashboard login | 10 attempts/minute, 1 password check at a time; 32 sessions, each up to 12 hours | Login attempts are refused temporarily; expired sessions must sign in again |
 | HTTP uploads | 10-second socket inactivity timeout; 20-second ordinary body deadline | Incomplete/slow requests stop; malformed framing is rejected |
 | Ordinary JSON request | 64 KiB; larger existing limits only for lore/backup routes | Oversized requests are rejected before reading the body |
 | Database recovery upload | One at a time, up to 512 MiB, 300-second body deadline | A second upload is refused; failed temporary uploads are removed |
@@ -91,6 +94,12 @@ and backup retention in Health & Support and Database & Recovery.
 This review added bounded HTTP connections, explicit upload deadlines, strict
 request framing, exclusive recovery uploads, a bounded AI work queue and a shared
 provider limiter. Rejected work now releases its domain-specific busy flags.
+
+The subsequent [dashboard-login update](DASHBOARD_LOGIN.md) adds a shared password,
+hashed server-side credentials, revocable sessions and rate-limited login attempts.
+Its full Ubuntu suite passed 612 tests, including protected recovery/API routes and
+authenticated installer readiness checks. Browser sign-in and logout were also
+verified against the installed service.
 
 An audit of the installed optional-Guardrails environment found PyJWT 2.14.0 affected
 by [GHSA-42vr-xj54-vc7v](https://github.com/jpadilla/pyjwt/security/advisories/GHSA-42vr-xj54-vc7v).

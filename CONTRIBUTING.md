@@ -34,5 +34,8 @@ version, platform, reproduction steps and redacted error types, not a raw privat
 
 ## Current priorities
 
-The alpha checklist tracks guided setup, demo packaging, diagnostics export and clean-machine
-validation. Discuss large architectural changes before replacing the shared-state service design.
+The [release checklist](docs/RELEASE_CHECKLIST.md) tracks package validation, fresh installations,
+upgrade/rollback rehearsals and external-world compatibility. Guided setup, diagnostics,
+companions and the three-area demo are included in version 1.0. Ongoing developer work
+will review module boundaries, readability and documentation; see the [roadmap](docs/ROADMAP.md).
+Discuss large architectural changes before replacing the shared-state service design.

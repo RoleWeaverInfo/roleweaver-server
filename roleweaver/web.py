@@ -18,6 +18,8 @@ from .recovery_web import handle as recovery_request
 from .health_web import handle as health_request
 from . import __version__
 from . import http_security
+from .dashboard_auth import DashboardAuth
+from .auth_web import handle as auth_request
 
 
 def main():
@@ -27,8 +29,9 @@ def main():
     os.umask(0o077)
     config_path = Path(args.config).resolve()
     config = json.loads(config_path.read_text())
-    runtime = RecoveryRuntime(config_path.parent / "data", config, start_workers=False)
     port = int(config.get("web_port", 8741))
+    auth = DashboardAuth(config_path, port)
+    runtime = RecoveryRuntime(config_path.parent / "data", config, start_workers=False)
     page = (Path(__file__).parent / "static/index.html").read_bytes()
 
     previews = {}
@@ -37,11 +40,20 @@ def main():
         def log_message(self, *_):
             pass
 
-        def respond(self, code, data, content_type="application/json", download=None):
+        def respond(
+            self,
+            code,
+            data,
+            content_type="application/json",
+            download=None,
+            headers=None,
+        ):
             body = data if isinstance(data, bytes) else json.dumps(data).encode()
             self.send_response(code)
             self.send_header("Content-Type", content_type)
             self.send_header("Content-Length", str(len(body)))
+            for name, value in (headers or {}).items():
+                self.send_header(name, value)
             if download:
                 self.send_header(
                     "Content-Disposition", f'attachment; filename="{download}"'
@@ -69,6 +81,8 @@ def main():
             if not self.allowed():
                 return self.respond(403, {"error": "Use the local dashboard address"})
             try:
+                if auth_request(self, auth, method):
+                    return
                 if health_request(self, runtime, method) or recovery_request(
                     self, runtime, method
                 ):
@@ -255,10 +269,12 @@ def main():
                 return self.respond(200, app.snapshot())
             if parsed.path == "/api/companions":
                 return self.respond(200, app.companion_dashboard())
-            if parsed.path == "/companions.js":
+            if parsed.path == "/api/companion-templates":
+                return self.respond(200, app.companion_template_dashboard())
+            if parsed.path in ("/companions.js", "/companion-templates.js"):
                 return self.respond(
                     200,
-                    (Path(__file__).parent / "static/companions.js").read_bytes(),
+                    (Path(__file__).parent / "static" / parsed.path[1:]).read_bytes(),
                     "application/javascript; charset=utf-8",
                 )
             if parsed.path == "/api/safeguards":
@@ -289,7 +305,16 @@ def main():
                     (
                         backup.LIMIT
                         if self.path == "/api/restore-preview"
-                        else 256000 if self.path == "/api/world-document" else 65536
+                        else (
+                            256000
+                            if self.path
+                            in (
+                                "/api/world-document",
+                                "/api/companion-profile",
+                                "/api/companion-template",
+                            )
+                            else 65536
+                        )
                     ),
                 )
                 body = json.loads(b"".join(http_security.body_chunks(self, length)))
@@ -299,6 +324,8 @@ def main():
                     return self.respond(200, app.save_companion_enabled(body))
                 if self.path == "/api/companion-profile":
                     return self.respond(200, app.save_companion_profile(body))
+                if self.path == "/api/companion-template":
+                    return self.respond(200, app.save_companion_template(body))
                 if self.path == "/api/live-assistant":
                     return self.respond(200, app.assist_live(body))
                 if self.path == "/api/encounter-assistant":

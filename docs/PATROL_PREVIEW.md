@@ -1,8 +1,9 @@
-# Patrol and awareness development preview
+# Patrol duties and NPC check-ins
 
-This first increment adds deterministic patrol duties and limited visual context.
-Optional two-turn NPC check-ins are now supported. Autonomous encounters, doors
-and item interactions remain future work. The published alpha remains unchanged.
+Patrol duties use saved destinations and game-confirmed movement. Optional short
+NPC check-ins let guards speak to other characters along the route. Broader
+[perception](PERCEPTION.md), [nearby behavior](NEARBY_BEHAVIOUR.md) and
+[inventory actions](INVENTORY_TASKS.md) are documented separately.
 
 ## Optional NPC check-ins
 

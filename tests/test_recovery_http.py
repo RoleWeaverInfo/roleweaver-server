@@ -59,8 +59,10 @@ class RecoveryHTTPTests(unittest.TestCase):
             )
         )
         self.process = None
+        self.cookie = ""
 
-    def start(self):
+    def start(self, authenticate=True, password="roleweaver"):
+        self.cookie = ""
         self.process = subprocess.Popen(
             [sys.executable, "-m", "roleweaver.web", "--config", str(self.config)],
             stdout=subprocess.DEVNULL,
@@ -68,7 +70,9 @@ class RecoveryHTTPTests(unittest.TestCase):
         )
         for _ in range(100):
             try:
-                self.request("/api/databases")
+                self.request("/login")
+                if authenticate:
+                    self.request("/api/login", {"password": password})
                 return
             except URLError:
                 time.sleep(0.05)
@@ -107,6 +111,8 @@ class RecoveryHTTPTests(unittest.TestCase):
 
     def request(self, path, body=None, origin=None, content_type="application/json"):
         headers = {}
+        if self.cookie:
+            headers["Cookie"] = self.cookie
         if body is not None:
             headers["Content-Type"] = content_type
             if not isinstance(body, bytes):
@@ -117,6 +123,8 @@ class RecoveryHTTPTests(unittest.TestCase):
             Request(f"http://127.0.0.1:{self.port}" + path, data=body, headers=headers),
             timeout=5,
         ) as r:
+            if r.headers.get("Set-Cookie"):
+                self.cookie = r.headers["Set-Cookie"].split(";", 1)[0]
             data = r.read()
             return (
                 json.loads(data)
@@ -207,6 +215,7 @@ class RecoveryHTTPTests(unittest.TestCase):
                     try:
                         connection.putrequest("POST", path)
                         connection.putheader("Content-Type", "application/json")
+                        connection.putheader("Cookie", self.cookie)
                         connection.putheader("Content-Length", str(len(body)))
                         for name, value in extra:
                             connection.putheader(name, value)

@@ -7,13 +7,16 @@ import hashlib
 import io
 import json
 from pathlib import Path
+import posixpath
+import re
 import tarfile
+from urllib.parse import unquote, urlsplit
 
 ROOT = Path(__file__).resolve().parents[1]
-VERSION = "0.3.0"
+VERSION = "1.0.0"
 NAMES = {
-    "demo": f"RoleWeaver-Demo-Alpha-{VERSION}",
-    "addon": f"RoleWeaver-Server-Addon-Alpha-{VERSION}",
+    "demo": f"RoleWeaver-Demo-{VERSION}",
+    "addon": f"RoleWeaver-Server-Addon-{VERSION}",
 }
 # Only these authored binary resources belong in a source distribution. In
 # particular, native executables/plugins and copied runtime archives do not.
@@ -24,6 +27,19 @@ ASSETS = {
     "assets/rw_tr_guide.utc",
     "demo/world/YourWorld_Fixed.mod",
     "roleweaver/static/rw_server_splash.png",
+}
+# JSON is not a general documentation format here: unreviewed JSON can contain
+# an exported world backup, saved player identity, credentials or test history.
+AUTHORED_JSON = {
+    "config.example.json",
+    "addon/setup.json",
+    "demo/content.json",
+    "demo/investigation/content.json",
+    "examples/translation_dialogue.json",
+    "examples/encounters/robbery/profiles.json",
+    "examples/encounters/troll-ransom/profiles.json",
+    "roleweaver/creature_catalog.json",
+    "roleweaver/merchant_catalog.json",
 }
 SOURCE_SUFFIXES = {
     ".py",
@@ -42,6 +58,7 @@ SOURCE_SUFFIXES = {
 PRIVATE_NAMES = {
     "provider.env",
     "llm-settings.json",
+    "dashboard-auth.json",
     "identity_salt",
     "settings.json",
     "config.json",
@@ -99,6 +116,10 @@ def source_file(path):
         or any(p.startswith(".") or p in RUNTIME_DIRS for p in relative.parts[:-1])
     ):
         raise ValueError(f"Private runtime file detected in package input: {relative}")
+    if path.suffix == ".json" and relative.as_posix() not in AUTHORED_JSON:
+        raise ValueError(f"Unreviewed JSON file in package input: {relative}")
+    if path.suffix == ".csv" and relative.as_posix() != "demo/results-template.csv":
+        raise ValueError(f"Unreviewed CSV file in package input: {relative}")
     if (
         relative.as_posix() not in ASSETS
         and relative.as_posix() not in FILES
@@ -106,6 +127,89 @@ def source_file(path):
     ):
         raise ValueError(f"Unreviewed file type in package input: {relative}")
     return True
+
+
+def validate_demo_content(raw):
+    """Distribution seed is authored data, never a dump of a live world store."""
+    data = json.loads(raw)
+    allowed = {
+        "scenario",
+        "area_tag",
+        "blueprint",
+        "npcs",
+        "world_documents",
+        "access_lore",
+        "controlled_actions",
+        "merchant_configs",
+        "safeguards",
+        "conversation",
+        "encounters",
+    }
+    if not isinstance(data, dict) or set(data) - allowed:
+        raise ValueError("Demo content contains unreviewed runtime fields")
+    fields = {
+        "id",
+        "name",
+        "role",
+        "personality",
+        "voice",
+        "lore",
+        "boundaries",
+        "guidance",
+        "mode",
+        "appearance",
+        "race",
+        "gender",
+        "npc_class",
+        "level",
+        "factions",
+        "area_tag",
+        "x",
+        "y",
+        "z",
+        "facing",
+        "shop",
+        "spawn",
+    }
+    for npc in data.get("npcs", []):
+        if (
+            not isinstance(npc, dict)
+            or set(npc) - fields
+            or str(npc.get("id", "")).startswith("cp_")
+        ):
+            raise ValueError(
+                "Demo seed contains a player companion or unreviewed NPC fields"
+            )
+    # Encounter definitions, not current participants, rolls or run ledgers.
+    for scene in data.get("encounters", []):
+        if any(
+            key in scene
+            for key in ("runs", "participants", "check_results", "receipts", "events")
+        ):
+            raise ValueError("Demo seed contains encounter runtime state")
+
+
+def validate_document_links(contents):
+    """Check relative Markdown links against the actual archive, not the repo."""
+    missing = []
+    for name, raw in contents.items():
+        if not name.endswith(".md"):
+            continue
+        text = re.sub(r"```.*?```", "", raw.decode("utf-8"), flags=re.S)
+        for match in re.finditer(r"\[[^\]\n]*\]\(([^)\n]+)\)", text):
+            target = match[1].strip().strip("<>")
+            url = urlsplit(target)
+            if url.scheme or url.netloc or not url.path:
+                continue
+            path = posixpath.normpath(
+                posixpath.join(posixpath.dirname(name), unquote(url.path))
+            )
+            if path not in contents and not any(
+                n.startswith(path.rstrip("/") + "/") for n in contents
+            ):
+                missing.append(f"{name}: {target}")
+    if missing:
+        raise ValueError("Broken packaged documentation links:\n" + "\n".join(missing))
 
 
 def runtime_version():
@@ -124,6 +228,9 @@ def package(output, kind="demo"):
     """Use an explicit source allowlist; fail rather than include private runtime files."""
     if kind not in NAMES:
         raise ValueError("Unknown distribution kind")
+    if runtime_version() != VERSION:
+        raise ValueError("Application and distribution versions must match")
+    validate_demo_content((ROOT / "demo/content.json").read_bytes())
     guide = "START_DEMO.md" if kind == "demo" else "START_ADDON.md"
     paths = [ROOT / name for name in (*FILES, "START_ADDON.md", guide)]
     for folder in (*FOLDERS, *(("demo",) if kind == "demo" else ())):
@@ -164,14 +271,14 @@ def package(output, kind="demo"):
             ROOT / "demo/content.json"
         ).read_bytes()
     contents["START_HERE.md"] = contents[guide]
-    notes = f"docs/releases/alpha-{VERSION}.md"
+    notes = f"docs/releases/{VERSION}.md"
     contents["RELEASE_NOTES.md"] = contents[notes]
     contents["RELEASE.json"] = (
         json.dumps(
             {
                 "distribution": NAMES[kind],
                 "version": VERSION,
-                "channel": "alpha",
+                "channel": "stable",
                 "runtime_version": runtime_version(),
                 "kind": kind,
             },
@@ -189,16 +296,15 @@ def package(output, kind="demo"):
         + "\nSource development: [CONTRIBUTING.md](CONTRIBUTING.md).\n"
         + "\nRead [release notes and limitations](RELEASE_NOTES.md) before upgrading.\n"
     ).encode()
-    contents["docs/README.md"] = (
-        "# Documentation\n\n- [Start here](../START_HERE.md)\n"
-        + f"- [Alpha {VERSION} release notes](releases/alpha-{VERSION}.md)\n"
-        + f"- [Alpha {VERSION} review](releases/alpha-{VERSION}-review.md)\n"
-        + "".join(
-            f'- [{p.stem.replace("_", " ").title()}]({p.name})\n'
-            for p in sorted((ROOT / "docs").glob("*.md"))
-            if p.name != "README.md"
-        )
+    index = contents["docs/README.md"].decode("utf-8")
+    if kind == "addon":
+        index = index.replace("- [Demo setup](../START_DEMO.md)\n", "")
+    contents["docs/README.md"] = index.replace(
+        "# Documentation\n",
+        "# Documentation\n\nStart with [START_HERE.md](../START_HERE.md).\n",
+        1,
     ).encode()
+    validate_document_links(contents)
     manifest = {
         name: hashlib.sha256(raw).hexdigest() for name, raw in sorted(contents.items())
     }

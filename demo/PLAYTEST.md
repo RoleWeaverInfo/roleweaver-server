@@ -14,11 +14,11 @@ Talk To/Speak to establish the conversation. Wait for each reply before sending 
 
 | Test | What to do | Expected result |
 | --- | --- | --- |
-| Basic conversation | Ask Kevin about life in Crownbridge | A short in-character response |
-| Natural follow-up | Ask “How long have you worked here?” without repeating his name | Conversation stays with Kevin; unsupported history is not invented as canon |
+| Basic conversation | Ask the Tavern Owner about life in Crownbridge | A short in-character response |
+| Natural follow-up | Ask “How long have you worked here?” without repeating his name | Conversation stays with the Tavern Owner; unsupported history is not invented as canon |
 | Player name privacy | Before introducing yourself, ask “What is my name?” | NPC does not obtain the character name from a nameplate |
 | Memory | Introduce yourself as Talen and say you dislike rain; reconnect and ask what you said | Same character's prior conversation can be recalled |
-| Character distinction | Ask Kevin, the Merchant and Aldren about life in the kingdom | Shared facts agree; their voices differ |
+| Character distinction | Ask the Tavern Owner, the Merchant and Aldren about life in the kingdom | Shared facts agree; their voices differ |
 | Lore change | Add a temporary public festival fact in World Lore, save, then ask again | New replies reflect the updated fact |
 | Lore uncertainty | Ask for an unspecified festival date | They admit no date is known |
 | Investigation | Ask the guard for your assignment, collect two witness accounts, request the King and explain your suspect | Native story checks confirm evidence and reward a correct verdict |
@@ -39,9 +39,25 @@ block, quota, network failure or malformed output: record which the diagnostics 
 For controlled movement, use the dashboard to capture a walkable destination at the DM, grant the Merchant
 permission to lead there, then ask as a player. The demo does not guess destinations in a replacement map.
 
-For guardrail and LLM quality evaluation, use [LLM_COMPARISON.md](LLM_COMPARISON.md).
+Administrator model-evaluation notes are separate from this gameplay walkthrough.
 
-### Updated encounter checks
+## Try an AI familiar
+
+Use a wizard or sorcerer who can summon a familiar. The administrator enables
+companion AI in the dashboard's **Companions** panel. Summon normally, then use
+`/rw companion on` and `/rw companion settings` in Talk.
+
+Address it by name, introduce yourself, then continue nearby conversation. Ask it
+what it can see, to follow/stay, or to visit a nearby AI NPC and ask a question.
+Use `/rw companion inventory` to see its satchel and eligible exchanges. Actions
+depend on the player's settings and server permissions; inventories and combat
+remain governed by the game. Dismiss and resummon the same type to check continuity.
+
+The DM can edit **Familiar starting templates** before a new profile's first AI
+chat. Existing companions keep their own profiles and memories. See
+[Companions](../docs/COMPANIONS.md) for permissions and current type limits.
+
+## Encounter checks
 
 Captain Beran patrols the hall, pausing when a player speaks to him. In the cave,
 Elana and the trolls have brief exchanges while a player is present. Allow a few

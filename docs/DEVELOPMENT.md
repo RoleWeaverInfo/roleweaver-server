@@ -28,6 +28,8 @@ python -m unittest discover -s tests
 ```
 
 Without those packages, optional Guardrails tests are skipped; inspect the test summary.
+With Node.js installed, also run `node tests/test_drafts.cjs` and
+`node tests/test_companion_templates.cjs` to check browser draft recovery.
 `test_*.py` tests use temporary storage and mocks. `live_*.py` scripts are separate native integration
 harnesses: read their arguments and prerequisites before running them.
 
@@ -41,7 +43,9 @@ python -m roleweaver.web --config .local/config.json
 
 Open http://127.0.0.1:8743. Data is stored next to the configuration in `.local/data/`.
 The bridge will show disconnected without Redis and an integrated game world. This does not mean
-that the dashboard failed. Stop with Ctrl+C. No credentials are required for offline mode.
+that the dashboard failed. Sign in with the initial dashboard password `roleweaver`
+(see [Dashboard login](DASHBOARD_LOGIN.md)). Offline mode needs no LLM API key.
+Stop with Ctrl+C.
 
 For a local Redis process on Ubuntu, install/start your Redis package and keep it bound to loopback.
 Use a unique `world_id` and `redis_prefix` per world; never point development at a live world's queue.
@@ -192,6 +196,12 @@ Player restrictions are applied both to offered actions and at native execution;
 satchel recovery remains independent of AI opt-in and normal inventory permission.
 
 The DM's Companions panel uses `companion_admin.py` and `static/companions.js`.
+Editable starting personalities live in `companion_templates.py` and
+`static/companion-templates.js`. The first AI chat snapshots a template into a new
+profile; resummons never replace it. Template matching uses game type IDs or exact
+DM-configured resrefs, never player names or chat. Portable backup format 15 carries
+the saved template bank; older backups get the shipped defaults. Test this path
+with `python -m unittest tests.test_companion_templates`.
 Format 14 also stores its server override and public owner/type labels. The
 installation `companions_enabled` value is the fallback until an override is
 saved. Updates use the existing game-generation invalidation, and bridge hello

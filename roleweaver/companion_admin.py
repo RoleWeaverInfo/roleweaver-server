@@ -10,7 +10,8 @@ import re
 import secrets
 import time
 
-FIELDS = ("role", "personality", "voice", "lore", "boundaries", "guidance")
+from . import companion_templates
+from .companion_templates import FIELDS
 
 
 def is_companion(npc):
@@ -124,6 +125,9 @@ class CompanionAdminService:
                         ),
                         profile={k: profile[k] for k in FIELDS},
                         revision=revision(profile),
+                        suggested_template=companion_templates.select(
+                            owner, self.companion_templates
+                        ),
                     )
                 )
             return dict(
@@ -168,15 +172,7 @@ class CompanionAdminService:
             or not is_companion(body.get("npc"))
         ):
             raise ValueError("Choose an existing companion profile")
-        values = body["profile"]
-        if (
-            not isinstance(values, dict)
-            or set(values) != set(FIELDS)
-            or any(not isinstance(v, str) or len(v) > 6000 for v in values.values())
-        ):
-            raise ValueError(
-                "Each companion profile field must be text of at most 6,000 characters"
-            )
+        values = companion_templates.validate_profile(body["profile"])
         with self.lock:
             old = self.store.get(body["npc"])
             if body["revision"] != revision(old):
@@ -185,3 +181,38 @@ class CompanionAdminService:
                 )
             self.save_profile(dict(old, **values))
             return self.companion_dashboard()
+
+    def companion_template_dashboard(self):
+        with self.lock:
+            return dict(
+                templates=companion_templates.dashboard(self.companion_templates),
+                draft_scope=hashlib.sha256(
+                    (self.salt + ":companion-templates").encode()
+                ).hexdigest()[:24],
+            )
+
+    def save_companion_template(self, body):
+        if (
+            not isinstance(body, dict)
+            or set(body) != {"id", "revision", "profile", "blueprints"}
+            or not isinstance(body.get("id"), str)
+            or body["id"] not in companion_templates.LABELS
+        ):
+            raise ValueError("Choose a familiar template")
+        with self.lock:
+            key = body["id"]
+            if body["revision"] != companion_templates.revision(
+                self.companion_templates[key]
+            ):
+                raise ValueError(
+                    "This template changed elsewhere. Reload the saved template and review your edits before saving."
+                )
+            value = dict(profile=body["profile"], blueprints=body["blueprints"])
+            saved = companion_templates.settings(
+                dict(self.companion_templates, **{key: value})
+            )
+            self.set_setting("companion_templates", saved)
+            self.companion_templates = saved
+            # Existing profiles, in-flight conversations and game permissions are
+            # independent copies. A template edit must not change any of them.
+            return self.companion_template_dashboard()

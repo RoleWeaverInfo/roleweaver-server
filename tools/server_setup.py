@@ -212,7 +212,13 @@ def verify(p):
     print(f"\nDashboard: http://127.0.0.1:{p['dashboard_port']}/")
     try:
         with urllib.request.urlopen(
-            f"http://127.0.0.1:{p['dashboard_port']}/api/health", timeout=5
+            urllib.request.Request(
+                f"http://127.0.0.1:{p['dashboard_port']}/api/health",
+                headers=manager.probe_headers(
+                    profiles.installation(p["world_id"]) / "config.json"
+                ),
+            ),
+            timeout=5,
         ) as response:
             data = json.load(response)
     except (OSError, ValueError):
@@ -233,7 +239,13 @@ def verify(p):
     if p["features"]["companions"]:
         try:
             with urllib.request.urlopen(
-                f"http://127.0.0.1:{p['dashboard_port']}/api/companions", timeout=5
+                urllib.request.Request(
+                    f"http://127.0.0.1:{p['dashboard_port']}/api/companions",
+                    headers=manager.probe_headers(
+                        profiles.installation(p["world_id"]) / "config.json"
+                    ),
+                ),
+                timeout=5,
             ) as response:
                 cp = json.load(response)
             applied = cp.get("status") == "applied" and cp.get("enabled") is True

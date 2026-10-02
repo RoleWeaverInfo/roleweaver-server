@@ -1,4 +1,4 @@
-# Merchant controls — 0.25.1
+# Merchant controls
 
 ## Select a merchant
 1. Refresh the dashboard and open **Merchants** in the left sidebar.
@@ -39,5 +39,5 @@ Recovery backup format11 includes per-merchant rules; versions1–10 remain supp
 
 Playtest: change Bram's discount and success chance and save; add one potion; reconnect as a player and ask about stock and haggling; buy the potion; verify gold/stock; remove another test item through the dashboard; reopen the shop to confirm it is absent. With a shop window already open, change rules or stock and verify that customers must reopen it before purchasing.
 
-## Price consistency fix (0.25.1)
+## Price consistency
 NWNX Player is now required alongside the existing plugins. Enable it with NWNX_PLAYER_SKIP=n when using SKIP_ALL. The shop closes and reopens automatically to refresh personal prices. Price questions use final game quotes without applying the discount twice; changed or expired quotes are rejected before speech. After updating, test haggling with a store already open, then verify displayed and charged prices.

@@ -12,7 +12,7 @@ main entrance.
 Both areas have a return exit to Crown Hall, with an arrival point away from the
 door. The forest has a short path, trees and space to retreat. The cave has an open
 compact chamber with room to approach the trolls and move around the hostage.
-The cave's playable space is roughly half the initial version's size. Each uses
+Each uses
 standard NWN tiles, lighting, ambient sound and music; no custom HAK is required.
 
 Fresh demos also import two armed **Persistent Encounters** from `demo/content.json`.
@@ -50,8 +50,7 @@ Encounters to pause, edit or rearm a scene. Live Encounters remain separate.
    [CUSTOMIZE.md](CUSTOMIZE.md#edit-or-replace-the-world), then start it again.
 
 Existing installed demos retain their current module until they are rebuilt from
-the updated source. Previously built Alpha 0.3.0 archives are unchanged by this
-development map update.
+the updated source. Rebuild from the new package's source to use its current bridge and map.
 
 ## Encounter staging points
 

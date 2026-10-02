@@ -1,4 +1,4 @@
-# Starting and continuing an NPC conversation — 0.21.0
+# Starting and continuing an NPC conversation
 
 1. Stand within **3 metres** of an AUTO NPC, right-click it and choose **Talk To** (Speak in some interfaces). You receive a private confirmation; selection itself does not call the AI.
 2. Alternatively, address the NPC once within hearing range: `Mira: Hello`, `Mira, can you help?`, or `Hello Mira`. A full name, unambiguous first name or stable ID works. For example, `Dimby, hello` can select Dimby Thornshield, and `Beran, hello` can select Captain Beran.

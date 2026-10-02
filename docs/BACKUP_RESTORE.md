@@ -3,13 +3,15 @@
 For coordinated world, translation and usage database recovery, use
 **Database & Recovery** and follow [the recovery guide](DATABASE_RECOVERY.md).
 It includes automatic snapshots and a recovery page that can start when a database
-is corrupt. This is included in Alpha 0.3.0, not the older Alpha 0.2.0.
+is corrupt.
 
 ## Portable JSON backups
 
 The older controls remain below the database recovery panel. **Download backup**
 saves profiles, world lore, memories, conversation history, supported world settings,
-the player identity salt and persistent NPC placement records. JSON backups exclude
+the player identity salt and persistent NPC placement records. Format 15 also
+includes editable familiar templates; companion preferences and dashboard
+administration settings are retained. Older backups restore shipped templates. JSON backups exclude
 translations, language preferences, usage history, credentials and NWN game files.
 They contain private player history; store them securely.
 

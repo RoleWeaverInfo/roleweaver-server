@@ -16,7 +16,7 @@ from the project's authored `examples/translation_dialogue.json`.
 The editable `YourWorld_Fixed.mod` was supplied and edited by the project owner.
 It includes inherited module resources/handlers, including DMFI integration.
 Preserve existing credits and review applicable third-party permissions before
-wider redistribution. Alpha 0.3.0 refreshes only Role Weaver's managed bridge
+wider redistribution. Version 1.0.0 refreshes only Role Weaver's managed bridge
 scripts/resources; it does not establish or change the other assets' licensing.
 
 The creature catalogue contains game-facing identifiers. The dashboard splash

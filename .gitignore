@@ -8,6 +8,8 @@ provider.env
 .env.*
 !.env.example
 llm-settings.json
+dashboard-auth.json
+.dashboard-auth-*
 identity_salt
 *.sqlite3*
 *.db

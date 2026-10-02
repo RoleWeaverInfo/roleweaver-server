@@ -50,6 +50,44 @@ players continue to use `/rw companion settings` in game.
   review your draft first. Saved profile edits invalidate model replies still
   being generated under the previous profile.
 
+### Familiar starting templates
+
+Expand **Familiar starting templates** in the Companions panel. Choose a type,
+edit its role, personality (including likes and dislikes), speaking style,
+background, boundaries and DM guidance, then click **Save template**.
+
+Defaults cover bat, cat/panther, hell hound, imp, fire mephit, ice mephit, pixie,
+raven, faerie dragon, pseudodragon and eyeball/beholder kin. **Other / unknown
+familiar** is the fallback. These are authored starting personalities; selecting
+one costs no LLM request. They do not invent world lore or an owner's history.
+
+- A new familiar profile receives a copy of the matching saved template on its
+  **first AI chat**. Summoning alone does not create a profile or call the model.
+- Returning familiars keep their saved personality and memories. Editing a
+  template does not update existing companions, even after a restart or resummon.
+- To update an existing companion deliberately, select it under **Companion
+  personalities**, choose a template, and click **Load template into profile
+  draft**. Review the six fields, then **Save companion profile**. This replaces
+  those profile fields while preserving its identity, memories and possessions.
+- **Load shipped defaults into draft** lets you undo template customization;
+  review and save to apply it. Both editors offer browser draft recovery and
+  reject stale saves if another administrator changed the same saved record.
+- Templates are saved in the Role Weaver database and included in database
+  recovery snapshots and portable world backups (format 15). Older world backups
+  restore the shipped template defaults. No NWN restart is needed for edits.
+
+For custom familiars, enter exact creature resrefs under **Custom creature
+blueprints**, separated by commas. For example, `pw_snowcat` can be mapped to
+Cat / panther. Each resref can appear in only one template. A custom match takes
+priority over the standard game familiar-type ID; the default type lookup remains
+active when this field is blank. Level-specific blueprints must each be listed
+if you need this override. This changes personality selection, not the familiar
+summoning system. Creature names chosen by players never select a template.
+
+Templates do not enable companion AI, opt a player in, grant action permissions,
+or change a familiar's stats, level, faction or in-game name. Optional automatic
+AI-generated personality variations are not part of this feature.
+
 This version has a server-wide AI switch, not separate DM switches for individual
 owners or familiar types. The listed status describes recent observations; an
 unavailable familiar may be switched off by its player, possessed or in combat.
@@ -349,8 +387,9 @@ should test that integration before enabling the feature for players.
   questions, but cannot take control.
 - AI actions include follow/stand ground, offered item errands and owner-directed visits.
   Native combat remains native; no new attack permissions are introduced.
-- A familiar's initial personality uses its creature blueprint where recognized;
-  unknown/custom creatures receive a general loyal-familiar personality.
+- A familiar's initial personality uses an editable starting template matched by
+  a custom blueprint override or standard familiar-type ID. Older bridge events
+  can match recognized blueprint names. Unknown creatures use the fallback.
 - Current dialogue context includes the latest 16 messages plus curated memories.
   It does not yet perform automatic long-term memory summarization.
 - At most two companion generations run at once, sharing existing provider limits
@@ -415,6 +454,14 @@ choice is saved. `companions.js` provides a separate editor with browser recover
 drafts. Native hello messages report the actual switch and preference generation;
 the dashboard does not infer game confirmation from a successful HTTP save.
 
+`roleweaver/companion_templates.py` owns the authored defaults, strict validation
+and deterministic matching. `backup_settings.companion_templates` stores the
+saved bank. Template profile fields are copied at creation, never referenced live
+by established companions. `/api/companion-templates` reads the bank and
+`/api/companion-template` saves one template with a revision check under the service
+lock. The template editor uses `static/companion-templates.js`; explicit application
+to an existing companion goes through the ordinary revision-checked profile save.
+
 `bridge/rw_cp_visit.nss` owns visit targets, physical movement, recipient consent,
 timeouts and speech acknowledgements. `roleweaver/companion_visits.py` coordinates
 short exchanges and reports from the acknowledged speech ledger. Opaque offered
@@ -426,7 +473,7 @@ or familiar is unavailable, so a lost visitor cannot permanently stop a patrol.
 
 ## Tests before expanding support
 
-Run `python -m unittest tests.test_companions tests.test_companion_inventory tests.test_companion_preferences tests.test_companion_visits tests.test_companion_admin` and
+Run `python -m unittest tests.test_companions tests.test_companion_inventory tests.test_companion_preferences tests.test_companion_visits tests.test_companion_admin tests.test_companion_templates` and
 the normal regression suite.
 Compile `tests/companions_native.nss` as `invtest` in an isolated module/userdata
 directory. It checks native protocol rejection and absence of world bindings;

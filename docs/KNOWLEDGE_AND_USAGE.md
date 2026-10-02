@@ -1,4 +1,4 @@
-# Knowledge and Usage & Performance — 0.18.0
+# Knowledge and Usage & Performance
 
 ## Inspect what an NPC can know
 
@@ -30,16 +30,18 @@ Expand **Model pricing** and enter your exact model's USD input/output/cached-in
 
 Rates are captured when each request begins. Changing them affects future requests only, not old estimates. Other tiers, long-context/cache-write surcharges, tools, taxes, credits and discounts are not included. Compare against your provider's invoice for actual charges.
 
-For the current Ubuntu deployment, OpenAI's gpt-5.6-luna model page was checked on 2026-09-17: standard input $0.20, cached input $0.02, output $1.20 per million tokens. The initial ceiling is 272,000 input tokens, above which the page lists different pricing. These initial rates will be entered only if this exact OpenAI endpoint/model has no saved rates; other models remain unpriced until configured. Source: https://developers.openai.com/api/docs/models/gpt-5.6-luna . Always review rates if your provider or service tier changes.
+Check your provider's current pricing for the exact model, endpoint and service tier.
+Do not use a development installation's historical rates for a new server. Models
+without saved rates show unknown cost until the administrator configures them.
 
 ## Storage and privacy
 
-Tracking starts with this release; older activity cannot be reconstructed. Up to 30 days or 50,000 request records are retained, whichever limit is reached first. The charts cover retained records only. The earliest retained timestamp and pricing/token coverage are shown.
+Tracking starts when the service records requests; earlier activity cannot be reconstructed. Up to 30 days or 50,000 request records are retained, whichever limit is reached first. The charts cover retained records only. The earliest retained timestamp and pricing/token coverage are shown.
 
-Metadata is stored in a separate local `data/usage.sqlite3` SQLite WAL database, including price snapshots. It survives dashboard restarts and is not rewritten by restoring gameplay backups. Existing dashboard recovery exports contain gameplay knowledge, not usage records or rate settings. Back up this database separately if long-term usage history is required (use SQLite's backup API, or stop the dashboard before copying it).
+Metadata is stored in a separate local `data/usage.sqlite3` SQLite WAL database, including price snapshots. It survives dashboard restarts and is not rewritten by restoring gameplay backups. Database & Recovery snapshots include usage history and rate settings. The separate portable gameplay JSON exports do not. See [Database recovery](DATABASE_RECOVERY.md); keep snapshots private.
 
 No request prompts, reply bodies, credentials, player references or source texts are retained in telemetry. Error records contain exception class/HTTP status only. Knowledge views remain part of the existing localhost administrative dashboard; do not publish that dashboard as a player-facing endpoint.
 
 ## Validation
 
-Automated tests cover reporting, provider success/failure accounting, missing counts, cached/reasoning tokens, concurrent writes, time/filter aggregation, pricing snapshots, player isolation, lore access, memory editing and all three service request categories. Browser testing uses isolated synthetic fixtures; no real player dialogue is sent to an LLM as a test. This release changes Python and dashboard files only; no NWN script recompilation or game restart is needed.
+Automated tests cover reporting, provider success/failure accounting, missing counts, cached/reasoning tokens, concurrent writes, time/filter aggregation, pricing snapshots, player isolation, lore access, memory editing and all three service request categories. Browser testing uses isolated synthetic fixtures; no real player dialogue is sent to an LLM as a test. Native bridge updates still require compilation and the server's normal maintenance process.

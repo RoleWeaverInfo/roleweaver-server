@@ -466,6 +466,7 @@ def connection_instructions(settings, addresses, username):
         )
     lines += [
         "Dashboard:",
+        "  Initial dashboard password: roleweaver (unless changed on the server).",
         f"  In Ubuntu: http://127.0.0.1:{web}",
         "  From Windows/another computer, run this SSH tunnel there and leave it open:",
         f"    ssh -N -L {web}:127.0.0.1:{web} {username}@{addresses[0] if len(addresses) == 1 else 'UBUNTU-IP'}",
@@ -527,7 +528,7 @@ def launch(runtime, settings):
         "-publicserver",
         "0",
         "-servername",
-        "Role Weaver Alpha Demo",
+        "Role Weaver Demo",
         "-servervault",
         "0",
         "-maxclients",

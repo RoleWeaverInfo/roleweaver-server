@@ -18,6 +18,7 @@ import urllib.request
 import install_profile as profiles
 from roleweaver.db_recovery import DatabaseRecovery, atomic_json
 from roleweaver.recovery_runtime import InstanceLock
+from roleweaver.dashboard_auth import probe_headers
 
 
 def run(args, **kwargs):
@@ -102,12 +103,16 @@ def set_current(root, target):
     os.replace(link, root / "current")
 
 
-def health(port, timeout=20):
+def health(port, timeout=20, config_path=None):
     deadline = time.monotonic() + timeout
     while True:
         try:
             with urllib.request.urlopen(
-                f"http://127.0.0.1:{port}/api/health", timeout=2
+                urllib.request.Request(
+                    f"http://127.0.0.1:{port}/api/health",
+                    headers=probe_headers(config_path) if config_path else {},
+                ),
+                timeout=2,
             ) as response:
                 value = json.load(response)
             if (
@@ -183,7 +188,7 @@ def restore_service(p, data):
             run(["systemctl", "--user", "link", root / unit_name(p)])
         if data["was_active"]:
             run(["systemctl", "--user", "start", unit_name(p)])
-            health(p["dashboard_port"])
+            health(p["dashboard_port"], config_path=root / "config.json")
     else:
         # Failed fresh installation: retain files/data for diagnosis, but do not
         # leave a restart-on-failure service running against a partial install.
@@ -282,7 +287,7 @@ def apply(p, update=False):
             run(["systemctl", "--user", "daemon-reload"])
             run(["systemctl", "--user", "enable", unit_name(p)])
             run(["systemctl", "--user", "start", unit_name(p)])
-            health(p["dashboard_port"])
+            health(p["dashboard_port"], config_path=root / "config.json")
             data.update(
                 state="complete", after_release=str((root / "current").resolve())
             )

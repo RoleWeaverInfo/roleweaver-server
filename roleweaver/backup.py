@@ -15,6 +15,7 @@ from . import (
     encounters,
     companion_preferences,
     companion_admin,
+    companion_templates,
 )
 from .lore_documents import validate_documents, combined
 
@@ -25,7 +26,8 @@ def validate(data):
     if (
         not isinstance(data, dict)
         or data.get("format") != "roleweaver-backup"
-        or data.get("version") not in (1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14)
+        or data.get("version")
+        not in (1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15)
     ):
         raise ValueError("Unsupported Role Weaver backup")
 
@@ -75,6 +77,15 @@ def validate(data):
     if data["version"] >= 14 and "companion_admin" not in data:
         raise ValueError("Missing companion administration settings")
     result["companion_admin"] = companion_admin.settings(data.get("companion_admin"))
+    if data["version"] >= 15 and "companion_templates" not in data:
+        raise ValueError("Missing companion templates")
+    if "companion_templates" in data and not isinstance(
+        data["companion_templates"], dict
+    ):
+        raise ValueError("Invalid companion templates")
+    result["companion_templates"] = companion_templates.settings(
+        data.get("companion_templates")
+    )
     result["world_documents"] = validate_documents(
         data.get(
             "world_documents",
@@ -220,7 +231,16 @@ def export(store, salt):
         ).fetchone()
         return dict(
             format="roleweaver-backup",
-            version=14,
+            version=15,
+            companion_templates=companion_templates.settings(
+                json.loads(row[0])
+                if (
+                    row := store.db.execute(
+                        "SELECT value FROM backup_settings WHERE key='companion_templates'"
+                    ).fetchone()
+                )
+                else None
+            ),
             companion_admin=companion_admin.settings(
                 json.loads(row[0])
                 if (
@@ -269,6 +289,14 @@ def export(store, salt):
 
 def replace(store, data):
     with store.lock, store.db:
+        store.db.execute(
+            "INSERT OR REPLACE INTO backup_settings VALUES ('companion_templates',?)",
+            (
+                json.dumps(
+                    companion_templates.settings(data.get("companion_templates"))
+                ),
+            ),
+        )
         store.db.execute(
             "INSERT OR REPLACE INTO backup_settings VALUES ('companion_admin',?)",
             (json.dumps(companion_admin.settings(data.get("companion_admin"))),),

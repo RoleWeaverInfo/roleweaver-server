@@ -4,7 +4,7 @@ Use staging, a backup and one test NPC. Record versions, provider/model and sett
 or unredacted player conversations.
 
 1. Before integration, verify login, chat moderation, private channels, spawning and stores.
-2. Install the reviewed bridge, start the companion, and run tools/check_addon.py.
+2. Install the reviewed bridge, start the companion, and run `python3 tools/check_addon.py --port 8743 --config "$HOME/.local/share/roleweaver/my_world/config.json"`, substituting your installed world and dashboard port. This reads the server's private readiness credential; it makes no LLM calls.
 3. Bind/resume one NPC. Offline Talk should reach it; unrelated conversations should not.
 4. Verify rejected, muted and hidden messages never reach Role Weaver's conversation view.
 5. Configure/test an LLM and check ordinary conversation and memory.

@@ -1,18 +1,19 @@
-# Alpha 0.3.0 distributions
+# Version 1.0.0 distributions
 
 | Download | Audience |
 | --- | --- |
-| RoleWeaver-Demo-Alpha-0.3.0.tar.gz | Players/testers using the supplied separate world |
-| RoleWeaver-Server-Addon-Alpha-0.3.0.tar.gz | Owners integrating an existing NWN/NWNX world |
+| RoleWeaver-Demo-1.0.0.tar.gz | Players/testers using the supplied separate world |
+| RoleWeaver-Server-Addon-1.0.0.tar.gz | Owners integrating an existing NWN/NWNX world |
 
 Each archive has its own **START_HERE.md**, **README.md**, **RELEASE_NOTES.md** and
-**RELEASE.json** (distribution 0.3.0 / runtime 0.28.0). Run `bash setup.sh` from
+**RELEASE.json** (distribution and runtime 1.0.0, stable channel). Run `bash setup.sh` from
 the extracted folder. The demo includes its launcher and optional playtests; the
-add-on prepares bridge resources without requiring a module path or starting NWN.
+add-on reads the selected module to generate path-specific integration instructions,
+while leaving it in place and never starting NWN.
 
 Both include the edited **YourWorld_Fixed.mod**: `demo/world/` in the demo and
-`addon/example-world/` in the add-on. Only managed bridge scripts/resources were
-refreshed for this alpha; the owner's layout and investigation hooks are preserved.
+`addon/example-world/` in the add-on. The throne room, forest, cave, placed objects and investigation hooks are retained.
+Demo setup recompiles current bridge resources for its own namespace.
 The add-on example uses `my_world` / `roleweaver:my_world`. It is an optional
 example, not an automatic replacement for an established world. Custom world IDs
 need matching compiled bridge settings. See its content.json for authoring data.
@@ -33,13 +34,29 @@ The archives and their `.sha256` sidecars are generated in **dist/** (ignored by
 Git). Each archive contains **MANIFEST.sha256.json** with every other file's hash.
 The archive top-level folder matches its filename. Shell launchers have executable
 permissions. Gzip/tar metadata is fixed so unchanged input produces identical bytes.
-The packager rejects private runtime files, unreviewed binaries and extra modules.
+The packager rejects private runtime files, unreviewed JSON/CSV exports, binaries
+and extra modules. It also rejects player/history fields in the authored demo seed
+and checks relative documentation links against the files actually shipped.
+
+## Clean demo data
+
+The demo is seeded from `demo/content.json`, not exported from a running server.
+It retains authored profiles, lore, actions, shops and the two encounter definitions.
+First setup creates new databases with no player memories, conversation history,
+translation cache or saved player language choices. API keys, dashboard credentials,
+identity salts, logs, backups and server character saves are not copied into either
+archive. The normal first-run dashboard password remains `roleweaver`; change it
+using [Dashboard login](DASHBOARD_LOGIN.md).
+
+This clean starting state applies to a **new demo installation**. Updating an existing
+installation deliberately preserves its player data. Packaging does not erase the
+development server's databases.
 
 Verify the downloaded files on Linux before extracting:
 
 ```bash
-sha256sum -c RoleWeaver-Demo-Alpha-0.3.0.tar.gz.sha256
-sha256sum -c RoleWeaver-Server-Addon-Alpha-0.3.0.tar.gz.sha256
+sha256sum -c RoleWeaver-Demo-1.0.0.tar.gz.sha256
+sha256sum -c RoleWeaver-Server-Addon-1.0.0.tar.gz.sha256
 ```
 
 Run only the line for the download you selected. Keep archives and sidecars in
@@ -48,14 +65,15 @@ project's release rather than treating the hash alone as proof of origin.
 
 ## Publication is separate
 
-Review [release notes](releases/alpha-0.3.0.md), the
-[checklist](ALPHA_CHECKLIST.md) and [asset notes](../THIRD_PARTY_NOTICES.md).
+Review [release notes](releases/1.0.0.md), the
+[checklist](RELEASE_CHECKLIST.md) and [asset notes](../THIRD_PARTY_NOTICES.md).
 Commit the reviewed source and generated example module before tagging
-`v0.3.0-alpha.1`. Rebuild from that source, verify the archives, and upload both
-archives with their sidecars to a GitHub **prerelease**. Update the repository
-README's prepared-release notice only after publication succeeds.
+`v1.0.0`. Rebuild from that source, verify the archives, and upload both
+archives with their sidecars to a normal GitHub release, marked latest and **not**
+a prerelease. Verify the public downloads against the locally built checksums.
+Forum and Neverwinter Vault announcements are separate from GitHub publication.
 
 Never upload `.demo/`, runtime databases, credentials, backups or raw logs.
 The module-copy builder is optional developer tooling; existing-server installation
 keeps the user's module in its own location. A future developer distribution and
-the larger version 1 demo are separate work.
+further demo expansion are separate work. Tagged GitHub source is the developer download for now.

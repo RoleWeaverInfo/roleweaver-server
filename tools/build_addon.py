@@ -313,7 +313,7 @@ def build(module, output, native, world, prefix, owner, chat, scripts=()):
 This bundle contains no dedicated NWN server. Use the world's existing server.
 World: `{world}`. Placement owner: `{owner}`. Chat mode: `{chat}`.
 
-1. Review audit.json and INTEGRATION.md in the Role Weaver source distribution.
+1. Review audit.json and docs/INTEGRATION.md in the Role Weaver source distribution.
    Static inspection is incomplete; review HAKs, overrides and runtime plugins too.
 2. Back up your active module and any files you intend to change.
 3. Merge bridge sources into the world's build, or stage all files from compiled/ (including .ncs, .utc and .utm assets) in its

@@ -22,6 +22,10 @@
     <p id="cp-admin-identity" class="muted"></p>
     <p id="cp-admin-empty">No companion profiles loaded.</p>
     <div id="cp-admin-editor" hidden>
+      <label for="cp-admin-template">Copy a saved starting template into this profile</label>
+      <div class="row"><select id="cp-admin-template" disabled></select>
+        <button id="cp-admin-use-template" type="button" disabled>Load template into profile draft</button></div>
+      <p class="muted">Review the copied fields, then Save companion profile to apply them. Memories and inventory are preserved.</p>
       <p id="cp-admin-draft" class="context-note" role="status"></p>
       <form id="cp-admin-form"><fieldset id="cp-admin-fields" style="border:0;padding:0;margin:0">
         <div class="grid">
@@ -38,11 +42,22 @@
           <button id="cp-admin-reload" type="button">Reload saved profile</button></div>
       </fieldset></form><p id="cp-admin-profile-notice" role="status"></p>
     </div>`;
-  host.append(panel, editor);
+  host.append(panel);
   const $ = id => document.getElementById('cp-admin-' + id);
   const fields = ['role', 'personality', 'voice', 'lore', 'boundaries', 'guidance'];
   let data = null, selected = '', baseline = null, version = '', drafts = null;
   let dirty = false, draftSaved = false, recovering = false, loading = false, saving = false, switching = false, sequence = 0;
+  const templateEditor = new CompanionTemplateEditor(host, rows => {
+    const value = $('template').value;
+    $('template').replaceChildren();
+    for (const row of rows) {
+      const option = document.createElement('option'); option.value = row.id; option.textContent = row.label;
+      $('template').append(option);
+    }
+    $('template').value = rows.some(r => r.id === value) ? value : (data?.companions.find(r => r.id === selected)?.suggested_template || 'default');
+    buttons();
+  });
+  host.append(editor);
   const read = () => Object.fromEntries(fields.map(k => [k, $(k).value]));
   const fill = p => fields.forEach(k => { $(k).value = p[k]; });
   const draftKey = () => 'companion-profile:' + selected;
@@ -61,6 +76,7 @@
     $('fields').disabled = saving || recovering;
     $('select').disabled = saving || !data?.companions.length;
     $('save').disabled = !selected || !dirty || saving || recovering;
+    $('template').disabled = $('use-template').disabled = !selected || !templateEditor.rows.length || saving || recovering;
   }
   function stash() {
     if (!selected || recovering) return;
@@ -78,6 +94,7 @@
   }
   function loadProfile(row) {
     selected = row.id; baseline = row.profile; version = row.revision;
+    $('template').value = row.suggested_template || 'default';
     fill(baseline); dirty = false; draftSaved = false; recovering = false;
     $('profile-notice').textContent = '';
     $('draft').replaceChildren();
@@ -144,6 +161,13 @@
     if (row) { loadProfile(row); render(data); }
   };
   $('form').oninput = stash;
+  $('use-template').onclick = () => {
+    if (saving || recovering) return;
+    const row = templateEditor.rows.find(r => r.id === $('template').value);
+    if (!row || (dirty && !confirm('Replace the current profile draft with this saved template?'))) return;
+    fill(row.profile); stash();
+    $('profile-notice').textContent = `${row.label} copied into the draft. Review it and Save companion profile to apply.`;
+  };
   $('reload').onclick = () => {
     if (dirty && !confirm(draftSaved
       ? 'Reload the saved profile? Your current edits will remain as a browser recovery draft.'

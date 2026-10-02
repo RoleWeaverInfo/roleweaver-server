@@ -30,13 +30,22 @@ or extend the authored spawn script later. Lore text alone does not change the m
 Recompile your saved source into the existing instance:
 
 ```bash
-python demo/demo.py check-content
-python demo/demo.py rebuild
+.venv/bin/python demo/demo.py check-content
+.venv/bin/python demo/demo.py rebuild
 ```
 
 Rebuild preserves data, provider settings and passwords. It backs up previous active module/override
 files under `.demo/rw_demo/previous-builds/`. Restart to load the new world. Replacing an area's tag may
 invalidate saved placements/destinations: check those in the dashboard before resuming AI.
+
+## Custom HAKs and TLKs
+
+Stop the demo before adding content. Put required HAK files under
+`.demo/rw_demo/userdata/hak/` and TLKs under `.demo/rw_demo/userdata/tlk/`, creating
+those folders if necessary. Set the module's HAK/TLK requirements in Aurora and
+provide matching client files to players. Rebuild the edited module before restarting.
+These are your local additions and are not collected by the release packager.
+Check redistribution permissions before including custom content in a public demo.
 
 ## Edit NPCs and lore
 
@@ -46,7 +55,7 @@ use a new ID for a genuinely different character. JSON must use normal double qu
 For an existing stopped instance, deliberately import your edited templates:
 
 ```bash
-python demo/demo.py apply-content
+.venv/bin/python demo/demo.py apply-content
 ```
 
 This backs up the database, updates listed profiles and public lore documents, enables auto mode and
@@ -94,8 +103,8 @@ builder uses authored source files only.
 Use a new instance name and unused ports for clean memory and inventory:
 
 ```bash
-python demo/demo.py setup --instance comparison_a --game-port 5126 --web-port 8746 --native /your/dependencies --compiler /your/nwnsc --guardrails
-python demo/demo.py start --instance comparison_a
+.venv/bin/python demo/demo.py setup --instance comparison_a --game-port 5126 --web-port 8746 --native /your/dependencies --compiler /your/nwnsc --guardrails
+.venv/bin/python demo/demo.py start --instance comparison_a
 ```
 
 Each has a separate Redis prefix, database, userdata and credentials. Do not reuse ports with a running
@@ -106,7 +115,7 @@ world. Changing models in one existing instance retains memories, which can bias
 From the repository root:
 
 ```bash
-python tools/package_demo.py
+.venv/bin/python tools/package_demo.py
 ```
 
 The archive and checksum appear in `dist/`. Rebuild after modifying the source world, content or guides.
@@ -128,4 +137,4 @@ controls whether the encounter may order that actor to attack the player; keep i
 
 ## Saved dashboard setup
 
-The supplied content.json includes the saved NPC profiles, lore/access settings, approved destinations, innkeeper/merchant spawn positions and facing, conversation/hearing controls, safeguard settings and merchant haggle rules captured on September 20, 2026. Setup applies these to a fresh instance. apply-content imports these authoring settings into an existing stopped demo after backing up its database; it preserves player memories. Provider credentials and player histories are not included. The optional example-world content in the add-on archive is the same snapshot.
+The supplied content.json includes the saved NPC profiles, lore/access settings, approved destinations, innkeeper/merchant spawn positions and facing, conversation/hearing controls, safeguard settings and merchant haggle rules maintained with this release. Setup applies these to a fresh instance. apply-content imports these authoring settings into an existing stopped demo after backing up its database; it preserves player memories. Provider credentials and player histories are not included. The optional example-world content in the add-on archive is the same authored content.

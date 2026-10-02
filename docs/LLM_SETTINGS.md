@@ -1,4 +1,4 @@
-# LLM settings — 0.26.0
+# LLM settings
 
 1. Open **LLM Settings** in the dashboard's left sidebar.
 2. Choose **OpenAI**, **Google Gemini**, or **LM Studio (local)**.
@@ -25,17 +25,17 @@ Token counts and latency use the provider's reported usage. Cost estimates remai
 
 Official API references: [OpenAI models](https://developers.openai.com/api/reference/resources/models/methods/list), [OpenAI chat parameters](https://developers.openai.com/api/reference/resources/chat/subresources/completions/methods/create), [Gemini OpenAI compatibility](https://ai.google.dev/gemini-api/docs/openai), [LM Studio compatibility](https://lmstudio.ai/docs/developer/openai-compat).
 
-## Gemini busy/timeout fallback — 0.26.2
+## Gemini busy/timeout fallback
 Enable **On Gemini busy or timeout errors, try other free-tier Flash models** for the supported Flash and Flash-Lite models listed below. The selected model is attempted first; HTTP 503, HTTP 408/504, and connection/response timeouts advance through the available fallback models listed below, skipping duplicates. IDs with a `models/` prefix are supported. At most three attempts share the configured request time budget. Each attempt gets the remaining budget divided by the remaining model count (initially about 20 seconds each with a 60-second budget). Unused time is available to later attempts. Socket timeouts and a monotonic deadline bound retries; network read timing may add overhead. Each new dialogue/review request starts with your selected model unless cooling down; settings are never silently changed. The same key and prompt are used, and output checks remain active. Authentication errors, quota errors (429), invalid output and other failures do not trigger fallback. If all attempts fail, normal dialogue error/safeguard behavior applies.
 
 These specific text models have free-tier input/output listed on Google's pricing page, checked September 18, 2026. Actual billing and availability depend on your Google project; Role Weaver cannot detect/enforce a free billing tier. This is not a spending cap. No paid-only models, moving aliases, other providers or alternate keys are selected. Recheck eligibility if Google changes pricing. Usage records each attempt under the actual requested model; estimates use that model's configured rates, not the primary model's rates.
 
 
-## Expanded fallback and timeout cooldown — 0.26.3
+## Expanded fallback and timeout cooldown
 Supports Gemini 3.8/3.7/3.6/3.5 Flash and 3.5/3.1 Flash-Lite. Try the selected model, then available models in order: 3.7, 3.6, 3.5, 3.8 Flash, 3.5 and 3.1 Flash-Lite, skipping duplicates. At most three attempts per request share the existing time budget. Connection/response timeouts and HTTP 408/504 put that model on a two-minute, process-wide cooldown shared by dialogue and safeguard reviews. Other models can be tried by subsequent requests; after cooldown the selected model is eligible again. HTTP 503 still triggers fallback without cooldown. If all six are cooling down, fail promptly through the existing error handling. Cooldowns are held in memory and reset on app restart. Disabling fallback bypasses cooldowns. No keys or player text are stored in cooldown state.
 
-## Gemini structured responses — 0.26.4
+## Gemini structured responses
 Gemini safeguard reviews, controlled-action replies and connection tests explicitly request JSON Schema output. Local validation and guardrail failure handling remain active. Malformed results are never treated as successful reviews. Plain speech and other providers are unchanged.
 
-## Sticky Gemini fallback — 0.26.5
+## Sticky Gemini fallback
 After a successfully decoded response, subsequent dialogue and safeguard requests prefer that working model until it fails, even after another model's cooldown expires. Preferences are scoped to selected model and a one-way credential fingerprint; no keys are stored in this state. App restart clears preferences. Retry eligibility, three-attempt budget, timeout cooldowns and strict validation remain unchanged. Invalid responses clear the preference but do not retry a safeguard verdict.

@@ -1,70 +1,57 @@
-# Companion operations
+# Run and maintain Role Weaver
 
-For the current installer, run commands from any extracted package:
+Use your saved world ID instead of `my_world`. Run commands from an extracted package:
 
-```bash
-bash setup.sh status --world my_world
-bash setup.sh restart --world my_world
-bash setup.sh update --world my_world
-bash setup.sh rollback --world my_world
-```
+| Task | Command |
+| --- | --- |
+| Check status | `bash setup.sh status --world my_world` |
+| Restart Role Weaver | `bash setup.sh restart --world my_world` |
+| Update software | `bash setup.sh update --world my_world` |
+| Roll back a managed update | `bash setup.sh rollback --world my_world` |
+| Check the game connection | `bash setup.sh verify --world my_world` |
 
-These reuse `~/.config/roleweaver/installations/my_world.json`. Updates preserve
-configuration/data and verify service startup; rollback restores managed software
-without rewinding player data. NWN/module deployment stays in your normal workflow.
-See [guided setup](../docs/GUIDED_SETUP.md) for recovery and older installations.
+To stop only Role Weaver: `systemctl --user stop roleweaver-my_world`.
+To start it: `systemctl --user start roleweaver-my_world`.
 
-The remaining commands are the **legacy/manual interface**, reading addon/setup.json.
-The older wizard file can be selected explicitly with `--config .local/setup-addon.json`.
-Do not mix this interface with the new saved-profile workflow unintentionally.
+These commands do not restart NWN. Use your world's game launcher/service when
+deploying changed scripts or plugins. The demo has its own foreground runner;
+follow its START_HERE.md instead.
 
-## Restart the dashboard/AI companion
+## Updates
 
-```bash
-bash addon/setup.sh restart
-bash addon/setup.sh status
-```
-
-This does not restart NWN or disconnect players. NWScript/module changes require a separate game restart through your existing server controls.
-
-## Updating
-
-Keep backups of the companion data, native campaign databases, and your current module. Extract the new package into a permanent folder and copy your previous addon/setup.json into it. The existing service's Python environment must remain available until replacement succeeds.
-
-Run `bash addon/setup.sh environment` and `bash addon/setup.sh check`. Stop the companion you intend to update, using your actual world ID:
-
-```bash
-systemctl --user stop roleweaver-my_world.service
-bash addon/setup.sh install
-```
-
-The installer preserves its config/data and starts the updated companion. Do not stop an unrelated world to reuse its ID. Prepare a new numbered import folder only if bridge scripts changed; review resource replacements and schedule the separate module update.
+Extract the new download. Guided setup reuses
+`~/.config/roleweaver/installations/my_world.json`, prepares dependencies, takes
+a verified recovery snapshot and checks startup after updating. It retains config,
+passwords, provider keys and player data. Keep earlier releases/environments for
+rollback. Review the generated INSTALL.md for separate game-script changes.
+See [guided setup](../docs/GUIDED_SETUP.md) for migration from legacy installations.
 
 ## Dashboard from Windows
 
-On Ubuntu, run `hostname -I` to find the VM's IP. In a Windows terminal, substitute your username/IP and configured dashboard port:
+Open a Windows terminal and keep this tunnel running:
 
 ```powershell
 ssh -N -L 8743:127.0.0.1:8743 USER@UBUNTU-IP
 ```
 
-Leave that terminal open, then browse to http://127.0.0.1:8743. Use the same local
-and remote dashboard port: the dashboard validates the browser's Host header.
-If 8743 is busy, close the old tunnel or choose another `web_port` in the installed
-world's config, restart that Role Weaver service and use the new port in all three
-places. Keep Redis and the dashboard on loopback. The dashboard is an administrator
-interface without individual logins; see [security and resource limits](../docs/SECURITY_AND_LIMITS.md).
+Use the port selected for this world in all three places. Browse to
+http://127.0.0.1:8743. The initial password is **roleweaver**;
+[change/reset it from the server](../docs/DASHBOARD_LOGIN.md).
+Keep the dashboard and Redis on loopback.
 
-## Common problems
+## Troubleshooting
 
-| Message or symptom | What to check |
+| Symptom | Check |
 | --- | --- |
-| Missing NWNX script | nwnx_headers must point to the folder containing the matching NWScript.zip contents, not the `.so` folder. |
-| Output directory already exists | Change output in addon/setup.json from `-01` to `-02`. Existing bundles are preserved. |
-| Address already in use | Use status/restart for the existing companion, or choose a distinct dashboard port/world ID for a separate world. |
-| Game connects but dashboard waits for NPCs | Confirm NWNX loaded, correct module events, same world ID/Redis prefix/port, and a bound NPC. |
-| No Spawn at DM | Enable both module flags and companion config options, restart the game after module changes, and connect as DM. |
-| Offline responses | Choose a provider in LLM Settings and run its connection test. |
-| Guardrails unavailable | Run environment with this package's helper, then check requirements-guardrails.txt installation output. The local adapter uses guardrails_ai in installed config; provider-backed review is a separate dashboard setting. |
+| Missing NWNX include | Headers must match the installed plugins; plugins alone are insufficient. |
+| Address already in use | Restart the existing service instead of starting a second copy; separate worlds need separate dashboard ports. |
+| Game works but bridge is offline | Check loaded NWNX plugins, hooks, matching world/Redis settings and the Health panel. |
+| No Spawn at DM | Enable corresponding module and service settings, load the updated scripts and connect as DM. |
+| Offline replies | Choose and test a provider in LLM Settings. |
+| Guardrails unavailable | Repair the Python environment selected by setup; inspect Health and Guardrails. Provider-backed reviews are a separate setting. |
+| Data appears missing after reinstall | Check the world ID and installation folder before importing anything. |
 
-To inspect companion errors, run `journalctl --user -u roleweaver-my_world.service -n 50 --no-pager`, using your world ID. Keep logs private; they may contain dialogue. Do not send API keys or provider.env with bug reports.
+Inspect local logs with `journalctl --user -u roleweaver-my_world.service -n 50 --no-pager`.
+Prefer a filtered Health & Support report when requesting help. Raw logs and database
+backups may contain private data. Legacy low-level commands are documented in
+[manual installation](../docs/INSTALL_COMPANION.md); do not mix workflows accidentally.

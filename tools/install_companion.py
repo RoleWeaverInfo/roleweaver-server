@@ -139,6 +139,8 @@ def _install_files(root, world, unit_name, config):
         "TRANSLATION.md",
         "HEALTH_AND_SUPPORT.md",
         "GUIDED_SETUP.md",
+        "DASHBOARD_LOGIN.md",
+        "SECURITY_AND_LIMITS.md",
     ):
         if (SOURCE / "docs" / document).exists():
             shutil.copy2(SOURCE / "docs" / document, release / document)
@@ -187,6 +189,9 @@ def _install_files(root, world, unit_name, config):
     print("systemctl --user daemon-reload")
     print("systemctl --user enable --now " + unit_name)
     print("Dashboard: http://127.0.0.1:" + str(config["web_port"]))
+    print(
+        "Dashboard password: roleweaver on a new installation; existing passwords are retained. See DASHBOARD_LOGIN.md to change it."
+    )
     print(
         "Bridge must use world ID "
         + world

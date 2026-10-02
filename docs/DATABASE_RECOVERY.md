@@ -1,7 +1,7 @@
 # Database recovery
 
 Open **World administration → Database & Recovery** in the dashboard. This feature
-is included in Alpha 0.3.0; it is not in the older Alpha 0.2.0 packages.
+is included in version 1.0.0; it is not in the older Alpha 0.2.0 packages.
 
 ## Save a backup
 

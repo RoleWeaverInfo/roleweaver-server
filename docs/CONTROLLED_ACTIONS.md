@@ -1,4 +1,4 @@
-# Controlled game actions — 0.24.0
+# Controlled game actions
 
 Role Weaver can let an NPC automatically choose a DM-approved gesture, walk or lead a player to a DM-recorded destination, return home, or open a dedicated shop or request a game-rolled haggle during a conversation. Actions are disabled for every NPC until you enable them. Players cannot grant permissions through dialogue.
 

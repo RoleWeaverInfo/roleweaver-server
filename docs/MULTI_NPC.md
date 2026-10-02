@@ -12,7 +12,7 @@ Each character starts paused. Select and resume each separately. Use ordinary pl
 
 
 
-Conversation history and curated memories remain scoped to the NPC and player. NPCs do not automatically overhear each other's conversations. This is conversational interaction; autonomous travel, combat decisions, quest awards and item creation are not implemented.
+Conversation history and curated memories remain scoped to the NPC and player. NPCs do not automatically overhear each other's conversations. Movement, patrols, encounters and inventory actions require their separate permissions; see [controlled actions](CONTROLLED_ACTIONS.md) and [encounters](ENCOUNTERS.md).
 
 
 

@@ -48,7 +48,7 @@ Open a terminal in the extracted package and run:
 bash addon/start-new-server.sh
 ```
 
-Leave the terminal open. Confirm the module and all six NWNX plugins loaded. Connect from NWN to **UBUNTU-IP:5121** (or your selected port). Run `hostname -I` in another Ubuntu terminal for the IP. Allow the game UDP port through your firewall for your client. A VPN or VM network mode can affect access.
+Leave the terminal open. Confirm the module and all required NWNX plugins loaded. Connect from NWN to **UBUNTU-IP:5121** (or your selected port). Run `hostname -I` in another Ubuntu terminal for the IP. Allow the game UDP port through your firewall for your client. A VPN or VM network mode can affect access.
 
 If the log says a library cannot be preloaded, check the underscore in NWNX_Core.so and the plugin path. `ldd ~/nwnx/plugins/NWNX_Core.so` identifies missing shared libraries. A functioning game alone does not mean NWNX loaded.
 
@@ -58,7 +58,7 @@ This is a private test launcher using local player characters. Configure your ow
 
 When ordinary player and DM connections work, enter `quit` in the foreground game console and wait for NWN to stop. Return to [START_HERE](../START_HERE.md) in a release download, or [START_ADDON](../START_ADDON.md) in the source repository, and follow steps 1–6.
 
-Use `bash addon/start-new-server.sh` whenever those instructions ask you to start your new test game server. Use `bash addon/setup.sh restart` to restart only the AI companion.
+Use `bash addon/start-new-server.sh` whenever those instructions ask you to start your new test game server. Use `bash setup.sh restart --world my_world` to restart only Role Weaver (replace the world ID).
 
 ### Keep encounters when switching from DM to player
 

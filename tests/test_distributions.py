@@ -17,6 +17,14 @@ import prepare_addon
 
 
 class DistributionTests(unittest.TestCase):
+    def test_version_mismatch_stops_packaging_before_writing(self):
+        with tempfile.TemporaryDirectory() as directory:
+            archive = Path(directory) / "release.tar.gz"
+            with patch.object(package_release, "runtime_version", return_value="0.0.0"):
+                with self.assertRaisesRegex(ValueError, "versions must match"):
+                    package_release.package(archive)
+            self.assertFalse(archive.exists())
+
     def test_separate_archives_and_hashes(self):
         with tempfile.TemporaryDirectory() as directory:
             for kind in ("demo", "addon"):
@@ -56,6 +64,8 @@ class DistributionTests(unittest.TestCase):
                 release = json.loads(entries["RELEASE.json"])
                 self.assertEqual(release["kind"], kind)
                 self.assertEqual(release["version"], package_release.VERSION)
+                self.assertEqual(release["channel"], "stable")
+                self.assertEqual(release["version"], release["runtime_version"])
                 self.assertEqual(
                     release["runtime_version"], package_release.runtime_version()
                 )
@@ -131,6 +141,7 @@ class DistributionTests(unittest.TestCase):
             with patch.object(package_release, "ROOT", root):
                 for name in (
                     "roleweaver/provider.env",
+                    "roleweaver/dashboard-auth.json",
                     "demo/settings.json",
                     "tools/.env.local",
                     "docs/player.sqlite3-wal",
@@ -140,12 +151,44 @@ class DistributionTests(unittest.TestCase):
                     "demo/.demo/history.json",
                     "assets/backup.zip",
                     "docs/errors.log",
+                    "docs/world-export.json",
+                    "examples/saved-translations.json",
+                    "demo/results-filled.csv",
                 ):
                     with self.subTest(name=name), self.assertRaises(ValueError):
                         package_release.source_file(root / name)
                 self.assertFalse(
                     package_release.source_file(root / "tools/__pycache__/test.pyc")
                 )
+
+    def test_demo_seed_rejects_runtime_data_in_authored_file(self):
+        source = (package_release.ROOT / "demo/content.json").read_text()
+        package_release.validate_demo_content(source)
+        for field in ("memories", "messages", "translations", "player_identities"):
+            data = json.loads(source)
+            data[field] = [{"private": "test history"}]
+            with self.subTest(field=field), self.assertRaises(ValueError):
+                package_release.validate_demo_content(json.dumps(data))
+        for field, value in (("memory", "test history"), ("id", "cp_test_owner_pet")):
+            data = json.loads(source)
+            data["npcs"][0][field] = value
+            with self.subTest(field=field), self.assertRaises(ValueError):
+                package_release.validate_demo_content(json.dumps(data))
+        data = json.loads(source)
+        data["encounters"][0]["participants"] = ["test player"]
+        with self.assertRaises(ValueError):
+            package_release.validate_demo_content(json.dumps(data))
+
+    def test_links_are_checked_against_shipped_files(self):
+        contents = {
+            "docs/start.md": b"[Guide](../START_HERE.md#setup) [Source](https://example.com) [Directory](../bridge/) [Self](#setup)\n```\n[example](not-a-file.md)\n```",
+            "START_HERE.md": b"# Setup",
+            "bridge/rw_init.nss": b"void main() {}",
+        }
+        package_release.validate_document_links(contents)
+        del contents["START_HERE.md"]
+        with self.assertRaisesRegex(ValueError, "docs/start.md: ../START_HERE.md"):
+            package_release.validate_document_links(contents)
 
     def test_prepared_bridge_contains_all_local_includes(self):
         with tempfile.TemporaryDirectory() as directory:

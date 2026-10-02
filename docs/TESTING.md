@@ -10,6 +10,7 @@ Optional Guardrails tests require `requirements-guardrails.txt`.
 | Provider settings and credential boundaries | `test_llm_settings.py` (see available files) |
 | Safeguards | `test_safeguards.py`, `test_guardrails_ai.py` |
 | HTTP admission, malformed requests and AI/provider overload recovery | `test_http_security.py`, `test_recovery_http.py`, `test_resource_limits.py` |
+| Dashboard login, reset/revocation, private recovery and server probes | `test_dashboard_auth.py`, `test_recovery_http.py` |
 | Module preparation and installer | `test_addon.py`, `test_installer.py` |
 | Shops | `test_merchants.py` and merchant-related tests |
 | Database integrity, retention and interrupted restore | `test_database_recovery.py`, `test_recovery_http.py` |
@@ -23,5 +24,6 @@ unittest discovery and must not be run against production data. A release also n
 playtest: targeting, takeover, persistent placement, store purchases and haggling, lore updates,
 restart recovery, failed providers, and a fresh installation by following the written guide.
 
-The source-organization milestone moves method bodies without intended behavior changes. Formatting
-uses Black's AST equivalence checks. Preserve the existing tests to detect accidental behavior changes.
+Run `node tests/test_drafts.cjs` and `node tests/test_companion_templates.cjs`
+for browser draft recovery. Release checks also verify documentation links, clean
+seed data, distribution boundaries and checksums; see [the review record](releases/1.0.0-review.md).

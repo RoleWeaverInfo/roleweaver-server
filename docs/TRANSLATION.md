@@ -5,7 +5,7 @@ NPC/placeable hover labels and prepared standard NPC dialogues in their preferre
 Examine window remains unchanged. A private reading window opens alongside it when
 a cached translation is available. Nothing is written back to shared object text.
 
-Included in the prepared Alpha 0.3.0 packages; absent from Alpha 0.2.0.
+Included in version 1.0.0; absent from Alpha 0.2.0.
 
 ## Administrator setup
 

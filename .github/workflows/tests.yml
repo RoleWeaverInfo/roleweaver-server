@@ -22,3 +22,4 @@ jobs:
         with:
           node-version: '22'
       - run: node tests/test_drafts.cjs
+      - run: node tests/test_companion_templates.cjs

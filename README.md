@@ -1,125 +1,72 @@
-# Role Weaver Server
+# Role Weaver Server Add-on
 
-An AI NPC companion for **Neverwinter Nights: Enhanced Edition** servers using NWNX:EE.
-It runs alongside an existing server; it does not replace NWN or its module.
+A Linux service connecting AI NPCs, an AI DM encounter assistant and cached
+world-text translation to **Neverwinter Nights: Enhanced Edition servers running
+NWNX:EE**. It runs alongside your game server. Server owners and DMs use its browser
+dashboard; players interact through the normal NWN:EE client.
 
-## Alpha demo and server add-on packages
+## Choose a download
 
-**Alpha 0.3.0 is prepared for release; publication is a separate step.**
-The previous published release is [Alpha 0.2.0](https://github.com/RoleWeaverInfo/roleweaver-server/releases/tag/v0.2.0-alpha.1), which does not include the new translation and recovery features.
+**Version 1.0.0** — [Release, downloads and checksums](https://github.com/RoleWeaverInfo/roleweaver-server/releases/tag/v1.0.0).
 
-Explore the Kingdom of Role Weaver, meet its inhabitants, shop and haggle, and solve a caravan investigation through conversation. Personal NPC memories persist between visits; the investigation resets each login.
+| Package | Purpose | Instructions |
+| --- | --- | --- |
+| [RoleWeaver-Demo-1.0.0.tar.gz](https://github.com/RoleWeaverInfo/roleweaver-server/releases/download/v1.0.0/RoleWeaver-Demo-1.0.0.tar.gz) | Explore the editable demo before integrating your server | [Demo setup](START_DEMO.md) |
+| [RoleWeaver-Server-Addon-1.0.0.tar.gz](https://github.com/RoleWeaverInfo/roleweaver-server/releases/download/v1.0.0/RoleWeaver-Server-Addon-1.0.0.tar.gz) | Install alongside your existing NWN/NWNX world | [Server add-on setup](START_ADDON.md) |
 
-- **Play the demo:** use `RoleWeaver-Demo-Alpha-0.3.0.tar.gz`, extract it on Linux and open its START_HERE.md. [Read the demo guide](START_DEMO.md).
-- **Integrate your own server:** use `RoleWeaver-Server-Addon-Alpha-0.3.0.tar.gz`. It includes a separate add-on installer, guided setup and an Aurora import generator. Follow [START_ADDON.md](START_ADDON.md) on a staging world first.
-- **Help test:** try the [playtest checklist](demo/PLAYTEST.md) and [conversation/guardrail model comparisons](demo/LLM_COMPARISON.md). Report results in [Issues](https://github.com/RoleWeaverInfo/roleweaver-server/issues), including the model, settings and reproduction steps, without private data or keys.
+Each download has its own **START_HERE.md** and **`bash setup.sh`** launcher.
+The demo includes Crown Hall, forest robbery and cave hostage encounters, the
+caravan investigation, Royal Guide, merchants and authored character lore.
+Fresh instances contain no previous conversations, memories, player profiles or
+translation cache. Developer installation databases are never shipped.
 
-Ubuntu 24.04 is the tested server environment. Players use the normal NWN:EE client. Generated dialogue requires a configured provider or local model; provider charges and limits may apply.
+The reference environment is **Ubuntu 24.04 x86-64 / Python 3.12**.
+NWN dedicated-server files, matching NWNX plugins/headers, Redis and a compiler
+are separate dependencies. Guides cover installation and reuse of existing folders.
+This is not a native Windows server package; players use their usual NWN:EE client.
 
-Application runtime: **0.28.0**. Distribution: **Alpha 0.3.0**. See the [release notes](docs/releases/alpha-0.3.0.md) for update steps, validation limits and open release checks.
+## Features
 
-See [distribution contents and release packaging](docs/DISTRIBUTIONS.md).
-NWN/NWNX/compiler dependencies are supplied separately.
+- **AI NPCs:** personalities, persistent memories, scoped lore, perception,
+  approved movement, patrols, NPC visits, inventory tasks and assistance.
+- **DM control:** pause/resume, possession priority, spawning, movement and persistence.
+- **Merchants:** real stock and prices, shop access, configurable haggling and
+  game-validated payment/exchange requests.
+- **AI DM encounters:** separate live and persistent panels; proposals, stages,
+  outcomes, optional social rolls and bounded automated direction. Live scenes
+  last until cleanup or module reset; armed persistent scenes can recover after
+  restart. Game scripts validate actions and handle combat.
+- **Player familiars:** opt-in chat, commands, remembered identity, inventory/errands
+  and visits. Editable personality templates and controls are in [Companions](docs/COMPANIONS.md).
+- **Translation:** players choose a language with `/rw language`. Supported world
+  text is translated on demand and cached; source changes need a new translation.
+  Chat, tells, logs and player names are excluded. Public player descriptions may
+  be translated. Independent multiplayer dialogue translation uses the optional
+  [native adapter](extensions/nwnx_translation/README.md).
+- **Administration:** OpenAI, Gemini and LM Studio; safeguards; knowledge inspection;
+  token, latency and estimated-cost monitoring; translation diagnostics; verified
+  database recovery; filtered health/support reports.
 
-## Start here
+The dashboard initially uses password **roleweaver**, settable on the server.
+Keep it and Redis private; use SSH for remote access. See [Dashboard login](docs/DASHBOARD_LOGIN.md)
+and [security/limits](docs/SECURITY_AND_LIMITS.md). Dialogue and translation need a
+configured provider or local model. Costs, availability and model behavior vary.
 
-- **Contribute code:** [Developer setup](docs/DEVELOPMENT.md), [architecture](docs/ARCHITECTURE.md), [contribution guide](CONTRIBUTING.md).
-- **Understand the game connection:** [bridge protocol and authority](docs/GAME_BRIDGE.md).
-- **Integrate an existing world:** [step-by-step add-on setup](START_ADDON.md). Test on staging before your live world.
-- **Find feature documentation:** [documentation index](docs/README.md).
-- **Plan the alpha:** [release checklist](docs/ALPHA_CHECKLIST.md).
+## Documentation and feedback
 
-## Current capabilities
+- [Documentation index](docs/README.md), [release notes](docs/releases/1.0.0.md)
+- [Demo walkthrough](demo/PLAYTEST.md), [editing the demo](demo/CUSTOMIZE.md)
+- [Guided setup and upgrades](docs/GUIDED_SETUP.md)
+- [Developer setup](docs/DEVELOPMENT.md), [architecture](docs/ARCHITECTURE.md), [contributing](CONTRIBUTING.md)
+- [Packaging](docs/DISTRIBUTIONS.md), [release checklist](docs/RELEASE_CHECKLIST.md), [roadmap](docs/ROADMAP.md)
 
-Persistent NPC profiles and memories; world and restricted lore; player conversation targeting;
-DM pause, takeover and spawning; temporary/persistent placement; approved movement and shop actions;
-merchant inventory and bounded haggling; backups; provider settings; safeguards; knowledge inspection;
-and token, latency and estimated-cost monitoring.
+Test on a staging copy before integrating a modified persistent world.
+Report problems in [GitHub Issues](https://github.com/RoleWeaverInfo/roleweaver-server/issues)
+with package/runtime versions, NWN/NWNX build, model and reproduction steps.
+Use filtered support reports; do not post databases, keys, raw logs or private
+conversations. Separate optional model-evaluation notes are for administrators;
+they are not part of the in-game walkthrough.
 
-OpenAI, Gemini and a local LM Studio endpoint are supported. Provider availability and quotas remain
-external dependencies. Offline mode allows dashboard development without API credentials.
-
-Alpha 0.3.0 includes a [world text translation preview](docs/TRANSLATION.md):
-player language preferences, cached object text and public NPC/player biographies,
-private reading windows, NPC/placeable hover labels
-and an offline preparation tool for existing standard NPC dialogues. An optional
-[NWNX adapter](extensions/nwnx_translation/README.md) delivers dialogue text in each
-viewer's language without changing shared dialogue or choices. Translation
-requests are limited to reached lines and available replies; preparation makes no
-LLM calls and does not catalogue the world in the translation database.
-
-The dashboard also includes [Database & Recovery](docs/DATABASE_RECOVERY.md):
-verified SQLite snapshots of world data, translations and usage, automatic rotation,
-restore previews, and an independent recovery page for database startup failures.
-The companion installer saves a verified recovery point before upgrading an existing world.
-
-[Health & Support](docs/HEALTH_AND_SUPPORT.md) brings connection, worker, plugin,
-database, backup and recent provider status into one panel. Download a filtered
-support report with bounded rotating error logs; credentials and game text are
-excluded.
-
-The [guided setup launcher](docs/GUIDED_SETUP.md), `bash setup.sh`, provides a
-resumable existing-server workflow with saved profiles, compatibility checks,
-path-specific module instructions, and managed software update/rollback. It
-keeps existing modules and launchers in place. The separate demo remains available.
-The
-Translations page now explains queue/rate-limit waits, cache reuse, recent errors
-and translation request usage. See [the next-alpha plan](docs/NEXT_ALPHA.md) for
-scope and explicitly deferred validation.
-
-## Quick developer start (Ubuntu 24.04, Python 3.12)
-
-```bash
-git clone https://github.com/RoleWeaverInfo/roleweaver-server.git
-cd roleweaver-server
-python3 -m venv .venv
-source .venv/bin/activate
-python -m pip install -r requirements-dev.txt
-python -m unittest discover -s tests
-mkdir -p .local
-cp config.example.json .local/config.json
-python -m roleweaver.web --config .local/config.json
-```
-
-Open <http://127.0.0.1:8743>. Without Redis/NWN the dashboard reports a disconnected bridge;
-that is expected for this dashboard-only start. See developer setup for optional Guardrails and
-native game requirements. The dashboard binds to loopback; use an SSH tunnel for remote access.
-It is a trusted administrator interface with no individual logins. See
-[security and resource limits](docs/SECURITY_AND_LIMITS.md) before deploying it.
-
-## Repository layout
-
-```text
-roleweaver/             Python application and static dashboard assets
-  services/            Dialogue, NPC lifecycle and world administration
-bridge/                NWScript game integration and authoritative checks
-tools/                 Module-copy, build and integration utilities
-tests/                 Automated regression tests and separate live harnesses
-assets/                Small creature/store resources; see asset notes
-docs/                  Architecture, setup, feature guides and release checklist
-packaging/             Example user-service unit
-examples/              Example world binding script
-```
-
-The demo includes an editable sample world. Game installation files, private player data and keys are not included. Source code is covered by the repository's [MIT license](LICENSE); see
-[third-party and asset notes](THIRD_PARTY_NOTICES.md) before distributing game assets.
-
-### Live and persistent encounters
-
-[Live Encounters](docs/LIVE_ENCOUNTERS.md) provides temporary DM placement, a separate
-proximity trigger location, preview, start/pause and scoped cleanup.
-[Persistent Encounters](docs/ENCOUNTERS.md) adds AI-assisted proposals, approved stage/outcome
-progression, optional native social checks, monitoring and unattended restart recovery.
-Arm an approved scene once; it waits for its persistent actors and resumes without an online DM.
-These have separate dashboard sections. Live placement needs the updated bridge
-installed once; creating subsequent live scenes does not require restarting NWN.
-
-See [NPC perception](docs/PERCEPTION.md) for visible surroundings, the NPC inspector
-and the limits on what characters can observe.
-
-See [Nearby behaviour and permissions](docs/NEARBY_BEHAVIOUR.md) for dynamic movement, doors, seating, and NPC visits.
-
-Inventory development: [NPC inventory, exchange and assistance](docs/INVENTORY_TASKS.md)
-explains the current opt-in controls and testing limits.
-
-See [payments and NPC combat](docs/PAYMENTS_AND_NPC_COMBAT.md) and the [robbery and troll-hostage examples](examples/encounters/README.md).
+Application and distribution version: **1.0.0**. Source is under the
+[MIT license](LICENSE); [asset/third-party notes](THIRD_PARTY_NOTICES.md) apply
+separately. Historical documentation remains available through Git history and tags.

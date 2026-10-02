@@ -1,4 +1,4 @@
-# Leading, home and merchants — 0.25.1
+# Leading, home and merchants
 
 ## Lead a player or return home
 1. As a DM, record a destination in Controlled Actions, in the same area and within 40 metres of the NPC.
@@ -47,5 +47,5 @@ When an offer expires, an old discounted store window will reject purchases unti
 ## Merchant administration
 Use the new Merchants sidebar tab to select shopkeepers, configure haggle rules, and add/remove stock. See MERCHANT_ADMIN.md for step-by-step instructions. The haggling values above are defaults; each merchant can now have their own rules.
 
-## Price consistency fix (0.25.1)
+## Price consistency
 NWNX Player is now required alongside the existing plugins. Enable it with NWNX_PLAYER_SKIP=n when using SKIP_ALL. The shop closes and reopens automatically to refresh personal prices. Price questions use final game quotes without applying the discount twice; changed or expired quotes are rejected before speech. After updating, test haggling with a store already open, then verify displayed and charged prices.

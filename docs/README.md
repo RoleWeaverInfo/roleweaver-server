@@ -1,47 +1,42 @@
 # Documentation
 
-## Installation and this release
+## Install and run
 
-- [Guided setup](GUIDED_SETUP.md)
 - [Demo setup](../START_DEMO.md)
 - [Existing-server setup](../START_ADDON.md)
-- [Alpha 0.3.0 notes](releases/alpha-0.3.0.md)
-- [Alpha 0.3.0 review and validation](releases/alpha-0.3.0-review.md)
-- [Distributions and packaging](DISTRIBUTIONS.md)
-- [Release checklist](ALPHA_CHECKLIST.md)
-- [Roadmap toward 1.0](NEXT_ALPHA.md)
+- [Guided setup, updates and rollback](GUIDED_SETUP.md)
+- [New NWN/NWNX server](../addon/NEW_SERVER.md)
+- [Aurora and module hooks](../addon/AURORA.md), [custom-world integration](../addon/INTEGRATION.md)
+- [Start, stop and remote access](../addon/OPERATIONS.md), [dashboard password](DASHBOARD_LOGIN.md)
 
-## Operation and troubleshooting
+## Features
 
-- [Health & Support](HEALTH_AND_SUPPORT.md)
-- [Database recovery](DATABASE_RECOVERY.md)
-- [Portable backups](BACKUP_RESTORE.md)
-- [Translation and diagnostics](TRANSLATION.md)
-- [Multiplayer dialogue adapter](../extensions/nwnx_translation/README.md)
-- [Restart, update and remote dashboard access](../addon/OPERATIONS.md)
-- [Providers and models](LLM_SETTINGS.md)
-- [Guardrails](GUARDRAILS_AI.md)
-- [Knowledge and usage](KNOWLEDGE_AND_USAGE.md)
-
-## NPCs and AI DM encounters
-
-- [Conversations](CONVERSATIONS.md) and [hearing controls](CONVERSATION_CONTROLS.md)
-- [World lore](LORE.md) and [documents](LORE_DOCUMENTS.md)
-- [Controlled actions](CONTROLLED_ACTIONS.md)
-- [Perception](PERCEPTION.md) and [nearby behavior](NEARBY_BEHAVIOUR.md)
-- [Inventory, exchanges and assistance](INVENTORY_TASKS.md)
-- [Merchants](MERCHANTS_AND_LEADING.md) and [shop administration](MERCHANT_ADMIN.md)
+- [Providers/models](LLM_SETTINGS.md), [security/limits](SECURITY_AND_LIMITS.md)
+- [Companions and familiar templates](COMPANIONS.md)
+- [Conversations](CONVERSATIONS.md), [multiplayer targeting](MULTI_NPC.md), [hearing controls](CONVERSATION_CONTROLS.md)
+- [Lore access](LORE.md), [world documents](LORE_DOCUMENTS.md)
+- [Actions](CONTROLLED_ACTIONS.md), [perception](PERCEPTION.md), [nearby behavior](NEARBY_BEHAVIOUR.md)
+- [Patrols](PATROL_PREVIEW.md), [village activities](VILLAGE_LIFE.md)
+- [Inventory/exchanges/assistance](INVENTORY_TASKS.md)
+- [Merchants and leading](MERCHANTS_AND_LEADING.md), [shop administration](MERCHANT_ADMIN.md)
 - [Payments and NPC combat](PAYMENTS_AND_NPC_COMBAT.md)
-- [Live Encounters](LIVE_ENCOUNTERS.md)
-- [Persistent Encounters](ENCOUNTERS.md)
-- [Example encounters](../examples/encounters/README.md)
+- [Live encounters](LIVE_ENCOUNTERS.md), [persistent encounters](ENCOUNTERS.md), [social checks](SOCIAL_CHECKS.md)
+- [Encounter examples](../examples/encounters/README.md)
+- [Translation](TRANSLATION.md), [multiplayer dialogue adapter](../extensions/nwnx_translation/README.md)
+- [Guardrails](GUARDRAILS_AI.md), [knowledge and usage](KNOWLEDGE_AND_USAGE.md)
 
-## Development
+## Maintenance
 
-- [Setup](DEVELOPMENT.md), [architecture](ARCHITECTURE.md) and [contributing](../CONTRIBUTING.md)
-- [Bridge authority and protocol](GAME_BRIDGE.md)
-- [Testing](TESTING.md) and [historical source-baseline validation](VALIDATION.md)
-- [Earlier refactor notes](REFACTOR_NOTES.md)
+- [Health/support](HEALTH_AND_SUPPORT.md), [database recovery](DATABASE_RECOVERY.md)
+- [Portable backups](BACKUP_RESTORE.md), [acceptance checks](../addon/ACCEPTANCE_TESTS.md), [game rollback](../addon/ROLLBACK.md)
 
-Installed-world paths in feature guides are examples; a source checkout does not
-create them automatically. Follow the guide for the distribution you downloaded.
+## Release and development reference
+
+- [Release notes](releases/1.0.0.md), [review record](releases/1.0.0-review.md)
+- [Packaging](DISTRIBUTIONS.md), [checklist](RELEASE_CHECKLIST.md), [roadmap](ROADMAP.md)
+- [Developer setup](DEVELOPMENT.md), [architecture](ARCHITECTURE.md), [contributing](../CONTRIBUTING.md)
+- [Bridge protocol](GAME_BRIDGE.md), [tests](TESTING.md)
+- [Advanced service installation](INSTALL_COMPANION.md), [optional module-copy builder](INTEGRATION.md)
+
+Use the setup guide for your distribution. Advanced commands are alternatives,
+not extra steps required after guided setup.

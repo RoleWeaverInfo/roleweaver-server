@@ -52,6 +52,9 @@ NWN is not stopped or restarted. Existing installations use the separate update 
 Open the dashboard address printed by setup. For Windows access use the SSH tunnel
 command in the generated INSTALL.md. Keep the dashboard and Redis private on loopback.
 
+The initial dashboard password is **roleweaver**. See [Dashboard login](docs/DASHBOARD_LOGIN.md)
+to change it from the server terminal. Existing installations retain their chosen password.
+
 ## 5. Connect your module
 
 Open the **generated INSTALL.md**, which shows your existing event assignments.

@@ -1,137 +1,96 @@
-# Role Weaver editable demo — alpha
+# Start the Role Weaver demo
 
-This package runs a separate demo NWN server and Role Weaver dashboard on Linux. Ubuntu 24.04
-(or an Ubuntu VM on Windows) is the tested target. No Docker is required. It starts in offline mode;
-choose an LLM in the dashboard when ready. It does not use an existing world's data or API keys.
+The demo is a separate editable NWN world: Crown Hall, a forest robbery, a troll
+hostage scene in a cave, an investigation, shops and a Royal Guide.
+Use Ubuntu 24.04 x86-64. Your NWN:EE game client can remain on Windows.
 
-## Recommended: guided setup
+## 1. Prepare the dependencies
 
-With the dependencies described below installed, open a terminal in this package
-and run **`bash setup.sh`**. Choose **2 — Prepare or start the separate demo**.
+You need the Linux **dedicated server**, matching **NWNX plugins and headers**,
+**Redis**, **Python 3.12** and **nwnsc**. They are not in this download.
 
-The wizard asks separately for your NWN runtime, NWNX plugins, NWNX headers and
-compiler paths. For example: `~/nwserver`, `~/nwnx/plugins`, `~/nwnx/nwscripts`
-and `~/bin/nwnsc`. It checks them and creates the required links automatically;
-you do not need to arrange a `nwn-demo-deps` folder yourself. It also prepares
-`.venv` if needed and asks which game/dashboard ports to use.
+- **Nothing installed:** follow **A1–A4** in [DEPENDENCIES.md](demo/DEPENDENCIES.md).
+- **Already installed:** use its **B** folder-identification table. Keep your folders.
 
-When preparation finishes, choose whether to start. Startup prints the game
-address, dashboard URL and SSH tunnel instructions. Default DM password:
-**roleweaver**. Stop with **Ctrl+C**. To return later, run `bash setup.sh`, choose
-**2**, and enter the same instance name (normally `rw_demo`). Existing data is kept.
+The wizard below links those folders for you. Manual steps C/D in that guide are
+an alternative, not extra requirements for wizard users.
 
-If starting without dependencies, complete **section A** of
-[demo/DEPENDENCIES.md](demo/DEPENDENCIES.md), then return to the wizard. Its path
-questions replace the guide's manual linking commands. The detailed command-line
-procedure below remains available.
+## 2. Run setup
 
-## 1. Prepare dependencies once
-
-You need Python 3.12, Redis, an NWN:EE client to play, and a compatible Linux **dedicated server**,
-NWNX:EE plugins/headers, and the `nwnsc` compiler. The game runtime and NWNX binaries are not
-bundled. **First follow [the step-by-step dependency guide](demo/DEPENDENCIES.md):**
-
-- **New installation:** section A downloads/installs the dedicated server, matching NWNX plugins/headers, Redis and compiler. Then section C creates the folder links.
-- **Already installed:** section B identifies your existing folders, and section C links them into the layout the demo expects. You do not need to move or reinstall them.
-
-Section D returns you to this package folder and runs setup. If you finish that section, continue here at **Step 4**. Otherwise continue below once dependency checks pass.
-
-## 2. Open a terminal in the extracted package
+Extract the download and open an Ubuntu terminal **inside the package folder**:
 
 ```bash
-python3 -m venv .venv
-source .venv/bin/activate
-python -m pip install -r requirements-guardrails.txt
+bash setup.sh
 ```
 
-Use that same activated environment whenever starting the demo.
+Choose **2 — Demo**. Use `rw_demo` as the instance name for a first test.
+Supply the actual dedicated-server root, NWNX plugin/header folders and compiler.
+Common paths are `~/nwserver`, `~/nwnx/plugins`, `~/nwnx/nwscripts` and `~/bin/nwnsc`.
 
-## 3. Build your demo
+The wizard prepares Python and a copy of the source module in `.demo/rw_demo/`.
+Existing instances are preserved. Select Guardrails if wanted; provider-backed
+review is configured separately in the dashboard.
 
-The dependency guide creates `~/nwn-demo-deps` containing links named `runtime`, `plugins` and `nwscripts`. **Do not point --native directly at ~/nwserver or ~/nwnx.** Keep the command below if you followed the standard layout; change only --compiler if your compiler lives elsewhere:
+## 3. Start or stop
 
-```bash
-.venv/bin/python demo/demo.py setup --native "$HOME/nwn-demo-deps" --compiler "$HOME/bin/nwnsc" --guardrails
-```
-
-This prepares `.demo/rw_demo/`. It compiles a **copy** of `demo/world/YourWorld_Fixed.mod`, adds the demo
-NPCs and creates fresh data. It does not change the source world. If a required file is missing, setup
-stops and names it. Setup does not start anything. Re-running setup never overwrites a prepared instance.
-
-## 4. Start
+Choose Start when offered. To start again later, from the package folder:
 
 ```bash
 .venv/bin/python demo/demo.py start
 ```
 
-The startup output lists the detected Ubuntu/VM game IP addresses, game port, local dashboard URL, and an SSH tunnel command for Windows. With multiple network interfaces, choose the Ubuntu address reachable from your client.
+Keep this terminal open. **Ctrl+C** stops the game and addon owned by this launcher.
+For another instance name, add `--instance YOUR_NAME`.
 
-Keep the terminal open. Wait for NWN to finish loading, then open the dashboard at
-**http://127.0.0.1:8745**. In NWN Direct Connect use **127.0.0.1:5125** if the client is on the same Linux
-machine. From Windows to a VM, use **VM-IP:5125**. Use `hostname -I` in Ubuntu to find its IP.
-The demo is unlisted and accepts local characters; a player password is not set. **New demos use DM password `roleweaver`** (all lowercase). The launcher supplies it using `-dmpassword`.
+## 4. Connect
 
-To open the VM dashboard from Windows, leave this SSH tunnel running, substituting your VM user/IP:
+**Use the addresses and ports printed at startup.** Defaults:
+
+| Connection | On Ubuntu | From another computer |
+| --- | --- | --- |
+| NWN Direct Connect | `127.0.0.1:5125` | `UBUNTU-IP:5125` |
+| Dashboard | `http://127.0.0.1:8745` | Same URL through the SSH tunnel below |
+
+From Windows, leave this tunnel running, replacing USER and VM-IP:
 
 ```bash
 ssh -N -L 8745:127.0.0.1:8745 USER@VM-IP
 ```
 
-Then open http://127.0.0.1:8745 in Windows. If a firewall is enabled, allow UDP 5125 only from your
-trusted client/network. Keep Redis and the dashboard private.
+The initial **dashboard password is `roleweaver`**.
+For a DM connection, launch NWN:EE in **DM client mode** (`-dmc`), connect to the
+same **game** port, and enter the separate **DM password `roleweaver`**.
+Ordinary player connections have no password by default. Change both known defaults
+before sharing a demo; keep the dashboard private. See [Dashboard login](docs/DASHBOARD_LOGIN.md).
 
-### Connect as Dungeon Master
+If an older demo's DM password is unknown, stop it, run
+`.venv/bin/python demo/demo.py reset-dm-password`, then restart.
+To choose a private DM password instead, edit `dm_password` in
+`.demo/rw_demo/settings.json` while stopped.
 
-1. Launch NWN:EE in **Dungeon Master client** mode. Use your launcher’s DM option, or add `-dmc` to the NWN client executable’s launch options/shortcut. Entering a DM password in an ordinary player connection does not switch it to DM mode.
-2. Direct Connect to the **same game IP and port** shown by the demo launcher (normally `UBUNTU-IP:5125`). There is no separate DM port. Do not use the dashboard port.
-3. Enter **roleweaver** as the DM password for a newly prepared demo.
+## 5. Configure AI and play
 
-**Already ran setup with an older download?** Its random password is still saved. Updating the code does not overwrite your instance settings. Stop the demo with Ctrl+C, then run from the updated package folder containing your existing `.demo/rw_demo`:
+In **LLM Settings**, select your provider/model, enter a key or local endpoint,
+test and save. Until configured, responses use offline mode.
+Enable player familiars separately in **Companions**. Configure **Translations**
+in the dashboard; each player opts in through `/rw language` in Talk.
 
-```bash
-.venv/bin/python demo/demo.py reset-dm-password
-.venv/bin/python demo/demo.py start
-```
+Talk to the **Royal Guide** at the entrance for a walkthrough.
+Ask **Captain Beran** about the investigation. Meet the Tavern Owner, Merchant,
+wizard, cleric and Holt. Doors lead to the forest robbery and cave hostage scenes.
+Use Talk To/Speak or address an NPC by name, then continue nearby Talk.
 
-Use the same `--instance NAME` on both commands if you selected a different instance. The reset changes only the DM password; profiles, keys and memories remain intact.
+- [Activities and familiar walkthrough](demo/PLAYTEST.md)
+- [Forest and cave encounters](demo/ENCOUNTER_AREAS.md)
+- [Edit the world, characters, lore and HAKs](demo/CUSTOMIZE.md)
+- [Troubleshooting and reports](demo/REPORTING.md)
+- [Optional administrator model evaluation](demo/LLM_COMPARISON.md)
 
-To choose a private password instead, stop the demo, edit `dm_password` in `.demo/rw_demo/settings.json`, save it and restart. Keep the other JSON fields unchanged. The known default is for private demo testing; change it before making the server publicly reachable.
+New instances start with authored content, empty memories and an empty translation
+cache. Later conversations and translations persist between starts. Retain/back up
+`.demo/rw_demo/` to keep custom changes; never include that private folder in a download.
 
-No extra NWNX or Role Weaver flag is needed for DM login in this demo. The DM spawn/persistence permissions control dashboard features, not authentication. If DM login is refused, confirm DM client mode, the game port, the saved password, and that the demo was restarted after changing it. An independently hosted world may also have its own DM admission restrictions.
-
-## 5. Meet the NPCs
-
-Explore Crown Hall in the Kingdom of Role Weaver. Meet **Captain Beran**, **Kevin** the innkeeper, the **Merchant**, **Aldren** the wizard, **Sister Meriel**, and **Quartermaster Holt**. Ask the guard about your investigation and an audience with the King. Read or examine the noticeboard for activities.
-Right-click an NPC and choose Talk To/Speak, or address them by name to begin. Stay close.
-They should appear in the dashboard and start in auto mode. Offline replies are explicitly marked.
-
-In **LLM Settings**, enter your provider/model and key, run the connection test, then save. LM Studio
-can be used instead of a cloud key. Models/quotas and inference speed depend on the provider or host.
-
-The Merchant's shop starts with a small weapon selection. Ask to see the stock or haggle.
-Ask NPCs to lead you to the visitor table, merchant stall, wizard study, shrine or royal dais.
-Collect witness accounts about the caravan attack, then present your conclusion to the King.
-The investigation resets each login; NPC memories of previous conversations remain.
-
-## 6. Stop or return later
-
-Press **Ctrl+C in the demo terminal**. This stops only the two processes started by this launcher.
-Later, open a terminal in the package folder and run `.venv/bin/python demo/demo.py start` again. Profiles, memories, keys and game
-campaign data stay in `.demo/rw_demo/`. This is a foreground demo runner, not a production service.
-
-## Optional testing and customization
-
-- [Quick playtest](demo/PLAYTEST.md)
-- [Guardrails and model comparison](demo/LLM_COMPARISON.md)
-- [Edit the world, NPCs and lore](demo/CUSTOMIZE.md)
-- [Report a problem](demo/REPORTING.md)
-
-If startup fails, read `.demo/rw_demo/game.log`, `dashboard.log` and `nwnx.log`. Never publish those
-files wholesale: they can contain player dialogue or local details. Logs are local troubleshooting
-files. Prefer **Health & Support → Download support report**, which excludes game
-text and credentials. **Translations → Download diagnostics** provides a separate
-content-free translation snapshot.
-
-## If every message is blocked
-
-If Guardrails reports **unavailable**, this is an installation/environment problem, not a sensitivity setting. Start with `.venv/bin/python demo/demo.py start` so the launcher uses the environment where you installed Guardrails. Do not rebuild or delete your demo data. If needed, repair that environment with `.venv/bin/python -m pip install -r requirements-guardrails.txt`.
+For missing files, use [dependency checks](demo/DEPENDENCIES.md).
+If Guardrails is unavailable, use the package's `.venv/bin/python`; repair it with
+`.venv/bin/python -m pip install -r requirements-guardrails.txt`.
+Prefer **Health & Support → Download support report** over raw logs.

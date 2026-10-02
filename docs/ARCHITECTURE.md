@@ -77,4 +77,5 @@ are separate files. Application backups do not replace NWN campaign-database bac
 state and item purchases must be backed up and validated on the game side.
 
 The HTTP dashboard is an administrative surface bound to loopback, not a public multiuser service.
-Use an SSH tunnel. Never expose it publicly without a separately designed authentication boundary.
+It uses a shared password and expiring sessions; see [Dashboard login](DASHBOARD_LOGIN.md).
+Use an SSH tunnel. Public hosting, TLS and individual DM roles require a separately designed deployment boundary.

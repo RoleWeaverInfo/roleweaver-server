@@ -17,6 +17,10 @@ backups under `~/.local/share/roleweaver/WORLD/`. Those files are independent of
 the installation profile. A saved feature choice describes what to prepare; it
 is not proof that the native hook, plugin or dashboard permission is active.
 
+The dashboard initially asks for **roleweaver**. Set your own password from the
+server terminal using [Dashboard login](DASHBOARD_LOGIN.md). Updates retain it;
+installer health checks use a separate, read-only local credential.
+
 ## Commands
 
 Run these from an extracted package; replace `my_world` with your saved ID.

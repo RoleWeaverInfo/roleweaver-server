@@ -1,4 +1,4 @@
-# Conversation & Hearing — 0.21.0
+# Conversation & Hearing
 
 1. Open **Conversation & Hearing** in the dashboard sidebar.
 2. Set **Initial Talk To distance** (default 3 metres), **Ongoing conversation distance** (6 metres), **Hearing range** (10 metres), and **Inactivity timeout** (180 seconds).
