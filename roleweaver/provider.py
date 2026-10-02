@@ -10,7 +10,8 @@ import hashlib
 import threading
 from .llm_settings import open_url, endpoint, ENDPOINTS, GEMINI_FREE_FLASH
 from contextvars import ContextVar
-from contextlib import contextmanager
+from contextlib import contextmanager, nullcontext
+from .resource_limits import CapacityError, ProviderLimits
 
 _observer = ContextVar("provider_usage_observer", default=None)
 
@@ -50,7 +51,7 @@ def complete(url, body, headers, timeout, limit, decode, config=None):
         and primary.removeprefix("models/") in GEMINI_FREE_FLASH
     )
     if not enabled:
-        return _attempt(url, body, headers, timeout, limit, decode)
+        return _attempt(url, body, headers, timeout, limit, decode, config)
     preference_key = (
         primary.removeprefix("models/"),
         hashlib.sha256(headers.get("Authorization", "").encode()).digest(),
@@ -94,7 +95,11 @@ def complete(url, body, headers, timeout, limit, decode, config=None):
                     remaining / (len(models) - index),
                     limit,
                     decode,
+                    config,
                 )
+            except CapacityError:
+                # Local overload says nothing about the selected model's health.
+                raise
             except Exception:
                 with _gemini_cooldown_lock:
                     if _gemini_preferred.get(preference_key) == model:
@@ -121,7 +126,15 @@ def complete(url, body, headers, timeout, limit, decode, config=None):
                 raise
 
 
-def _attempt(url, body, headers, timeout, limit, decode):
+def _attempt(url, body, headers, timeout, limit, decode, config=None):
+    limits = (config or {}).get("_provider_limits")
+    if len(body) > ProviderLimits.MAX_REQUEST_BYTES and limits is None:
+        raise CapacityError("LLM request exceeds the 512 KiB size limit")
+    with limits.attempt(len(body)) if limits is not None else nullcontext():
+        return _measured_attempt(url, body, headers, timeout, limit, decode)
+
+
+def _measured_attempt(url, body, headers, timeout, limit, decode):
     """Measure actual HTTP attempts; never persist request text, URLs or credentials."""
     observer = _observer.get()
     start = time.perf_counter()

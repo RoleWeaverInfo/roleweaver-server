@@ -26,6 +26,7 @@ INCLUDES = (
     "rw_cp_visit",
     "rw_cp_items",
     "rw_cp_pack",
+    "rw_cp_persist",
     "rw_cp_ui",
     "rw_address",
     "rw_shopcore",

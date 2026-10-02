@@ -70,6 +70,9 @@ python -m unittest discover -s tests
 CI runs the core and optional-Guardrails configurations on Ubuntu/Python 3.12. Native playtests are
 manual and are not implied by a green CI run. See [testing](TESTING.md).
 
+See [Security and resource limits](SECURITY_AND_LIMITS.md) for trust boundaries,
+provider/worker budgets, the release review and its verification limits.
+
 ## Encounter preview
 
 See [DM encounters](ENCOUNTERS.md) for the editor, information boundaries, combat
@@ -166,6 +169,17 @@ snapshots are not persisted in the Role Weaver database. Native character saves
 and PW world persistence remain responsible for the actual items; database
 backups alone cannot restore these possessions. See the companion guide for
 configuration, lifecycle limits and isolated native test fixtures.
+
+`rw_cp_persist` coalesces companion inventory save requests in module-local state;
+ordinary chat, inspection and lifecycle events must not mark inventory dirty.
+`tests/run_companion_saves_native.py --runtime /path/to/nwserver --compiler
+/path/to/nwnsc --module /path/to/YourWorld_Fixed.mod` runs a 35-second scheduler
+regression in a private disposable server. It substitutes only PC eligibility
+and the export primitive with fixture counters; native delays, coalescing, logout
+flush, stale callbacks and export reentrancy are exercised. It does not test real
+client export notifications or modify the supplied module/server vault. The fixture
+asserts the ten-minute production default, then uses a 30-second module override
+for its timing checks.
 
 Player settings live in `backup_settings` under `companion_preferences`, keyed by
 the existing hashed companion profile identity. `companion_preferences.py`

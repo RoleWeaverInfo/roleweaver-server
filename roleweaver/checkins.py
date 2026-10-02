@@ -114,7 +114,7 @@ class CheckinService:
             runtime["cast_next"] = now + 25
             self.checkin = item
             self.checkin_working += 1
-            self.pool.submit(self.generate_checkin, item)
+            self.queue_checkin(item)
             return
 
     def checkin_valid(self, item):
@@ -231,7 +231,12 @@ class CheckinService:
         self.checkin = item
         self.checkin_notice = "Preparing NPC check-in"
         self.checkin_working += 1
-        self.pool.submit(self.generate_checkin, item)
+        self.queue_checkin(item)
+
+    def queue_checkin(self, item):
+        if not self.queue_work(self.generate_checkin, item):
+            self.checkin_working -= 1
+            self.cancel_checkin(item["pair"][0], "AI workers busy; check-in skipped")
 
     def generate_checkin(self, item):
         try:
@@ -390,6 +395,6 @@ class CheckinService:
         elif self.checkin_valid(item) and self.request_budget.admit("npc-checkins"):
             item["turn"] = 1
             self.checkin_working += 1
-            self.pool.submit(self.generate_checkin, item)
+            self.queue_checkin(item)
         else:
             self.cancel_checkin(speaker, "Check-in interrupted before reply")

@@ -337,7 +337,12 @@ class CompanionVisitService:
                 return
             item["working"] = True
             self.companion_work.add(item["npc"])
-            self.pool.submit(self.generate_companion_visit, item, phase, event["step"])
+            if not self.queue_work(
+                self.generate_companion_visit, item, phase, event["step"]
+            ):
+                item["working"] = False
+                self.companion_work.discard(item["npc"])
+                self.companion_visit_command(item, "return")
 
     def companion_visit_record(self, item, who, text):
         item["heard"].append(dict(speaker=who, text=text))

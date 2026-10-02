@@ -413,7 +413,7 @@ class LiveDirectorService:
                 runtime["next"] = now + 10
                 d["reviews"] += 1
                 self.persist_director(scene)
-                self.pool.submit(
+                if not self.queue_work(
                     self.director_review,
                     key,
                     scene["run"]["started"],
@@ -421,7 +421,10 @@ class LiveDirectorService:
                     fingerprint,
                     context,
                     dict(self.config),
-                )
+                ):
+                    self.director_busy = False
+                    d["reviews"] -= 1
+                    self.persist_director(scene)
                 break
 
     def director_review(self, key, activation, revision, fingerprint, context, config):

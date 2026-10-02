@@ -7,6 +7,7 @@ import tempfile
 from urllib.parse import parse_qs, urlparse
 
 from .db_recovery import MAX_UPLOAD
+from . import http_security
 
 
 def handle(handler, runtime, method):
@@ -49,45 +50,42 @@ def handle(handler, runtime, method):
             else:
                 handler.respond(404, {"error": "Unknown recovery operation"})
             return True
-        length = int(handler.headers.get("Content-Length", "0"))
-        if handler.headers.get("Transfer-Encoding") or not 0 < length <= (
-            MAX_UPLOAD if path.endswith("/import") else 65536
-        ):
-            raise ValueError("Invalid request size (maximum recovery archive: 512 MB)")
+        length = http_security.body_length(
+            handler.headers, MAX_UPLOAD if path.endswith("/import") else 65536
+        )
         if path == "/api/databases/import":
             if handler.headers.get("Content-Type") != "application/zip":
                 raise ValueError("Choose a Role Weaver database recovery ZIP")
-            runtime.manager.space(length * 2)
-            upload = tempfile.NamedTemporaryFile(
-                prefix=".upload-", dir=runtime.directory, delete=False
-            )
-            source = Path(upload.name)
-            try:
-                remaining = length
-                handler.connection.settimeout(30)
-                with upload:
-                    while remaining:
-                        chunk = handler.rfile.read(min(1024 * 1024, remaining))
-                        if not chunk:
-                            raise ValueError("Upload was incomplete")
-                        upload.write(chunk)
-                        remaining -= len(chunk)
+            with http_security.recovery_upload(handler):
+                runtime.manager.space(length * 2)
+                upload = tempfile.NamedTemporaryFile(
+                    prefix=".upload-", dir=runtime.directory, delete=False
+                )
+                source = Path(upload.name)
+                try:
+                    with upload:
+                        for chunk in http_security.body_chunks(
+                            handler, length, seconds=300
+                        ):
+                            upload.write(chunk)
 
-                def import_file():
-                    try:
-                        return runtime.manager.import_archive(source)
-                    finally:
-                        source.unlink(missing_ok=True)
+                    def import_file():
+                        try:
+                            return runtime.manager.import_archive(source)
+                        finally:
+                            source.unlink(missing_ok=True)
 
-                result = runtime.submit("Import and verify recovery point", import_file)
-            except BaseException:
-                upload.close()
-                source.unlink(missing_ok=True)
-                raise
+                    result = runtime.submit(
+                        "Import and verify recovery point", import_file
+                    )
+                except BaseException:
+                    upload.close()
+                    source.unlink(missing_ok=True)
+                    raise
         else:
             if handler.headers.get("Content-Type") != "application/json":
                 raise ValueError("Same-origin JSON required")
-            body = json.loads(handler.rfile.read(length))
+            body = json.loads(b"".join(http_security.body_chunks(handler, length)))
             if not isinstance(body, dict):
                 raise ValueError("Invalid recovery request")
             manager = runtime.manager

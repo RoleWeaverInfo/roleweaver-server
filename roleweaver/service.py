@@ -1,7 +1,6 @@
 """Application composition, game event dispatch, and Redis command transport."""
 
 from .authoring import creature_build, BUILD_DEFAULTS
-import concurrent.futures
 import hashlib
 import json
 import secrets
@@ -38,6 +37,7 @@ from .store import Store
 from .usage import Usage
 from .llm_settings import Settings
 from .knowledge import inspect_knowledge
+from .resource_limits import BoundedExecutor, CapacityError, ProviderLimits
 
 
 class Service(
@@ -63,6 +63,8 @@ class Service(
         self.directory, self.config = directory, config
         directory.mkdir(parents=True, exist_ok=True)
         self.llm = Settings(directory, config)
+        self.provider_limits = ProviderLimits(config)
+        self.llm.base["_provider_limits"] = self.provider_limits
         self.config = config = self.llm.runtime()
         salt = directory / "identity_salt"
         if not salt.exists():
@@ -126,11 +128,20 @@ class Service(
         self.error = ""
         self.running = True
         self.stop_event = threading.Event()
-        self.pool = concurrent.futures.ThreadPoolExecutor(max_workers=4)
+        self.pool = BoundedExecutor(max_workers=4, capacity=8)
         self.redis_ok = False
         self.recovery = RecoveryBackups(
             directory / "recovery-backups", self.backup_data, config
         )
+
+    def queue_work(self, callback, *args):
+        """Fail promptly; callers release their own domain-specific busy flags."""
+        try:
+            self.pool.submit(callback, *args)
+            return True
+        except CapacityError:
+            self.guard_counts["rate_limited"] += 1
+            return False
 
     def llm_status(self):
         with self.lock:
@@ -735,7 +746,7 @@ class Service(
                 return
             self.busy.add(npc)
             generation = self.generations.get(npc, 0)
-            self.pool.submit(
+            if not self.queue_work(
                 self.generate,
                 npc,
                 player,
@@ -748,7 +759,11 @@ class Service(
                 speech,
                 speech_id,
                 event.get("merchant_quote"),
-            )
+            ):
+                self.busy.discard(npc)
+                self.diagnostics[npc][
+                    "error"
+                ] = "AI workers are busy; try again shortly."
 
     def command(self, npc, kind, **fields):
         with self.lock:

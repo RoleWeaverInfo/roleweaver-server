@@ -261,9 +261,10 @@ class CompanionService(CompanionVisitService, CompanionAdminService):
                 self.store.save(profile)
             self.companion_work.add(npc)
             event["_profile_generation"] = self.generations.get(npc, 0)
-            self.pool.submit(
+            if not self.queue_work(
                 self.generate_companion, npc, dict(event), profile, dict(self.config)
-            )
+            ):
+                self.companion_work.discard(npc)
 
     def generate_companion(self, npc, event, profile, config):
         try:

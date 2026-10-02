@@ -10,6 +10,10 @@ void main()
     RWCPICancel(familiar,"Familiar control or presence changed.",FALSE);
     RWCPEndTalk(owner);RWCPInvalidate(owner);
     if(NWNX_Events_GetCurrentEvent()=="NWNX_ON_CLIENT_DISCONNECT_BEFORE")
-    {DeleteLocalInt(owner,"rw_cp_on");DeleteLocalString(owner,"rw_cp_login_session");DeleteLocalInt(owner,"rw_cp_save_pending");DeleteLocalInt(owner,"rw_cpp_loaded");DeleteLocalString(owner,"rw_cpp_session");DeleteLocalString(owner,"rw_cpp_pending");}
-    if(GetIsPC(owner) && GetIsObjectValid(RWCPIPack(owner)))ExportSingleCharacter(owner);
+    {
+        // Save only outstanding inventory changes while the player still
+        // exists. Dismissal/possession/associate changes do not change cargo.
+        RWCPSFlush(owner);
+        DeleteLocalInt(owner,"rw_cp_on");DeleteLocalString(owner,"rw_cp_login_session");DeleteLocalInt(owner,"rw_cp_save_pending");DeleteLocalInt(owner,"rw_cpp_loaded");DeleteLocalString(owner,"rw_cpp_session");DeleteLocalString(owner,"rw_cpp_pending");
+    }
 }

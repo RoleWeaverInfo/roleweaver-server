@@ -9,7 +9,7 @@ import signal
 import threading
 import time
 from . import backup
-from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+from http.server import BaseHTTPRequestHandler
 from pathlib import Path
 from urllib.parse import parse_qs, urlparse
 
@@ -17,6 +17,7 @@ from .recovery_runtime import RecoveryRuntime
 from .recovery_web import handle as recovery_request
 from .health_web import handle as health_request
 from . import __version__
+from . import http_security
 
 
 def main():
@@ -56,11 +57,7 @@ def main():
             self.wfile.write(body)
 
         def allowed(self):
-            host = self.headers.get("Host", "")
-            if host not in (f"localhost:{port}", f"127.0.0.1:{port}"):
-                return False
-            origin = self.headers.get("Origin")
-            return origin is None or origin == "http://" + host
+            return http_security.allowed(self.headers, port)
 
         def do_GET(self):
             self.dispatch("GET")
@@ -287,18 +284,17 @@ def main():
             ):
                 return self.respond(403, {"error": "Same-origin JSON required"})
             try:
-                length = int(self.headers.get("Content-Length", "0"))
-                if (
-                    not 0
-                    < length
-                    <= (
+                length = http_security.body_length(
+                    self.headers,
+                    (
                         backup.LIMIT
                         if self.path == "/api/restore-preview"
                         else 256000 if self.path == "/api/world-document" else 65536
-                    )
-                ):
-                    raise ValueError("Invalid request length")
-                body = json.loads(self.rfile.read(length))
+                    ),
+                )
+                body = json.loads(b"".join(http_security.body_chunks(self, length)))
+                if not isinstance(body, dict):
+                    raise ValueError("Supply a JSON object")
                 if self.path == "/api/companion-settings":
                     return self.respond(200, app.save_companion_enabled(body))
                 if self.path == "/api/companion-profile":
@@ -527,7 +523,7 @@ def main():
                 )
 
     try:
-        server = ThreadingHTTPServer(("127.0.0.1", port), Handler)
+        server = http_security.DashboardServer(("127.0.0.1", port), Handler)
     except BaseException:
         runtime.close()
         raise

@@ -48,7 +48,12 @@ On Ubuntu, run `hostname -I` to find the VM's IP. In a Windows terminal, substit
 ssh -N -L 8743:127.0.0.1:8743 USER@UBUNTU-IP
 ```
 
-Leave that terminal open, then browse to http://127.0.0.1:8743. If local port 8743 is busy, use `-L 8744:127.0.0.1:8743` and open http://127.0.0.1:8744. The middle port is always the Ubuntu dashboard port. Keep Redis and the dashboard on loopback.
+Leave that terminal open, then browse to http://127.0.0.1:8743. Use the same local
+and remote dashboard port: the dashboard validates the browser's Host header.
+If 8743 is busy, close the old tunnel or choose another `web_port` in the installed
+world's config, restart that Role Weaver service and use the new port in all three
+places. Keep Redis and the dashboard on loopback. The dashboard is an administrator
+interface without individual logins; see [security and resource limits](../docs/SECURITY_AND_LIMITS.md).
 
 ## Common problems
 

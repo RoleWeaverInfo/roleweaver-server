@@ -9,6 +9,7 @@ Optional Guardrails tests require `requirements-guardrails.txt`.
 | Gemini retry, cooldown, sticky selection | `test_gemini_fallback.py` |
 | Provider settings and credential boundaries | `test_llm_settings.py` (see available files) |
 | Safeguards | `test_safeguards.py`, `test_guardrails_ai.py` |
+| HTTP admission, malformed requests and AI/provider overload recovery | `test_http_security.py`, `test_recovery_http.py`, `test_resource_limits.py` |
 | Module preparation and installer | `test_addon.py`, `test_installer.py` |
 | Shops | `test_merchants.py` and merchant-related tests |
 | Database integrity, retention and interrupted restore | `test_database_recovery.py`, `test_recovery_http.py` |

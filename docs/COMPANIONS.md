@@ -313,9 +313,22 @@ satchels are plot/non-droppable. Existing native bag access remains available.
 
 The one real satchel stays on the character when the familiar is dismissed,
 killed or resummoned, and returns with the character after logout or restart.
-Role Weaver requests a native character save after confirmed transfers and native
-satchel inventory changes. It does not serialize an additional item copy in its
-AI database or recreate contents when a familiar appears.
+Role Weaver batches companion inventory changes into one native character save
+per player every ten minutes while changes are pending. Several transfers share the same
+save; more changes do not delay it indefinitely. Logout flushes any pending changes
+before disconnect. An unchanged satchel, ordinary conversation, following,
+inspection, dismissal or possession does not request an extra character export.
+It does not serialize an additional item copy in its AI database or recreate
+contents when a familiar appears.
+
+This is a save interval, not just suppression of the game's export notification.
+A crash before the next save can lose recent inventory changes. Normal NWN/world
+autosaves and saves requested by other Role Weaver features remain independent.
+For custom PW save policies, module integer `rw_cp_save_seconds` changes the
+companion interval (default 600 seconds, bounded to 30–3600). Set module integer
+`rw_cp_save_disabled` to `1` to delegate all companion character saving, including
+logout, to the world's own save system. These locals are server settings, not
+player or AI commands. The one real satchel must still be covered by world saves.
 
 Use `/rw companion recover` for an owner-only, withdraw-only window without a
 living familiar, even when companion AI or inventory actions are disabled. You
@@ -374,8 +387,10 @@ older custom adapter can refuse these orders while retaining follow/stay support
 
 `rw_cp_pack` owns native satchel binding and transfer rules; `rw_cp_ui` owns
 exchange consent and stale-selection checks; `rw_cp_items` builds offered actions
-and runs bounded movement tasks. `rw_cp_save` requests character saves for native
-bag changes. `roleweaver/companion_inventory.py` filters model context and policy;
+and runs bounded movement tasks. `rw_cp_save` observes native bag changes and
+`rw_cp_persist` batches save requests, guards against export reentrancy and flushes
+dirty inventories on logout. Pending state is module-local, so character loading
+cannot restore stale timers. `roleweaver/companion_inventory.py` filters model context and policy;
 it never moves, saves or recreates native items. No player inventory lists,
 object references or arbitrary action targets cross into the model.
 

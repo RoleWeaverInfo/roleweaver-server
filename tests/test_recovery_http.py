@@ -1,6 +1,7 @@
 """Isolated HTTP smoke tests, including the corrupt-database recovery page."""
 
 import json
+import http.client
 from pathlib import Path
 import socket
 import socketserver
@@ -181,6 +182,41 @@ class RecoveryHTTPTests(unittest.TestCase):
             time.sleep(0.02)
         self.assertTrue(job["error"])
         self.assertTrue(self.request("/api/databases")["available"])
+
+    def test_invalid_framing_and_cross_site_requests_leave_dashboard_usable(self):
+        self.start()
+        for path in ("/api/llm-test", "/api/databases/create"):
+            for extra, body, expected in (
+                ([("Content-Length", "2")], b"{}", 400),
+                ([("Transfer-Encoding", "chunked")], b"{}", 400),
+                ([("Sec-Fetch-Site", "cross-site")], b"{}", 403),
+                (
+                    [
+                        ("Origin", "http://127.0.0.1:" + str(self.port)),
+                        ("Origin", "http://127.0.0.1:" + str(self.port)),
+                    ],
+                    b"{}",
+                    403,
+                ),
+                ([], b"[]", 400),
+            ):
+                with self.subTest(path=path, extra=extra, body=body):
+                    connection = http.client.HTTPConnection(
+                        "127.0.0.1", self.port, timeout=5
+                    )
+                    try:
+                        connection.putrequest("POST", path)
+                        connection.putheader("Content-Type", "application/json")
+                        connection.putheader("Content-Length", str(len(body)))
+                        for name, value in extra:
+                            connection.putheader(name, value)
+                        connection.endheaders(body)
+                        response = connection.getresponse()
+                        self.assertEqual(response.status, expected, response.read())
+                    finally:
+                        connection.close()
+        self.assertTrue(self.request("/api/databases")["available"])
+        self.assertIn("npcs", self.request("/api/state"))
 
 
 if __name__ == "__main__":

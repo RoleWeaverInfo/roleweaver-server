@@ -40,6 +40,8 @@
     metrics.append(el('dt',names[name]),el('dd',text));
    }
    if(part.entries)metrics.append(el('dt','Cached entries'),el('dd',Object.entries(part.entries).map(([s,n])=>`${s}: ${n}`).join(' · ')));
+   if(part.request_limits){const l=part.request_limits;metrics.append(el('dt','Concurrent LLM requests'),el('dd',`${l.active} / ${l.max_concurrent}`),el('dt','Provider attempts this minute'),el('dd',`${l.attempts_last_minute} / ${l.attempts_per_minute}`),el('dt','Requests refused by local limits since start'),el('dd',String(l.rejected_since_start)));}
+   if(part.ai_work_capacity)metrics.append(el('dt','Maximum running and queued AI jobs'),el('dd',String(part.ai_work_capacity)));
    if(part.databases)for(const [kind,value] of Object.entries(part.databases))metrics.append(el('dt',kind),el('dd',`${value.missing?'Missing':value.ok?'Check passed':'Check failed'} · ${size(value.bytes+value.wal_bytes)}`));
    card.append(metrics);$('cards').append(card);
   }

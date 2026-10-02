@@ -171,7 +171,9 @@ int RWCPIExchangeStart(object owner,object familiar)
 }
 void RWCPIFinish(object familiar,object owner,string result,string emote="")
 {
-    RWCPICancel(familiar,result,TRUE);RWCPISave(owner);
+    // Finishing an inspection or failed/cancelled errand changes no inventory.
+    // Successful transfers request their save at the actual mutation below.
+    RWCPICancel(familiar,result,TRUE);
     if(emote!="" && !GetIsDead(familiar))NWNX_Chat_SendMessage(NWNX_CHAT_CHANNEL_PLAYER_TALK,emote,familiar);
 }
 void RWCPITaskTick(object owner,object familiar)
@@ -219,7 +221,7 @@ void RWCPITaskTick(object owner,object familiar)
     {
         if(container)ok=RWCPIMove(item,target,pack,RWCPIMaximum());
         else if(RWCPIGround(familiar,item))ok=NWNX_Item_MoveTo(item,pack);
-        RWCPISave(owner);
+        if(ok)RWCPISave(owner);
         if(!ok){RWCPIFinish(familiar,owner,"The game refused collection; nothing was copied.");return;}
         if(verb=="fetch" || verb=="fetch_ground")
         {
@@ -252,6 +254,6 @@ void RWCPITaskTick(object owner,object familiar)
         {RWCPIFinish(familiar,owner,"The offered exchange item is no longer available.");return;}
         ok=RWCPISwap(pack,target,item,offer,RWCPIMaximum(),FALSE);
     }
-    RWCPISave(owner,target);
+    if(ok!=0)RWCPISave(owner,target); // Include incomplete compensation.
     RWCPIFinish(familiar,owner,ok>0?"Item transfer completed.":(ok<0?"Exchange partly completed; inspect both inventories before retrying.":"Item transfer rejected by the game."),ok>0?"*Hands over the belongings.*":"");
 }

@@ -2,6 +2,8 @@
 
 import copy, ipaddress, json, os, re, secrets, tempfile, time, urllib.error, urllib.parse, urllib.request
 from pathlib import Path
+from contextlib import nullcontext
+from .resource_limits import CapacityError
 
 ENDPOINTS = {
     "openai": "https://api.openai.com/v1",
@@ -252,10 +254,16 @@ class Settings:
         start = time.perf_counter()
         try:
             if models:
-                with open_url(
-                    urllib.request.Request(c["base_url"] + "/models", headers=headers),
-                    15,
-                ) as response:
+                limits = c.get("_provider_limits")
+                with (
+                    limits.attempt() if limits is not None else nullcontext(),
+                    open_url(
+                        urllib.request.Request(
+                            c["base_url"] + "/models", headers=headers
+                        ),
+                        15,
+                    ) as response,
+                ):
                     raw = response.read(1048577)
                 if len(raw) > 1048576:
                     raise ValueError("Model list too large")
@@ -312,6 +320,8 @@ class Settings:
                 message="Connection and NPC JSON response passed.",
                 duration_ms=round((time.perf_counter() - start) * 1000),
             )
+        except CapacityError:
+            raise
         except urllib.error.HTTPError as exc:
             messages = {
                 401: "API key rejected",

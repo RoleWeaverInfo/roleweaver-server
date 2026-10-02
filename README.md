@@ -84,6 +84,8 @@ python -m roleweaver.web --config .local/config.json
 Open <http://127.0.0.1:8743>. Without Redis/NWN the dashboard reports a disconnected bridge;
 that is expected for this dashboard-only start. See developer setup for optional Guardrails and
 native game requirements. The dashboard binds to loopback; use an SSH tunnel for remote access.
+It is a trusted administrator interface with no individual logins. See
+[security and resource limits](docs/SECURITY_AND_LIMITS.md) before deploying it.
 
 ## Repository layout
 

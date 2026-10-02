@@ -14,6 +14,8 @@
   "recovery_keep_recent": 12,
   "recovery_keep_daily": 7,
   "companions_enabled": false,
+  "provider_max_concurrent": 4,
+  "provider_attempts_per_minute": 180,
   "companion_inventory": {
     "enabled": true,
     "radius": 20,

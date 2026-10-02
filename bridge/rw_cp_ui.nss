@@ -118,7 +118,7 @@ void RWCPITradeEvent()
         int ok=FALSE;
         if(GetIsObjectValid(gift) && GetObjectUUID(gift)==GetLocalString(pc,"rw_cpt_gift_uuid")
             && GetItemStackSize(gift)==GetLocalInt(pc,"rw_cpt_gift_qty"))ok=RWCPIMove(gift,pack,pc,maximum);
-        RWCPISave(owner,pc);
+        if(ok)RWCPISave(owner,pc);
         RWCPIStatus(familiar,ok?"Delivery accepted and item transferred.":"Delivery failed; item was unavailable or transfer rejected.");
         SendMessageToPC(pc,ok?"You received the offered item.":"That item is no longer available. No transfer completed.");
         if(ok)NWNX_Chat_SendMessage(NWNX_CHAT_CHANNEL_PLAYER_TALK,"*Hands over the offered belongings.*",familiar);
@@ -148,7 +148,7 @@ void RWCPITradeEvent()
     if(a>=0 && b>=0)result=RWCPISwap(pack,pc,give,offer,maximum,TRUE);
     else if(a>=0)result=RWCPIMove(give,pack,pc,maximum);
     else result=RWCPIMove(offer,pc,pack,maximum);
-    RWCPISave(owner);
+    if(result!=0)RWCPISave(owner); // Include incomplete compensation.
     if(result<0){SendMessageToPC(pc,"Transfer only partly completed. Check both inventories; do not repeat blindly.");RWCPIStatus(familiar,"Exchange compensation failed; inspect both inventories.");return;}
     SendMessageToPC(pc,result?"Familiar item transfer completed.":"The game rejected this transfer. No exchange completed.");
     if(result)RWCPIStatus(familiar,"Owner confirmed an item exchange; inventories updated.");

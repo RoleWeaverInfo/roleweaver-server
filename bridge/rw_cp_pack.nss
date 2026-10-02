@@ -2,6 +2,7 @@
 // There is no serialized item mirror and nothing is recreated on resummoning.
 #include "rw_cp_prefs"
 #include "rw_inventory"
+#include "rw_cp_persist"
 
 int RWCPIEnabled()
 {return GetLocalInt(GetModule(),"rw_cp_enabled") && GetLocalInt(GetModule(),"rw_cpi_enabled") && NWNX_Core_PluginExists("NWNX_Item");}
@@ -77,7 +78,7 @@ object RWCPIPack(object owner,int create=FALSE)
     SetName(pack,"Familiar Satchel");SetIdentified(pack,TRUE);SetDroppableFlag(pack,FALSE);SetPlotFlag(pack,TRUE);
     SetLocalInt(pack,"rw_cp_satchel",1);SetLocalInt(pack,"rw_cp_type",type);
     SetLocalString(pack,"rw_cp_world",RWWorld());SetLocalString(pack,"rw_cp_owner",RWCPOwnerKey(owner));
-    ExportSingleCharacter(owner);
+    RWCPISave(owner);
     return pack;
 }
 int RWCPIGround(object familiar,object item)
@@ -105,11 +106,6 @@ int RWCPIRecipient(object familiar,object who)
         && GetArea(who)==GetArea(familiar) && !GetIsEnemy(who,familiar)
         && GetDistanceBetween(familiar,who)<=RWCPIRadius() && LineOfSightObject(familiar,who)
         && (GetIsPC(who) || (GetLocalString(who,"rw_id")!="" && RWInvReady(who) && RWInvFlag(who,"receive")));
-}
-void RWCPISave(object owner,object recipient=OBJECT_INVALID)
-{
-    if(GetIsPC(owner))ExportSingleCharacter(owner);
-    if(recipient!=owner && GetIsPC(recipient))ExportSingleCharacter(recipient);
 }
 // Only successful native moves count. No creation, copying, or retries.
 int RWCPIMove(object item,object source,object target,int maximum)

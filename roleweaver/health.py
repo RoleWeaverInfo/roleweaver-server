@@ -228,6 +228,7 @@ class HealthMonitor:
                 **alive,
                 active_replies=busy,
                 pending_commands=pending,
+                ai_work_capacity=app.pool.capacity,
             ),
             "translations": component(
                 (
@@ -264,6 +265,7 @@ class HealthMonitor:
                 ),
                 "Observed request history only; health checks make no LLM calls. Failures may include attempts that succeeded through a fallback model.",
                 provider=provider,
+                request_limits=app.provider_limits.status(),
                 attempts_last_hour=total,
                 failures_last_hour=errors,
                 mean_duration_ms=(
