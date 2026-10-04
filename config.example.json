@@ -14,6 +14,7 @@
   "recovery_keep_recent": 12,
   "recovery_keep_daily": 7,
   "companions_enabled": false,
+  "companion_listening_enabled": true,
   "provider_max_concurrent": 4,
   "provider_attempts_per_minute": 180,
   "companion_inventory": {

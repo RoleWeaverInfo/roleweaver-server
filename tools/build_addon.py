@@ -14,6 +14,7 @@ from module_copy import make_copy, resources, simple_fields
 
 ENTRY_SCRIPTS = (
     "rw_init",
+    "rw_hear",
     "rw_cp_order",
     "rw_cp_event",
     "rw_cp_trade",
@@ -124,6 +125,7 @@ def audit(module, scripts=()):
     reserved = set(ENTRY_SCRIPTS) | {
         "rw_inc",
         "rw_core",
+        "rw_hearing",
         "rw_companion",
         "rw_cp_base",
         "rw_cp_prefs",
@@ -206,6 +208,7 @@ def build(module, output, native, world, prefix, owner, chat, scripts=()):
         *ENTRY_SCRIPTS,
         "rw_inc",
         "rw_core",
+        "rw_hearing",
         "rw_companion",
         "rw_cp_base",
         "rw_cp_prefs",

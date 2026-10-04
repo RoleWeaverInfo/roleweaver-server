@@ -12,6 +12,49 @@ spec.loader.exec_module(demo)
 
 
 class DemoTests(unittest.TestCase):
+    def test_seeded_demo_starts_recovery_runtime_and_keeps_player_identity(self):
+        from roleweaver.recovery_runtime import RecoveryRuntime
+
+        value = demo.content(ROOT / "demo/content.json")
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            path = root / "roleweaver.sqlite3"
+            demo.seed_database(path, value, "clean_demo")
+            salt = (root / "identity_salt").read_text()
+            runtime = RecoveryRuntime(
+                root,
+                {"provider": "offline", "world_id": "clean_demo"},
+                start_workers=False,
+            )
+            try:
+                self.assertEqual(runtime.error, "")
+                self.assertIsNotNone(runtime.app)
+                self.assertEqual(runtime.app.salt, salt)
+            finally:
+                runtime.close()
+            demo.seed_database(path, value, "clean_demo")
+            self.assertEqual((root / "identity_salt").read_text(), salt)
+
+    def test_reimport_does_not_replace_a_missing_existing_player_identity(self):
+        from roleweaver.recovery_runtime import RecoveryRuntime
+
+        value = demo.content(ROOT / "demo/content.json")
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            path = root / "roleweaver.sqlite3"
+            demo.seed_database(path, value, "clean_demo")
+            (root / "identity_salt").unlink()
+            demo.seed_database(path, value, "clean_demo")
+            self.assertFalse((root / "identity_salt").exists())
+            runtime = RecoveryRuntime(
+                root, {"provider": "offline"}, start_workers=False
+            )
+            try:
+                self.assertIn("Player identity file is missing", runtime.error)
+                self.assertIsNone(runtime.app)
+            finally:
+                runtime.close()
+
     def test_fresh_demo_has_authored_content_without_player_or_translation_history(
         self,
     ):

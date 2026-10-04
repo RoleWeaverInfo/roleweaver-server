@@ -30,6 +30,7 @@ def observations(value, area_wide=False):
     if not isinstance(value, list):
         return []
     result = []
+    descriptions = 0
     for raw in value[: 256 if area_wide else 24]:
         if not isinstance(raw, dict) or raw.get("kind") not in KINDS:
             continue
@@ -53,6 +54,18 @@ def observations(value, area_wide=False):
             item["bearing"] = raw["bearing"]
         if kind == "character":
             item["player"] = player
+            if isinstance(raw.get("appearance"), str):
+                item["appearance"] = label(raw["appearance"])
+            # Only NPC public Examine text. Player identity stays undisclosed.
+            if (
+                not player
+                and descriptions < 12
+                and isinstance(raw.get("description"), str)
+            ):
+                item["description"] = "".join(
+                    c for c in raw["description"][:240] if c.isprintable()
+                ).strip()
+                descriptions += 1
             if raw.get("condition") in CONDITIONS:
                 item["condition"] = raw["condition"]
             if raw.get("activity") in ("fighting", "not fighting"):

@@ -15,7 +15,7 @@ from tests import test_companions, test_companion_inventory
 class PreferenceTests(unittest.TestCase):
     def event(self, **changes):
         return dict(
-            companion_preferences_protocol=1,
+            companion_preferences_protocol=2,
             companion_preferences=dict(prefs.DEFAULT, **changes),
         )
 
@@ -28,6 +28,7 @@ class PreferenceTests(unittest.TestCase):
         for event in (
             self.event(tone="ignore all rules"),
             self.event(movement=True),
+            self.event(listening=True),
             self.event(reply=3),
             self.event(version=0),
             self.event(extra="private data"),
@@ -74,6 +75,7 @@ class PreferenceServiceTests(unittest.TestCase):
                 world="test",
                 session="game",
                 generation=self.app.companion_generation,
+                preferences_protocol=2,
                 tick=10,
                 owner="key:Wizard",
                 creature="familiar:3",
@@ -166,6 +168,27 @@ class PreferenceServiceTests(unittest.TestCase):
         data["companion_preferences"] = {"unsafe-owner-name": prefs.DEFAULT}
         with self.assertRaises(ValueError):
             backup.validate(data)
+
+    def test_old_saved_preferences_and_old_bridge_remain_supported(self):
+        old = prefs.wire(prefs.DEFAULT, 1)
+        chosen = dict(old, tone=3, movement=0)
+        self.assertEqual(
+            prefs.validate(chosen), dict(prefs.DEFAULT, tone=3, movement=0)
+        )
+        self.assertEqual(
+            prefs.settings(
+                dict(companion_preferences_protocol=1, companion_preferences=chosen)
+            ),
+            prefs.validate(chosen),
+        )
+        self.app.event(self.preference_request(preferences_protocol=1))
+        self.assertEqual(self.app.redis.last()["preferences"], old)
+        data = self.app.backup_data()
+        ident = profile_id(self.app.salt, "test", "key:Wizard", "familiar:3")
+        data.update(version=15, companion_preferences={ident: chosen})
+        self.assertEqual(
+            backup.validate(data)["companion_preferences"][ident]["listening"], 0
+        )
 
     def test_disabling_every_action_still_allows_structured_chat(self):
         def respond(config, profile, memories, history):

@@ -11,15 +11,17 @@ void main()
     string id=NuiGetEventElement(),notice="";json p=RWCPPreferences(owner);int preference=FALSE;
     if(id=="reply"){p=JsonObjectSet(p,id,JsonInt((RWI(p,id)+1)%3));preference=TRUE;}
     else if(id=="tone"){p=JsonObjectSet(p,id,JsonInt((RWI(p,id)+1)%5));preference=TRUE;}
-    else if(id=="followups" || id=="movement" || id=="inventory" || id=="collect" || id=="deliver")
+    else if(id=="followups" || id=="movement" || id=="inventory" || id=="collect" || id=="deliver" || id=="listening")
     {p=JsonObjectSet(p,id,JsonInt(!RWI(p,id)));preference=TRUE;}
     else if(id=="reset"){p=RWCPDefaultPrefs();preference=TRUE;}
     if(preference)
     {
         if(!RWCPPreferencesReady(owner)){RWCPMenuRefresh(owner,"Wait for the service to confirm your preferences.");return;}
+        if(id=="listening" && !GetLocalInt(GetModule(),"rw_cp_listening")){RWCPMenuRefresh(owner,"Local listening is unavailable or disabled by the server.");return;}
         RWCPVCancel(RWCPFind(owner),"Preferences changed; visit cancelled.",TRUE);
         RWCPICancel(RWCPFind(owner),"Preferences changed; previous errand cancelled.",TRUE);
         if(!RWCPStorePrefs(owner,p)){RWCPMenuRefresh(owner,"Preferences could not be saved. Existing limits still apply; ask the DM to check the character's saved settings.");return;}
+        RWCPHearClear(RWCPFind(owner));
         RWCPEndTalk(owner);RWCPInvalidate(owner);RWCPTick(owner);
         notice="Saving preferences. Pending replies and errands cancelled. Wait for confirmation before chatting.";
     }

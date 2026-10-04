@@ -6,6 +6,7 @@
 #include "rw_translate"
 
 #include "rw_cp_base"
+#include "rw_hearing"
 #include "rw_cp_menu"
 
 // Focus is private to the owner. A fresh address opens a short conversation;
@@ -45,7 +46,10 @@ json RWCPObserve(json e,object familiar,string instruction="")
     e=JsonObjectSet(e,"self_condition",JsonString(RWVisibleCondition(familiar)));
     e=JsonObjectSet(e,"area",JsonString(GetName(GetArea(familiar))));
     e=JsonObjectSet(e,"companion_preferences",RWCPPreferences(owner));
-    e=JsonObjectSet(e,"companion_preferences_protocol",JsonInt(1));
+    e=JsonObjectSet(e,"companion_preferences_protocol",JsonInt(2));
+    e=JsonObjectSet(e,"hearing_protocol",JsonInt(1));
+    e=JsonObjectSet(e,"hearing_enabled",JsonInt(RWCPHearEnabled(owner,familiar)));
+    e=JsonObjectSet(e,"heard_speech",RWCPHearRecent(familiar));
     return RWCPVObserve(RWCPIObserve(e,owner,familiar),owner,familiar,instruction);
 }
 void RWCPTick(object owner)
@@ -53,6 +57,7 @@ void RWCPTick(object owner)
     if(GetLocalInt(owner,"rw_cpp_requested") || GetLocalInt(owner,"rw_cp_on"))RWCPRequestPrefs(owner);
     if(!GetLocalInt(owner,"rw_cp_on") || GetLocalString(owner,"rw_cp_login_session")!=GetLocalString(GetModule(),"rw_session"))return;
     object familiar=RWCPFind(owner);
+    if(GetIsObjectValid(familiar))RWCPHearRecent(familiar);
     int ready=RWCPReady(owner,familiar);
     if(familiar!=GetLocalObject(owner,"rw_cp_object")
         || ready!=GetLocalInt(owner,"rw_cp_ready")
@@ -95,7 +100,7 @@ int RWCPSpeak(object familiar,string text)
 {
     if(!GetIsObjectValid(familiar) || GetIsDead(familiar) || GetIsDMPossessed(familiar)
         || GetIsPossessedFamiliar(familiar) || text=="" || GetStringLength(text)>1000)return FALSE;
-    return NWNX_Chat_SendMessage(NWNX_CHAT_CHANNEL_PLAYER_TALK,text,familiar);
+    return RWPublicSpeak(text,familiar);
 }
 // Matching another character takes priority over follow-up focus, including an
 // ambiguous shared name. Ordinary clauses such as "Yes, thank you" do not.
@@ -148,7 +153,7 @@ int RWCPChat(object owner,string text)
     if(command && lower=="cancel")
     {RWCPVCancel(familiar,"Visit cancelled by the owner.",TRUE);RWCPICancel(familiar,"Errand cancelled by the owner.",TRUE);RWCPEndTalk(owner);RWCPInvalidate(owner);SendMessageToPC(owner,"Companion errand cancelled. Collected belongings remain in your satchel.");return TRUE;}
     if(command && lower=="off")
-    {RWCPVCancel(familiar,"Companion AI disabled.",TRUE);RWCPICancel(familiar,"Familiar inventory task disabled.",TRUE);SetLocalInt(owner,"rw_cp_on",FALSE);RWCPEndTalk(owner);RWCPInvalidate(owner);SendMessageToPC(owner,"Role Weaver companion disabled. Your familiar satchel stays in your inventory.");return TRUE;}
+    {RWCPVCancel(familiar,"Companion AI disabled.",TRUE);RWCPICancel(familiar,"Familiar inventory task disabled.",TRUE);SetLocalInt(owner,"rw_cp_on",FALSE);RWCPHearClear(familiar);RWCPEndTalk(owner);RWCPInvalidate(owner);SendMessageToPC(owner,"Role Weaver companion disabled. Your familiar satchel stays in your inventory.");return TRUE;}
     if(command && lower=="recover")
     {
         object pack=RWCPIPack(owner);
@@ -201,7 +206,7 @@ void RWCPReply(json cmd)
     if(RWS(cmd,"world")!=RWWorld() || RWS(cmd,"session")!=GetLocalString(m,"rw_session")
         || RWI(cmd,"expires")<tick || RWI(cmd,"expires")>tick+5)return;
     if(RWS(cmd,"kind")=="companion_config")
-    {SetLocalInt(m,"rw_cp_enabled",RWI(cmd,"enabled")==1);SetLocalString(m,"rw_cpp_generation",RWS(cmd,"preferences_generation"));RWCPIConfig(cmd);RWCPVConfig(cmd);return;}
+    {SetLocalInt(m,"rw_cp_enabled",RWI(cmd,"enabled")==1);SetLocalInt(m,"rw_cp_listening",RWI(cmd,"listening_enabled")==1);SetLocalString(m,"rw_cpp_generation",RWS(cmd,"preferences_generation"));RWCPIConfig(cmd);RWCPVConfig(cmd);return;}
     if(RWS(cmd,"kind")=="companion_preferences_reply")
     {
         if(RWCPAcceptPrefs(cmd))

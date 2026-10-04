@@ -18,6 +18,7 @@ from . import (
     companion_templates,
     guardrails,
     perception,
+    companion_hearing,
     provider,
     safeguards,
 )
@@ -89,6 +90,9 @@ class CompanionService(CompanionVisitService, CompanionAdminService):
                 session=event["session"],
                 expires=event["tick"] + 4,
                 enabled=int(self.companions_enabled()),
+                listening_enabled=int(
+                    self.config.get("companion_listening_enabled", True) is True
+                ),
                 preferences_generation=self.companion_generation,
                 visits=dict(
                     visit_policy(self.config),
@@ -146,7 +150,9 @@ class CompanionService(CompanionVisitService, CompanionAdminService):
                 dict(
                     {k: event[k] for k in (*fields, "world", "generation")},
                     kind="companion_preferences_reply",
-                    preferences=value,
+                    preferences=companion_preferences.wire(
+                        value, event.get("preferences_protocol")
+                    ),
                     expires=event["tick"] + 4,
                 )
             )
@@ -270,6 +276,7 @@ class CompanionService(CompanionVisitService, CompanionAdminService):
                 else dict(available=False, reason="No game observation", objects=[])
             )
             cargo, cargo_choices = companion_inventory.context(event, config)
+            heard = companion_hearing.context(event, config)
             with self.lock:
                 visits = self.companion_visit_choices(event)
             preference = companion_preferences.settings(event)
@@ -300,6 +307,7 @@ class CompanionService(CompanionVisitService, CompanionAdminService):
                             profile.get("voice", ""), preference
                         ),
                         perception=view,
+                        heard_speech=heard,
                         inventory=cargo,
                         last_action=dict(status=cargo.get("status", "")),
                     ),

@@ -216,7 +216,7 @@ void RWCPVReply(json cmd)
             : RWCPVTarget(familiar,target) && GetObjectUUID(target)==GetLocalString(familiar,"rw_cpv_target_uuid")
                 && GetLocalInt(target,"rw_epoch")==GetLocalInt(familiar,"rw_cpv_peer_epoch") && GetDistanceBetween(familiar,target)<=4.0;
         if(close && (phase!="answer" || !GetIsPC(target)))
-        {SetLocalString(familiar,"rw_cpv_ack",RWS(cmd,"request"));ok=NWNX_Chat_SendMessage(NWNX_CHAT_CHANNEL_PLAYER_TALK,text,phase=="answer"?target:familiar);}
+        {SetLocalString(familiar,"rw_cpv_ack",RWS(cmd,"request"));ok=RWPublicSpeak(text,phase=="answer"?target:familiar);}
     }
     json ack=cmd;ack=JsonObjectSet(ack,"kind",JsonString("companion_visit_ack"));ack=JsonObjectSet(ack,"ok",JsonInt(ok));RWEmit(ack);
     if(!ok){RWCPVReturn(familiar,"no_reply");return;}
@@ -248,7 +248,7 @@ int RWCPVPlayerChat(object player,string text)
     if(slash)
     {
         SetLocalInt(player,"rw_cpv_echo",TRUE);
-        int spoken=NWNX_Chat_SendMessage(NWNX_CHAT_CHANNEL_PLAYER_TALK,body,player);
+        int spoken=RWPublicSpeak(body,player);
         DeleteLocalInt(player,"rw_cpv_echo");if(!spoken)return TRUE;
     }
     json e=RWCPVEvent("companion_visit_player",familiar);e=JsonObjectSet(e,"text",JsonString(body));RWEmit(e);

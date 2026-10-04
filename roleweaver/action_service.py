@@ -597,12 +597,17 @@ class ActionService(InteractionService, VillageService, PatrolService, MerchantA
             self.action_notice = "Stop rejected: NPC may be possessed or disconnected. DM control takes priority."
 
     def action_state(self, npc, event):
+        request = event.get("action_request")
+        # Idle/native-only states cannot acknowledge a dispatched action. In
+        # particular, a completed payment has no movement request to reconcile.
+        if not isinstance(request, str) or not request:
+            return
         job = self.action_jobs.get(npc)
         if event.get("action_status") in ("running", "waiting for player") and (
-            not job or job.get("request") != event.get("action_request")
+            not job or job.get("request") != request
         ):
             job = dict(
-                request=event["action_request"],
+                request=request,
                 choice="Action reported by game",
                 status="running",
                 session=event["session"],
@@ -612,7 +617,7 @@ class ActionService(InteractionService, VillageService, PatrolService, MerchantA
         if (
             job
             and job["session"] == event.get("session")
-            and job["request"] == event.get("action_request")
+            and job.get("request") == request
         ):
             job["status"] = event.get("action_status", "unknown")
 

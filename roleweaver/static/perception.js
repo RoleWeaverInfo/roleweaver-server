@@ -18,7 +18,7 @@
     const thead=document.createElement('thead');thead.append(head);table.append(thead);
     const body=document.createElement('tbody');
     for(const item of snapshot.objects){
-      const states=[item.condition,item.activity,item.attitude?item.attitude+' (game relationship)':'',item.open,item.merchant?'Role Weaver merchant':''];
+      const states=[item.appearance,item.description,item.condition,item.activity,item.attitude?item.attitude+' (game relationship)':'',item.open,item.merchant?'Role Weaver merchant':''];
       if(typeof item.usable==='boolean')states.push(item.usable?'usable':'not usable');
       const row=document.createElement('tr');
       for(const value of [item.label,item.kind,item.distance+' m'+(item.bearing?' · '+item.bearing:''),states.filter(Boolean).join(' · ')||'No further visible details']){

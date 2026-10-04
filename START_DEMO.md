@@ -72,8 +72,15 @@ To choose a private DM password instead, edit `dm_password` in
 
 In **LLM Settings**, select your provider/model, enter a key or local endpoint,
 test and save. Until configured, responses use offline mode.
-Enable player familiars separately in **Companions**. Configure **Translations**
-in the dashboard; each player opts in through `/rw language` in Talk.
+Companion AI is enabled by default in new demos. Summon a familiar normally, then
+use `/rw companion on` in Talk to activate its AI. Administrators can manage the
+service in the dashboard's **Companions** panel.
+
+The **Translations** service is also enabled by default in new demos; each player
+chooses a language and turns translation on through `/rw language` in Talk.
+Text is translated on demand using
+the configured provider, then cached for reuse. Existing demos keep their saved
+setting, which can be changed in the dashboard's **Translations** panel.
 
 Talk to the **Royal Guide** at the entrance for a walkthrough.
 Ask **Captain Beran** about the investigation. Meet the Tavern Owner, Merchant,

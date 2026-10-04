@@ -31,6 +31,9 @@ Talk To/Speak to establish the conversation. Wait for each reply before sending 
 | Failure | Select an unavailable test model, then restore the working one | Errors are visible; failure feedback does not invent an answer |
 | Persistent spawn | As DM, spawn a new persistent profile; stop/start the demo | Placement and memory return subject to configured persistence rules |
 | Backup | Export a dashboard backup and inspect its reported contents | Backup succeeds; keep it private and test restore only in a disposable instance |
+| Familiar creature awareness | Summon and enable a familiar, enter the cave, then ask what it sees | Visible trolls can be described as trolls; hidden intentions are not invented |
+| Familiar local listening | Enable Local listening in `/rw companion settings` before entering the cave. After nearby demands/pleas, ask what is happening | The familiar can refer to recently heard public speech, without automatic replies or action orders from bystanders |
+| Listening privacy and reset | With another tester, send a tell or whisper, then turn listening off or leave the area | Private text is not supplied; the short listening buffer clears. Existing conversation memories remain |
 
 NPC feedback is processed on game ticks, so timing is approximate. Do not manufacture repeated provider
 failures against a public service. A missing reply can be a hearing/targeting issue, deliberate policy
@@ -43,8 +46,9 @@ Administrator model-evaluation notes are separate from this gameplay walkthrough
 
 ## Try an AI familiar
 
-Use a wizard or sorcerer who can summon a familiar. The administrator enables
-companion AI in the dashboard's **Companions** panel. Summon normally, then use
+Use a wizard or sorcerer who can summon a familiar. Companion AI is enabled by
+default in new demos; older instances keep their saved setting in the dashboard's
+**Companions** panel. Summon normally, then use
 `/rw companion on` and `/rw companion settings` in Talk.
 
 Address it by name, introduce yourself, then continue nearby conversation. Ask it

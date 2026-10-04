@@ -47,6 +47,7 @@ void RWCPMenuRefresh(object owner,string notice="")
     NuiSetBind(owner,token,"inventory_label",JsonString("Satchel exchanges: "+RWCPOnOff(RWI(p,"inventory"))));
     NuiSetBind(owner,token,"collect_label",JsonString("Collect and fetch: "+RWCPOnOff(RWI(p,"collect"))));
     NuiSetBind(owner,token,"deliver_label",JsonString("Give or barter with others: "+RWCPOnOff(RWI(p,"deliver"))));
+    NuiSetBind(owner,token,"listening_label",JsonString("Local listening: "+(GetLocalInt(GetModule(),"rw_cp_listening")?RWCPOnOff(RWI(p,"listening")):"unavailable")));
 }
 json RWCPMenuSetting(string key)
 {return NuiEnabled(NuiWidth(NuiHeight(NuiId(NuiButton(NuiBind(key+"_label")),key),32.0),300.0),NuiBind("can_preferences"));}
@@ -61,13 +62,15 @@ int RWCPMenu(object owner)
     row=JsonArray();row=JsonArrayInsert(row,RWCPMenuSetting("reply"));row=JsonArrayInsert(row,RWCPMenuSetting("tone"));col=JsonArrayInsert(col,NuiRow(row));
     row=JsonArray();row=JsonArrayInsert(row,RWCPMenuSetting("followups"));row=JsonArrayInsert(row,RWCPMenuSetting("movement"));col=JsonArrayInsert(col,NuiRow(row));
     row=JsonArray();row=JsonArrayInsert(row,RWCPMenuSetting("inventory"));row=JsonArrayInsert(row,RWCPMenuSetting("collect"));col=JsonArrayInsert(col,NuiRow(row));
-    row=JsonArray();row=JsonArrayInsert(row,RWCPMenuSetting("deliver"));row=JsonArrayInsert(row,RWCPMenuButton("Reset these preferences","reset",300.0,"can_preferences"));col=JsonArrayInsert(col,NuiRow(row));
+    row=JsonArray();row=JsonArrayInsert(row,RWCPMenuSetting("deliver"));row=JsonArrayInsert(row,RWCPMenuSetting("listening"));col=JsonArrayInsert(col,NuiRow(row));
     row=JsonArray();row=JsonArrayInsert(row,RWCPMenuButton("Follow me","follow",300.0,"can_move"));row=JsonArrayInsert(row,RWCPMenuButton("Stand ground","stay",300.0,"can_move"));col=JsonArrayInsert(col,NuiRow(row));
     row=JsonArray();row=JsonArrayInsert(row,RWCPMenuButton("Open inventory","inventory_open",300.0,"can_inventory"));row=JsonArrayInsert(row,RWCPMenuButton("Recover satchel items","recover"));col=JsonArrayInsert(col,NuiRow(row));
     row=JsonArray();row=JsonArrayInsert(row,RWCPMenuButton("End conversation","end"));row=JsonArrayInsert(row,RWCPMenuButton("Cancel current errand","cancel"));col=JsonArrayInsert(col,NuiRow(row));
+    col=JsonArrayInsert(col,RWCPMenuButton("Reset these preferences","reset",300.0,"can_preferences"));
     col=JsonArrayInsert(col,NuiWidth(NuiHeight(NuiText(JsonString("Click a preference to change it; changes save immediately for this character and familiar type. Follow-ups let you talk without repeating its name. Item errands need satchel exchanges and movement enabled. If movement is off, approach your familiar to exchange items. Recovery remains available. Server restrictions and normal familiar controls still apply. Tone changes delivery, not the character's history. AI must be enabled again after login."),FALSE,0),120.0),612.0));
     col=JsonArrayInsert(col,NuiWidth(NuiHeight(NuiText(NuiBind("notice"),FALSE,0),44.0),612.0));
-    int token=NuiCreate(owner,NuiWindow(NuiCol(col),JsonString("Role Weaver - Companion settings"),NuiRect(-1.0,-1.0,660.0,600.0),JSON_FALSE,JSON_FALSE,JSON_TRUE,JSON_FALSE,JSON_TRUE),"rwcompanionsettings","rw_cp_menu_evt");
+    col=JsonArrayInsert(col,NuiWidth(NuiHeight(NuiText(JsonString("Local listening remembers up to 8 nearby public lines for 2 minutes, for your next conversation. No private chat, automatic replies or extra AI requests. Turn it off to clear the short history."),FALSE,0),62.0),612.0));
+    int token=NuiCreate(owner,NuiWindow(NuiCol(col),JsonString("Role Weaver - Companion settings"),NuiRect(-1.0,-1.0,660.0,700.0),JSON_FALSE,JSON_FALSE,JSON_TRUE,JSON_FALSE,JSON_TRUE),"rwcompanionsettings","rw_cp_menu_evt");
     if(!token)return FALSE;
     SetLocalInt(owner,"rw_cp_menu_token",token);SetLocalString(owner,"rw_cp_menu_session",GetLocalString(GetModule(),"rw_session"));
     SetLocalInt(owner,"rw_cp_menu_type",GetFamiliarCreatureType(owner));SetLocalObject(owner,"rw_cp_menu_familiar",RWCPFind(owner));

@@ -545,7 +545,15 @@
           "holt_desk"
         ],
         "home": "merchant_stall",
-        "shop": true
+        "shop": true,
+        "nearby": {
+          "approach": false,
+          "doors": false,
+          "talk": false,
+          "receive": true,
+          "radius": 8,
+          "seat_tags": []
+        }
       },
       "tavern_owner": {
         "enabled": true,
@@ -573,7 +581,15 @@
           "holt_desk"
         ],
         "home": "welcome_table",
-        "shop": false
+        "shop": false,
+        "nearby": {
+          "approach": false,
+          "doors": false,
+          "talk": false,
+          "receive": true,
+          "radius": 8,
+          "seat_tags": []
+        }
       },
       "rq_guard": {
         "enabled": true,
@@ -602,6 +618,14 @@
         ],
         "home": "guard_post",
         "shop": false,
+        "nearby": {
+          "approach": false,
+          "doors": false,
+          "talk": false,
+          "receive": true,
+          "radius": 8,
+          "seat_tags": []
+        },
         "patrol": {
           "enabled": true,
           "purpose": "Patrol the Crown Hall and check on its people. Return to the entrance between rounds. Stop to help visitors.",
@@ -648,7 +672,15 @@
           "holt_desk"
         ],
         "home": "arcane_corner",
-        "shop": false
+        "shop": false,
+        "nearby": {
+          "approach": false,
+          "doors": false,
+          "talk": false,
+          "receive": true,
+          "radius": 8,
+          "seat_tags": []
+        }
       },
       "rq_cleric": {
         "enabled": true,
@@ -676,7 +708,15 @@
           "holt_desk"
         ],
         "home": "chapel_shrine",
-        "shop": false
+        "shop": false,
+        "nearby": {
+          "approach": false,
+          "doors": false,
+          "talk": false,
+          "receive": true,
+          "radius": 8,
+          "seat_tags": []
+        }
       },
       "rq_holt": {
         "enabled": true,
@@ -704,7 +744,15 @@
           "holt_desk"
         ],
         "home": "holt_desk",
-        "shop": false
+        "shop": false,
+        "nearby": {
+          "approach": false,
+          "doors": false,
+          "talk": false,
+          "receive": true,
+          "radius": 8,
+          "seat_tags": []
+        }
       },
       "morga": {
         "enabled": true,

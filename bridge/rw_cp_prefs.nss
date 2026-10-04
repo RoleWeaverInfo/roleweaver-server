@@ -4,7 +4,8 @@
 
 json RWCPDefaultPrefs(int safe=FALSE)
 {
-    json p=JsonObject();p=JsonObjectSet(p,"version",JsonInt(1));
+    json p=JsonObject();p=JsonObjectSet(p,"version",JsonInt(2));
+    p=JsonObjectSet(p,"listening",JsonInt(0));
     p=JsonObjectSet(p,"reply",JsonInt(1));p=JsonObjectSet(p,"tone",JsonInt(0));
     p=JsonObjectSet(p,"followups",JsonInt(!safe));p=JsonObjectSet(p,"movement",JsonInt(!safe));
     p=JsonObjectSet(p,"inventory",JsonInt(!safe));p=JsonObjectSet(p,"collect",JsonInt(!safe));
@@ -12,13 +13,15 @@ json RWCPDefaultPrefs(int safe=FALSE)
 }
 int RWCPValidPrefs(json p)
 {
-    if(JsonGetType(p)!=JSON_TYPE_OBJECT || JsonGetLength(p)!=8 || RWI(p,"version")!=1)return FALSE;
-    json keys=JsonParse("[\"version\",\"reply\",\"tone\",\"followups\",\"movement\",\"inventory\",\"collect\",\"deliver\"]");int i;
-    for(i=0;i<8;i++)
+    int version=RWI(p,"version");
+    if(JsonGetType(p)!=JSON_TYPE_OBJECT || (version!=1 && version!=2)
+        || JsonGetLength(p)!=(version==1?8:9))return FALSE;
+    json keys=JsonParse("[\"version\",\"reply\",\"tone\",\"followups\",\"movement\",\"inventory\",\"collect\",\"deliver\",\"listening\"]");int i;
+    for(i=0;i<(version==1?8:9);i++)
     {
         string key=JsonGetString(JsonArrayGet(keys,i));json v=JsonObjectGet(p,key);
         if(JsonGetType(v)!=JSON_TYPE_INTEGER)return FALSE;
-        int limit=1;if(key=="reply")limit=2;if(key=="tone")limit=4;
+        int limit=1;if(key=="reply" || key=="version")limit=2;if(key=="tone")limit=4;
         if(JsonGetInt(v)<0 || JsonGetInt(v)>limit)return FALSE;
     }
     return TRUE;
@@ -27,6 +30,7 @@ json RWCPPreferences(object owner)
 {
     json p=JsonParse(GetLocalString(owner,"rw_cpp_value"));
     if(!RWCPPreferencesReady(owner) || !RWCPValidPrefs(p))return RWCPDefaultPrefs(TRUE);
+    if(RWI(p,"version")==1){p=JsonObjectSet(p,"version",JsonInt(2));p=JsonObjectSet(p,"listening",JsonInt(0));}
     return p;
 }
 int RWCPPreference(object owner,string key) {return RWI(RWCPPreferences(owner),key);}
@@ -47,6 +51,7 @@ void RWCPRequestPrefs(object owner)
     e=JsonObjectSet(e,"player",JsonString(ObjectToString(owner)));e=JsonObjectSet(e,"owner",JsonString(RWCPOwnerKey(owner)));
     e=JsonObjectSet(e,"creature",JsonString("familiar:"+IntToString(GetFamiliarCreatureType(owner))));
     e=JsonObjectSet(e,"request",JsonString(request));e=JsonObjectSet(e,"generation",JsonString(generation));
+    e=JsonObjectSet(e,"preferences_protocol",JsonInt(2));
     if(pending!="")e=JsonObjectSet(e,"preferences",JsonParse(pending));RWEmit(e);
 }
 int RWCPStorePrefs(object owner,json p)

@@ -4,12 +4,43 @@
 #include "nwnx_redis"
 #include "rw_settings"
 #include "rw_talk_inc"
+#include "nwnx_chat"
 
 // Only these namespaced keys are used. Redis remains on the local VM.
 string RWKey(string suffix) { return RW_REDIS_PREFIX + ":" + suffix; }
 string RWWorld() { return RW_WORLD; }
 string RWS(json value, string key) { return JsonGetString(JsonObjectGet(value, key)); }
 int RWI(json value, string key) { return JsonGetInt(JsonObjectGet(value, key)); }
+
+// Capture only successfully broadcast nearby speech. The separate script avoids
+// coupling the common bridge to companion inventory/menu dependencies. Suppress
+// callback capture while sending so registered chat hooks cannot record it twice.
+int RWPublicSpeak(string text, object speaker)
+{
+    object m=GetModule(); int sending=GetLocalInt(m,"rw_public_sending");
+    SetLocalInt(m,"rw_public_sending",TRUE);
+    int ok=NWNX_Chat_SendMessage(NWNX_CHAT_CHANNEL_PLAYER_TALK,text,speaker);
+    SetLocalInt(m,"rw_public_sending",sending);
+    if(ok)
+    {
+        SetLocalObject(m,"rw_hear_speaker",speaker);SetLocalString(m,"rw_hear_text",text);
+        ExecuteScript("rw_hear",m);
+        DeleteLocalObject(m,"rw_hear_speaker");DeleteLocalString(m,"rw_hear_text");
+    }
+    return ok;
+}
+
+// Describe the displayed model, never underlying race/class or blueprint tags.
+// Reading the world's own table also supports custom appearance rows.
+string RWVisibleAppearance(object creature)
+{
+    string value=Get2DAString("appearance","LABEL",GetAppearanceType(creature));
+    if(value=="****")return "";
+    int i; string result="";value=GetStringLeft(value,80);
+    for(i=0;i<GetStringLength(value);i++)
+    {string c=GetSubString(value,i,1);result+=c=="_"?" ":c;}
+    return result;
+}
 
 void RWEmit(json value)
 {
@@ -104,7 +135,7 @@ json RWSurroundings(object npc)
     // to objects that have left this NPC's current visible set.
     json old=JsonParse(GetLocalString(npc,"rw_perception_rows")); int k;
     for(k=0;k<JsonGetLength(old);k++) DeleteLocalObject(npc,"rw_visible_"+RWS(JsonArrayGet(old,k),"ref"));
-    json rows=JsonArray(); int scanned=0;
+    json rows=JsonArray(); int scanned=0,descriptions=0;
     object o=GetFirstObjectInArea(GetArea(npc));
     // Area-wide sight, with explicit workload/output bounds for crowded worlds.
     while(GetIsObjectValid(o) && scanned<1024 && JsonGetLength(rows)<256)
@@ -139,6 +170,11 @@ json RWSurroundings(object npc)
             if(type==OBJECT_TYPE_CREATURE)
             {
                 row=JsonObjectSet(row,"player",JsonInt(GetIsPC(o)));
+                row=JsonObjectSet(row,"appearance",JsonString(RWVisibleAppearance(o)));
+                // Examine text is public, but omit player biographies so merely
+                // seeing a player cannot introduce their name behind their back.
+                if(!GetIsPC(o) && descriptions<12 && GetDistanceBetween(npc,o)<=20.0)
+                {row=JsonObjectSet(row,"description",JsonString(GetStringLeft(GetDescription(o),240)));descriptions++;}
                 row=JsonObjectSet(row,"condition",JsonString(RWVisibleCondition(o)));
                 row=JsonObjectSet(row,"activity",JsonString(GetIsInCombat(o) ? "fighting" : "not fighting"));
                 row=JsonObjectSet(row,"attitude",JsonString(GetIsEnemy(o,npc) ? "hostile" : (GetIsFriend(o,npc) ? "friendly" : "neutral")));

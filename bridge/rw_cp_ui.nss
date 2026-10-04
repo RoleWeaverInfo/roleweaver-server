@@ -121,7 +121,7 @@ void RWCPITradeEvent()
         if(ok)RWCPISave(owner,pc);
         RWCPIStatus(familiar,ok?"Delivery accepted and item transferred.":"Delivery failed; item was unavailable or transfer rejected.");
         SendMessageToPC(pc,ok?"You received the offered item.":"That item is no longer available. No transfer completed.");
-        if(ok)NWNX_Chat_SendMessage(NWNX_CHAT_CHANNEL_PLAYER_TALK,"*Hands over the offered belongings.*",familiar);
+        if(ok)RWPublicSpeak("*Hands over the offered belongings.*",familiar);
         return;
     }
     if(element=="refresh"){RWCPIWindow(pc,owner,familiar,pack,OBJECT_INVALID,GetLocalInt(pc,"rw_cpt_recover"));return;}

@@ -73,6 +73,42 @@ class InteractionTests(unittest.TestCase):
         self.assertEqual(self.app.payment_receipts, [])
         self.assertEqual(self.app.action_jobs["mira"]["choice"], "payment:100")
 
+    def test_completed_payment_does_not_interrupt_later_game_states(self):
+        self.ready()
+        self.app.run_interaction("mira", "payment:100", "player")
+        offer, record = next(iter(self.app.payment_offers.items()))
+        self.app.payment_event(
+            dict(
+                record,
+                offer=offer,
+                world="test",
+                payer="synthetic-key:Test",
+                status="paid",
+            )
+        )
+        receipt_job = dict(self.app.action_jobs["mira"])
+        # Ordinary states raised KeyError after payment, backing up the bridge.
+        # Anonymous running states must not replace the receipt either.
+        for fields in (
+            {},
+            dict(action_request="", action_status=""),
+            dict(action_request="", action_status="running"),
+            dict(action_request="old-movement", action_status="completed"),
+        ):
+            with self.subTest(fields=fields):
+                with patch.object(self.app, "sync_merchant") as sync:
+                    self.app.event(dict(self.state, kind="state", npc="mira", **fields))
+                    sync.assert_called_once()
+                self.assertEqual(self.app.action_jobs["mira"], receipt_job)
+        self.app.action_state(
+            "mira",
+            dict(
+                session="game", action_request="new-movement", action_status="running"
+            ),
+        )
+        self.assertEqual(self.app.action_jobs["mira"]["request"], "new-movement")
+        self.assertEqual(len(self.app.payment_receipts), 1)
+
     def test_invalid_limits_and_targets(self):
         for changes in [dict(minimum=101), dict(amount=True), dict(minimum=0)]:
             with self.assertRaises(ValueError):

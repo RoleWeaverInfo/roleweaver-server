@@ -336,7 +336,7 @@ int RWEncounterDecision(object leader,object pc,json cmd)
     if(choice=="encounter:warn")
     {
         if(status!="armed" && status!="engaged")return FALSE;
-        if(!NWNX_Chat_SendMessage(NWNX_CHAT_CHANNEL_PLAYER_TALK,RWS(p,"warning"),leader))return FALSE;
+        if(!RWPublicSpeak(RWS(p,"warning"),leader))return FALSE;
         SendMessageToPC(pc,GetName(leader)+": "+RWS(p,"warning")+" (You may leave safely; combat requires a later reply.)");
         SetLocalObject(leader,"rw_enc_target",pc);
         SetLocalInt(leader,"rw_enc_warning_seq",GetLocalInt(leader,"rw_enc_chat_seq"));
@@ -437,7 +437,7 @@ void RWCastOpening(object leader,object pc,string token,int index,int generation
     if(speech=="" || !GetIsObjectValid(npc) || GetLocalInt(npc,"rw_epoch")!=RWI(row,"epoch")
         || GetLocalString(npc,"rw_mode")!="auto" || GetIsDead(npc) || GetIsDMPossessed(npc) || GetIsInCombat(npc)
         || !RWEncounterPlayer(pc,GetArea(npc)) || GetDistanceBetween(pc,npc)>20.0 || !LineOfSightObject(npc,pc))return;
-    if(NWNX_Chat_SendMessage(NWNX_CHAT_CHANNEL_PLAYER_TALK,speech,npc))
+    if(RWPublicSpeak(speech,npc))
     {
         json e=RWBase("scene_line",npc);e=JsonObjectSet(e,"encounter",JsonString(GetLocalString(leader,"rw_enc_id")));
         e=JsonObjectSet(e,"token",JsonString(token));e=JsonObjectSet(e,"text",JsonString(speech));RWEmit(e);
@@ -467,7 +467,7 @@ void RWEncounterTick(object leader)
             if(GetIsObjectValid(talking) && talking!=leader)return;
             string opening=RWS(p,"opening");
             if(opening=="")opening="A moment, traveler. I would like a word.";
-            if(GetStringLength(opening)>500 || !NWNX_Chat_SendMessage(NWNX_CHAT_CHANNEL_PLAYER_TALK,opening,leader))
+            if(GetStringLength(opening)>500 || !RWPublicSpeak(opening,leader))
             {RWEncounterEvent(leader,"warning_failed");return;}
             SetLocalObject(leader,"rw_enc_target",pc);
             RWBeginTalk(pc,leader);
@@ -495,7 +495,7 @@ void RWEncounterTick(object leader)
     {
         pc=RWEncounterNearbyPlayer(leader,p,anchor);
         if(!GetIsObjectValid(pc))return;
-        if(!NWNX_Chat_SendMessage(NWNX_CHAT_CHANNEL_PLAYER_TALK,RWS(p,"warning"),leader))
+        if(!RWPublicSpeak(RWS(p,"warning"),leader))
         {RWEncounterEvent(leader,"warning_failed");return;}
         // The private copy makes the warning unambiguous for the selected target.
         SendMessageToPC(pc,GetName(leader)+": "+RWS(p,"warning")+" (Move at least "+IntToString(RWI(p,"leave_radius"))+" metres from the encounter start within "+IntToString(RWI(p,"grace_seconds"))+" seconds.)");

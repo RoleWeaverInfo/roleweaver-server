@@ -211,7 +211,7 @@ class TemplateServiceTests(unittest.TestCase):
             dict(self.edit(lore="A library companion"), blueprints=["my_cat"])
         )
         data = self.app.backup_data()
-        self.assertEqual(data["version"], 15)
+        self.assertEqual(data["version"], 16)
         self.app.save_companion_template(self.edit(lore="Changed"))
         self.app.states.clear()
         self.app.restore_data(data)

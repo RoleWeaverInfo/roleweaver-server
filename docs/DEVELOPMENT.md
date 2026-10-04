@@ -195,6 +195,23 @@ session/service-generation-bound native cache. The owner-only `rw_cp_menu` and
 Player restrictions are applied both to offered actions and at native execution;
 satchel recovery remains independent of AI opt-in and normal inventory permission.
 
+Preference schema 2 adds optional local listening, defaulting off when migrating
+schema 1. The service returns schema 1 to older game menus and accepts old saved
+records. Portable backup format 16 carries schema 2; older backups remain readable.
+`rw_hearing` buffers eight public speech lines per opted-in familiar for 120 ticks.
+`rw_hear` receives successful Role Weaver broadcasts through `RWPublicSpeak`;
+the existing final chat hook captures public player Talk. Native eligibility,
+range/visibility and private-target checks run before capture. The buffer is
+neither a Redis event stream nor a saved transcript. `companion_hearing.py` filters
+the turn's context again, and `provider.py` marks it as untrusted testimony.
+Public creature appearance/Examine details use the common `perception.py` path.
+
+Run `python -m unittest tests.test_companion_hearing tests.test_companion_preferences`.
+The optional `tests/run_companion_hearing_native.py` accepts `--runtime`, `--nwnx`,
+`--compiler`, and `--module`. It uses a private disposable world on port 5197 and
+synthetic owner/association lookups; it never modifies a running world. Actual
+client UI rendering and natural model responses still need a player playtest.
+
 The DM's Companions panel uses `companion_admin.py` and `static/companions.js`.
 Editable starting personalities live in `companion_templates.py` and
 `static/companion-templates.js`. The first AI chat snapshots a template into a new

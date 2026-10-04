@@ -123,7 +123,8 @@ Responses and command emotes now appear in **normal nearby chat under the famili
 The player's addressed Talk also remains visible. Nearby players can hear both sides;
 only the owner can issue commands. `/rw companion` slash commands and setup notices
 stay private. The slash helper can still send a message, but its reply is public.
-There is no microphone input or ambient listening in this prototype. The normal
+There is no microphone input. Optional local listening supplies recent public
+speech as context when the owner speaks; it does not start automatic replies. The normal
 right-click menu and click-to-talk conversation remain available. Combat, death,
 possession, distance beyond the configured hearing range (normally ten metres),
 and blocked line of sight prevent AI replies.
@@ -148,6 +149,7 @@ The familiar settings window provides these player controls:
 | Reply length | Brief, natural or detailed replies, with a corresponding maximum length. |
 | Tone | Character default, warm, playful, reserved or serious. This changes delivery without replacing the DM's character profile, memories or lore. |
 | Follow-up conversation | Allow nearby Talk without repeating the familiar's name after addressing it. |
+| Local listening | Off by default. Remember up to eight nearby public speech lines for two minutes as context for the next owner conversation. Turning it off clears the short history. |
 | AI movement | Allow Role Weaver follow/stay commands, item errands and conversation visits. Native game commands and combat remain available. |
 | Satchel exchanges | Allow the normal familiar inventory exchange window. |
 | Collect/fetch | Allow eligible pickups and approved-container errands; also requires movement and satchel exchanges. |
@@ -189,7 +191,7 @@ Focus also ends on area changes, dismissal, possession, combat, opening a native
 orders, or loss of hearing range/line of sight. Address the familiar again to
 resume. Tells, party chat, slash commands for other features, and OOC lines
 starting `//` or `((` are not familiar conversation. This is selected conversation,
-not ambient listening to everything the player or nearby characters say.
+separate from optional local listening; overheard speech cannot issue commands.
 
 Each AI conversation request includes a fresh, bounded view from the familiar's
 position: visible creatures, doors, containers and fixtures; approximate distance
@@ -200,10 +202,57 @@ identifiers are not supplied. Inventory actions add a separate, limited list of
 eligible satchel items, loose items and explicitly approved containers. The
 familiar cannot read another player's inventory.
 
+The visual snapshot includes the visible creature model's label from the world's
+appearance table (for example, Troll). Up to twelve nearby NPCs within 20 metres
+also contribute up to 240 characters of public Examine description each. These
+are descriptions of what can be seen, not hidden race, class, intentions or quest
+state. Player biographies and nameplates are omitted. Custom appearance rows use
+the world's own labels; unusually technical labels may need clearer public NPC
+descriptions. The ordinary world-NPC perception inspector also shows these details.
+
 The scan happens when you speak, not as a continuous AI background task. A delayed
 observation is marked unavailable instead of refreshed by lifecycle heartbeats.
 These observations are not saved as automatic long-term memories. Delivered
 conversation still follows the normal history and backup behavior.
+
+### Optional local listening
+
+Open `/rw companion settings`, turn **Local listening** on, and wait for settings
+confirmation. Enable it before entering the encounter: earlier speech cannot be
+recovered. After hearing the trolls and hostage, ask your familiar, for example,
+`Agathos, what do you think is happening here?`
+
+The familiar keeps at most eight public Talk lines, capped at 400 characters each,
+for 120 bridge seconds (normally two minutes). Speakers must be in the same area,
+within the world's hearing range (normally ten metres), visible and unobstructed.
+It can listen during combat, but AI replies remain paused until combat ends.
+Tells, whispers, party/DM channels, targeted messages, commands and OOC lines are
+excluded. Player speakers remain unidentified unless they introduce themselves
+in audible speech. This does not give access to another NPC's profile or hidden
+encounter plan. Claims remain testimony, not established facts or action authority.
+
+The short buffer exists only in game memory, with no extra LLM requests or Redis
+events per overheard line. It is cleared on disabling listening/AI, area changes,
+dismissal, possession, logout, or service/server restart. It is not a separate
+saved transcript or automatic long-term memory; a companion's actual reply may
+refer to what it heard and follows normal conversation history retention.
+
+The server owner can set `"companion_listening_enabled": false` in `config.json`
+and restart the add-on service to prohibit listening. The player cannot override
+that setting. Saved player preferences migrate with listening **off**. Portable
+backup format 16 includes the new preference; versions 1–15 remain readable, but
+older add-on versions cannot restore format 16 backups.
+
+Install the updated service and rebuild/reload the bridge together, including
+the new `rw_hear` script. Both the demo and existing-server builders include it.
+Role Weaver NPC/encounter speech is captured only after a successful public
+broadcast. Public player Talk uses the existing final chat hook. If the world
+uses Role Weaver's NWNX Chat callback, other native public NPC speech is captured
+there too. Worlds retaining their own Chat callback can pass its final public
+message to `RWHandleChat(sender, text, channel, FALSE, target)`; keep its actual
+target so private messages are excluded. The new listener does not take over an
+existing world's Chat callback. Custom server speech scripts can use
+`RWPublicSpeak(text, speaker)` for successful untargeted public Talk broadcasts.
 
 ## Send your familiar to ask someone
 
@@ -222,8 +271,10 @@ There is no search through other areas. Ambiguous recipient names are withheld;
 move closer or identify a uniquely described recipient.
 
 For AI NPCs, the DM must enable **Controlled Actions → Nearby behaviour → Accept
-these nearby check-ins** on the recipient. It must be idle in AUTO and outside
-an active encounter. Its reply uses its own personality and permitted lore.
+visits from AI NPCs and companions** on the recipient. (Older dashboards call this
+**Accept these nearby check-ins**.) The merchant, tavern owner, guard captain,
+wizard, cleric and Holt have this enabled in a fresh demo. It must be idle in AUTO
+and outside an active encounter. Its reply uses its own personality and permitted lore.
 The familiar cannot acquire that NPC's actions, private profile or unspoken
 knowledge. A brief visit pauses idle patrol scheduling; player conversations
 and DM control still take priority.

@@ -14,6 +14,7 @@ import math
 import os
 from pathlib import Path
 import re
+import secrets
 import shutil
 import signal
 import socket
@@ -149,6 +150,14 @@ def seed_database(path, value, world="rw_demo"):
     """Upsert supplied profiles/lore; never erase conversations or removed profiles."""
     path.parent.mkdir(parents=True, exist_ok=True)
     fresh = not path.exists() or path.stat().st_size == 0
+    # Recovery treats an existing database without its identity salt as data loss.
+    # Create the identity together with a new demo, before seeding that database.
+    # Never invent a replacement identity when reimporting an existing world.
+    salt = path.parent / "identity_salt"
+    if not path.exists() and not salt.exists():
+        with salt.open("x") as stream:
+            stream.write(secrets.token_hex(32))
+        salt.chmod(0o600)
     store = Store(path)
     try:
         # The generic app starts with Mira; the demo supplies its own cast.
@@ -377,9 +386,21 @@ def prepare(runtime, args):
         world_name="Role Weaver editable demo",
         allow_dm_spawn=True,
         allow_persistent_spawn=True,
+        companions_enabled=True,
         guardrails_ai=args.guardrails,
     )
     write_json(runtime / "config.json", config)
+    # Translation is available immediately in new demos; players still opt in.
+    # Preserve a saved choice if an interrupted setup left a translation database.
+    translation_path = runtime / "data/translations.sqlite3"
+    if not translation_path.exists():
+        from roleweaver.translation import TranslationCache
+
+        cache = TranslationCache(translation_path)
+        try:
+            cache.configure(dict(cache.config(), enabled=True))
+        finally:
+            cache.db.close()
     write_json(runtime / "settings.json", settings)
     print("Prepared. Run: python demo/demo.py start --instance " + args.instance)
 

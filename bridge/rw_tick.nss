@@ -246,7 +246,7 @@ void main()
                     && RWS(cmd,"request")!=GetLocalString(npc,"rw_checkin_last") && GetStringLength(speech)>0 && GetStringLength(speech)<=1000)
                 {
                     SetLocalString(npc,"rw_checkin_last",RWS(cmd,"request"));
-                    ok=NWNX_Chat_SendMessage(NWNX_CHAT_CHANNEL_PLAYER_TALK,speech,npc);
+                    ok=RWPublicSpeak(speech,npc);
                 }
             }
             if (kind == "say" && GetLocalString(npc, "rw_mode") == "auto" && !GetIsDMPossessed(npc) && !GetIsDead(npc) && !GetIsInCombat(npc))
@@ -257,7 +257,7 @@ void main()
                     {SendMessageToPC(listener,"Shop prices changed while the merchant was answering. Please ask again.");speech="";}
                 if (GetIsObjectValid(listener) && RWCanHear(listener, npc, RWHearingRange()) && RWS(cmd,"conversation_revision") == GetLocalString(m,"rw_talk_revision") && GetStringLength(speech) > 0 && GetStringLength(speech) <= 1000)
                 {
-                    ok = NWNX_Chat_SendMessage(NWNX_CHAT_CHANNEL_PLAYER_TALK, speech, npc);
+                    ok = RWPublicSpeak(speech,npc);
                     if(ok && RWS(cmd,"encounter_choice")!="")
                     {
                         if(!RWEncounterDecision(npc,listener,cmd))

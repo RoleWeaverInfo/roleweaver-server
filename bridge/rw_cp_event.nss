@@ -8,6 +8,7 @@ void main()
     // cancel work; they never recreate or move a second copy of possessions.
     RWCPVCancel(familiar,"Familiar control or presence changed.",FALSE);
     RWCPICancel(familiar,"Familiar control or presence changed.",FALSE);
+    RWCPHearClear(familiar);
     RWCPEndTalk(owner);RWCPInvalidate(owner);
     if(NWNX_Events_GetCurrentEvent()=="NWNX_ON_CLIENT_DISCONNECT_BEFORE")
     {

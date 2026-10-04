@@ -27,7 +27,7 @@ def validate(data):
         not isinstance(data, dict)
         or data.get("format") != "roleweaver-backup"
         or data.get("version")
-        not in (1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15)
+        not in (1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16)
     ):
         raise ValueError("Unsupported Role Weaver backup")
 
@@ -231,7 +231,7 @@ def export(store, salt):
         ).fetchone()
         return dict(
             format="roleweaver-backup",
-            version=15,
+            version=16,
             companion_templates=companion_templates.settings(
                 json.loads(row[0])
                 if (

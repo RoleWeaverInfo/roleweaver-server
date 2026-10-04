@@ -1,0 +1,10 @@
+# Local assembly only: includes private SSH keys and saved user data.
+/runtime/
+/downloads/
+/logs/
+/build-tools/
+/content/
+/__pycache__/
+/BUILD-MANIFEST.json
+/VALIDATION.json
+/PYTHON-DEPENDENCIES.txt

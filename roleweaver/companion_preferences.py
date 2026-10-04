@@ -7,7 +7,7 @@ server limits. Malformed preference messages never enable extra actions.
 import re
 
 DEFAULT = dict(
-    version=1,
+    version=2,
     reply=1,
     tone=0,
     followups=1,
@@ -15,9 +15,10 @@ DEFAULT = dict(
     inventory=1,
     collect=1,
     deliver=1,
+    listening=0,
 )
 LIMITS = dict(
-    version=1,
+    version=2,
     reply=2,
     tone=4,
     followups=1,
@@ -25,6 +26,7 @@ LIMITS = dict(
     inventory=1,
     collect=1,
     deliver=1,
+    listening=1,
 )
 TONES = (
     "Keep your established personality and speaking style.",
@@ -42,14 +44,26 @@ CAPS = (240, 600, 900)
 
 
 def validate(raw):
+    # Previously saved preferences and old game bridges never opt into hearing.
+    if isinstance(raw, dict) and raw.get("version") == 1:
+        if set(raw) != set(DEFAULT) - {"listening"} or type(raw["version"]) is not int:
+            raise ValueError("Invalid companion preferences")
+        raw = dict(raw, version=2, listening=0)
     if (
         not isinstance(raw, dict)
         or set(raw) != set(DEFAULT)
         or any(type(raw[k]) is not int or not 0 <= raw[k] <= LIMITS[k] for k in DEFAULT)
-        or raw["version"] != 1
+        or raw["version"] != 2
     ):
         raise ValueError("Invalid companion preferences")
     return dict(raw)
+
+
+def wire(value, protocol):
+    """Keep updated services compatible with worlds still using the old menu."""
+    if type(protocol) is int and protocol == 2:
+        return dict(value)
+    return {k: 1 if k == "version" else v for k, v in value.items() if k != "listening"}
 
 
 def records(raw):
@@ -65,16 +79,15 @@ def records(raw):
 def settings(event):
     if "companion_preferences_protocol" not in event:
         return dict(DEFAULT)  # Compatible with the earlier companion bridge.
+    protocol = event.get("companion_preferences_protocol")
     raw = event.get("companion_preferences")
-    if (
-        type(event.get("companion_preferences_protocol")) is int
-        and event["companion_preferences_protocol"] == 1
-        and isinstance(raw, dict)
-        and set(raw) == set(DEFAULT)
-        and all(type(raw[k]) is int and 0 <= raw[k] <= LIMITS[k] for k in DEFAULT)
-        and raw["version"] == 1
-    ):
-        return dict(raw)
+    if type(protocol) is int and protocol in (1, 2):
+        try:
+            if not isinstance(raw, dict) or raw.get("version") != protocol:
+                raise ValueError("Preference protocol mismatch")
+            return validate(raw)
+        except ValueError:
+            pass
     return dict(DEFAULT, followups=0, movement=0, inventory=0, collect=0, deliver=0)
 
 

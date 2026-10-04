@@ -174,7 +174,7 @@ void RWCPIFinish(object familiar,object owner,string result,string emote="")
     // Finishing an inspection or failed/cancelled errand changes no inventory.
     // Successful transfers request their save at the actual mutation below.
     RWCPICancel(familiar,result,TRUE);
-    if(emote!="" && !GetIsDead(familiar))NWNX_Chat_SendMessage(NWNX_CHAT_CHANNEL_PLAYER_TALK,emote,familiar);
+    if(emote!="" && !GetIsDead(familiar))RWPublicSpeak(emote,familiar);
 }
 void RWCPITaskTick(object owner,object familiar)
 {
@@ -242,7 +242,7 @@ void RWCPITaskTick(object owner,object familiar)
         {
             if(!RWCPIWindow(target,owner,familiar,pack,item)){RWCPIFinish(familiar,owner,"The recipient could not receive an offer.");return;}
             SetLocalInt(familiar,"rw_cpi_phase",3);SetLocalInt(familiar,"rw_cpi_deadline",tick+60);RWCPIStatus(familiar,"Delivery offered; waiting for the other player's acceptance.");
-            NWNX_Chat_SendMessage(NWNX_CHAT_CHANNEL_PLAYER_TALK,"*Offers the belongings and waits for an answer.*",familiar);return;
+            RWPublicSpeak("*Offers the belongings and waits for an answer.*",familiar);return;
         }
         if(!GetIsPC(target) && !RWCPISafe(item,pack,RWI(RWInvPolicy(target),"max_value")))
         {RWCPIFinish(familiar,owner,"The recipient's item rules refused this gift.");return;}

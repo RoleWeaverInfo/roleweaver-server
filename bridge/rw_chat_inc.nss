@@ -58,9 +58,11 @@ object RWChatTarget(object speaker, string text)
     return target;
 }
 
-void RWHandleChat(object speaker, string text, int channel, int moduleEvent)
+void RWHandleChat(object speaker, string text, int channel, int moduleEvent, object chatTarget=OBJECT_INVALID)
 {
     object m = GetModule();
+    if(!GetLocalInt(m,"rw_public_sending") && !(GetIsPC(speaker) && IsInConversation(speaker)))
+        RWCPHearPublic(speaker,text,channel,chatTarget);
     if(channel==NWNX_CHAT_CHANNEL_PLAYER_TALK && GetIsPC(speaker) && !GetIsDM(speaker)
         && !GetIsDMPossessed(speaker) && !GetIsPossessedFamiliar(speaker) && RWCPVPlayerChat(speaker,text))
     {

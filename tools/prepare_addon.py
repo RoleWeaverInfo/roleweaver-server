@@ -19,6 +19,7 @@ ENTRIES = tuple(name for name in ENTRY_SCRIPTS if name != "rw_load")
 INCLUDES = (
     "rw_inc",
     "rw_core",
+    "rw_hearing",
     "rw_companion",
     "rw_cp_base",
     "rw_cp_prefs",
