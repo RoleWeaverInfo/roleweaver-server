@@ -30,6 +30,24 @@ class SetupGuiTests(unittest.TestCase):
         self.assertNotIn("provider", shown)
         self.assertNotIn("password", json.dumps(shown).lower())
 
+    def test_remote_browser_filters_module_files(self):
+        with tempfile.TemporaryDirectory() as folder:
+            root = Path(folder)
+            (root / "areas").mkdir()
+            (root / "world.mod").write_bytes(b"module")
+            (root / "notes.txt").write_text("not selectable")
+            result = setup_gui.browse_directory(str(root), "module")
+            names = {item["name"] for item in result["entries"]}
+            self.assertEqual(names, {"areas", "world.mod"})
+            module = next(
+                item for item in result["entries"] if item["name"] == "world.mod"
+            )
+            self.assertTrue(module["selectable"])
+
+    def test_remote_browser_rejects_unknown_selection_type(self):
+        with self.assertRaisesRegex(ValueError, "Unsupported path selection"):
+            setup_gui.browse_directory("", "secret")
+
     @unittest.skipUnless(sys.platform == "linux", "Linux path validation")
     def test_save_profile_validates_and_preserves_progress(self):
         with tempfile.TemporaryDirectory() as folder:

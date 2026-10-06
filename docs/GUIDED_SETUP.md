@@ -34,6 +34,7 @@ Run these from an extracted package; replace `my_world` with your saved ID.
 | Command | Purpose |
 | --- | --- |
 | `bash setup.sh gui` | Start the localhost graphical installer on port 8750. |
+| `bash setup.sh gui --trusted-local` | Open directly through a private tunnel without copying a token; use only on a trusted single-user host. |
 | `bash setup.sh gui --port 8751` | Use another local setup port. |
 | `bash setup.sh setup --world my_world` | Resume checks, bridge preparation, initial install and connection guidance. |
 | `bash setup.sh configure --world my_world` | Edit paths and feature choices. Existing runtime identity/ports are preserved. |
@@ -57,6 +58,9 @@ the helper; a missing prerequisite is explained with a suggested correction.
 Close the graphical installer with Ctrl+C in its Linux terminal. Closing setup
 does not stop an installed Role Weaver service. Do not expose its temporary setup
 port through a firewall or public reverse proxy; use the printed SSH tunnel.
+The Server page's Browse buttons navigate the remote Ubuntu filesystem. Browser
+file inputs are deliberately not used because those would select files from the
+administrator's Windows computer rather than the NWN server.
 
 ## Integration and compatibility
 

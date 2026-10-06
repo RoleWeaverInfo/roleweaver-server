@@ -109,6 +109,57 @@ def clean_path(value, optional=False):
     return str(path.resolve())
 
 
+def browse_directory(raw_path="", kind="folder"):
+    """List selectable paths on the Linux server without reading file contents."""
+    if kind not in {"folder", "module", "compiler"}:
+        raise ValueError("Unsupported path selection")
+    path = Path(raw_path).expanduser() if raw_path else Path.home()
+    path = path.resolve()
+    if path.is_file():
+        path = path.parent
+    if not path.is_dir():
+        raise ValueError(f"Folder not found: {path}")
+    entries = []
+    try:
+        children = sorted(
+            path.iterdir(), key=lambda item: (not item.is_dir(), item.name.lower())
+        )
+    except OSError as exc:
+        raise ValueError(f"Cannot open {path}: {exc}") from None
+    for item in children[:1000]:
+        try:
+            directory = item.is_dir()
+            selectable = (
+                directory
+                if kind == "folder"
+                else (
+                    item.is_file()
+                    and (
+                        item.suffix.lower() == ".mod"
+                        if kind == "module"
+                        else os.access(item, os.X_OK)
+                    )
+                )
+            )
+            if directory or selectable:
+                entries.append(
+                    {
+                        "name": item.name,
+                        "path": str(item.resolve()),
+                        "directory": directory,
+                        "selectable": selectable,
+                    }
+                )
+        except OSError:
+            continue
+    return {
+        "path": str(path),
+        "parent": str(path.parent),
+        "entries": entries,
+        "kind": kind,
+    }
+
+
 def save_profile(payload):
     if not isinstance(payload, dict):
         raise ValueError("Invalid configuration")
@@ -224,24 +275,30 @@ HTML = r"""<!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Role Weaver Setup</title>
 <style>
-:root{color-scheme:dark;--bg:#101018;--panel:#1b1b28;--gold:#d7a94b;--ink:#f4f0e8;--muted:#aaa7b5;--good:#67c587;--bad:#ef7373;--warn:#e4bd60}*{box-sizing:border-box}body{margin:0;background:linear-gradient(145deg,#0d0d13,#181522);color:var(--ink);font:15px system-ui,sans-serif}header{padding:22px 28px;border-bottom:1px solid #4c3b22;background:#111018}header h1{margin:0;color:var(--gold);font-family:Georgia,serif}header p{margin:5px 0 0;color:var(--muted)}main{max-width:1100px;margin:auto;padding:24px}.steps{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px}.steps button,.actions button{border:1px solid #65502d;background:#242032;color:var(--ink);padding:10px 14px;border-radius:7px;cursor:pointer}.steps button.active,.actions button.primary{background:#6c4a16;color:#fff3d6}.card{display:none;background:var(--panel);border:1px solid #353044;border-radius:10px;padding:22px;box-shadow:0 10px 28px #0005}.card.active{display:block}h2{margin-top:0;color:#f2d28d}label{display:block;margin:12px 0 5px;color:#d8d3df}input,select,textarea{width:100%;padding:10px;border-radius:6px;border:1px solid #4a4558;background:#11111a;color:var(--ink)}input[type=checkbox]{width:auto;margin-right:8px}.grid{display:grid;grid-template-columns:1fr 1fr;gap:0 18px}.feature{display:inline-block;width:48%;padding:7px 0}.hint{color:var(--muted);font-size:13px}.actions{display:flex;gap:9px;flex-wrap:wrap;margin-top:18px}.status{padding:10px;margin:8px 0;border-left:4px solid var(--warn);background:#12121b}.status.ok{border-color:var(--good)}.status.fix{border-color:var(--bad)}pre{white-space:pre-wrap;background:#0b0b10;border:1px solid #353044;padding:14px;border-radius:7px;max-height:430px;overflow:auto}.hidden{display:none}@media(max-width:700px){.grid{grid-template-columns:1fr}.feature{width:100%}}
+:root{color-scheme:dark;--bg:#101018;--panel:#1b1b28;--gold:#d7a94b;--ink:#f4f0e8;--muted:#aaa7b5;--good:#67c587;--bad:#ef7373;--warn:#e4bd60}*{box-sizing:border-box}body{margin:0;background:linear-gradient(145deg,#0d0d13,#181522);color:var(--ink);font:15px system-ui,sans-serif}header{padding:22px 28px;border-bottom:1px solid #4c3b22;background:#111018}header h1{margin:0;color:var(--gold);font-family:Georgia,serif}header p{margin:5px 0 0;color:var(--muted)}main{max-width:1100px;margin:auto;padding:24px}.steps{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px}.steps button,.actions button,.pathrow button,.browser button{border:1px solid #65502d;background:#242032;color:var(--ink);padding:10px 14px;border-radius:7px;cursor:pointer}.steps button.active,.actions button.primary{background:#6c4a16;color:#fff3d6}.card{display:none;background:var(--panel);border:1px solid #353044;border-radius:10px;padding:22px;box-shadow:0 10px 28px #0005}.card.active{display:block}h2{margin-top:0;color:#f2d28d}label{display:block;margin:12px 0 5px;color:#d8d3df}input,select,textarea{width:100%;padding:10px;border-radius:6px;border:1px solid #4a4558;background:#11111a;color:var(--ink)}input[type=checkbox]{width:auto;margin-right:8px}.grid{display:grid;grid-template-columns:1fr 1fr;gap:0 18px}.pathrow{display:flex;gap:6px}.pathrow input{flex:1}.pathrow button{padding:8px 11px}.feature{display:inline-block;width:48%;padding:7px 0}.hint{color:var(--muted);font-size:13px}.actions{display:flex;gap:9px;flex-wrap:wrap;margin-top:18px}.status{padding:10px;margin:8px 0;border-left:4px solid var(--warn);background:#12121b}.status.ok{border-color:var(--good)}.status.fix{border-color:var(--bad)}pre{white-space:pre-wrap;background:#0b0b10;border:1px solid #353044;padding:14px;border-radius:7px;max-height:430px;overflow:auto}.browser{position:fixed;inset:0;background:#000b;display:flex;align-items:center;justify-content:center;padding:25px;z-index:20}.browser.hidden{display:none}.browserbox{background:var(--panel);border:1px solid #65502d;border-radius:10px;padding:18px;width:min(760px,100%);max-height:82vh;display:flex;flex-direction:column}.browserhead{display:flex;gap:8px;margin-bottom:10px}.browserhead input{flex:1}.browserlist{overflow:auto;border:1px solid #393445;min-height:260px}.browseritem{display:flex;align-items:center;gap:8px;width:100%;padding:9px 12px;border:0;border-bottom:1px solid #302b3a!important;border-radius:0!important;text-align:left;background:#151520!important}.browseritem:hover{background:#292337!important}.browseritem span{flex:1}.hidden{display:none}@media(max-width:700px){.grid{grid-template-columns:1fr}.feature{width:100%}}
 </style></head><body>
 <header><h1>Role Weaver Server Add-on</h1><p>Guided installation for an existing Linux NWN:EE/NWNX server</p></header>
 <main><div class="steps"><button data-step="welcome" class="active">1 Welcome</button><button data-step="server">2 Server</button><button data-step="features">3 Features</button><button data-step="review">4 Check</button><button data-step="install">5 Install</button><button data-step="verify">6 Verify</button></div>
 <section id="welcome" class="card active"><h2>Choose a world</h2><p>The installer keeps your module and NWNX installation in their existing locations. It will not restart NWN.</p><label>Saved installation</label><select id="worlds"></select><div class="actions"><button class="primary" onclick="loadWorld()">Open selected world</button><button onclick="newWorld()">Configure a new world</button></div><p class="hint">Settings are saved privately under ~/.config/roleweaver/installations/. API keys are not stored in the setup profile.</p></section>
-<section id="server" class="card"><h2>Server and world</h2><div class="grid"><div><label>World ID</label><input id="world_id" pattern="[a-z][a-z0-9_]{0,23}"><label>NWN dedicated server root</label><input id="runtime"><label>World server home / userdirectory</label><input id="server_home"><label>Module file</label><input id="module"></div><div><label>NWNX plugin folder</label><input id="plugins"><label>NWNX header folder</label><input id="headers"><label>nwnsc compiler (optional)</label><input id="compiler"><label>Additional loose resource folders, one per line</label><textarea id="resources" rows="3"></textarea></div></div><div class="grid"><div><label>Dashboard port</label><input id="dashboard_port" type="number"></div><div><label>Redis port</label><input id="redis_port" type="number"></div></div><label>Redis prefix</label><input id="redis_prefix"><div class="actions"><button class="primary" onclick="saveAnd('features')">Save and continue</button></div></section>
+<section id="server" class="card"><h2>Server and world</h2><p class="hint">Browse opens folders and files on this Ubuntu server. You may also type an absolute Linux path.</p><div class="grid"><div><label>World ID</label><input id="world_id" pattern="[a-z][a-z0-9_]{0,23}"><label>NWN dedicated server root</label><div class="pathrow"><input id="runtime"><button onclick="browseFor('runtime','folder')">Browse</button></div><label>World server home / userdirectory</label><div class="pathrow"><input id="server_home"><button onclick="browseFor('server_home','folder')">Browse</button></div><label>Module file</label><div class="pathrow"><input id="module"><button onclick="browseFor('module','module')">Browse</button></div></div><div><label>NWNX plugin folder</label><div class="pathrow"><input id="plugins"><button onclick="browseFor('plugins','folder')">Browse</button></div><label>NWNX header folder</label><div class="pathrow"><input id="headers"><button onclick="browseFor('headers','folder')">Browse</button></div><label>nwnsc compiler (optional)</label><div class="pathrow"><input id="compiler"><button onclick="browseFor('compiler','compiler')">Browse</button></div><label>Additional loose resource folders, one per line</label><textarea id="resources" rows="3"></textarea><button onclick="browseFor('resources','folder')">Add folder</button></div></div><div class="grid"><div><label>Dashboard port</label><input id="dashboard_port" type="number"></div><div><label>Redis port</label><input id="redis_port" type="number"></div></div><label>Redis prefix</label><input id="redis_prefix"><div class="actions"><button class="primary" onclick="saveAnd('features')">Save and continue</button></div></section>
 <section id="features" class="card"><h2>Optional capabilities</h2><p>Basic AI NPC conversations are always included.</p><div id="featureList"></div><div class="actions"><button class="primary" onclick="saveAnd('review')">Save and check</button></div></section>
 <section id="review" class="card"><h2>Compatibility check</h2><div id="checks"></div><div class="actions"><button onclick="runCheck()">Run checks again</button><button class="primary" onclick="prepare()">Prepare integration bundle</button></div><p class="hint">Preparation reads the module and creates a review bundle. It does not modify the module, launcher, plugins or running NWN server.</p></section>
 <section id="install" class="card"><h2>Install or update Role Weaver</h2><p id="installText"></p><div class="actions"><button class="primary" onclick="serviceAction()" id="serviceButton">Install service</button><button onclick="doAction('rollback',true)">Roll back software</button></div><p class="hint">The service installer creates a recovery point and restores the earlier service if startup fails. It does not restart NWN.</p></section>
 <section id="verify" class="card"><h2>Connection and maintenance</h2><div class="actions"><button class="primary" onclick="doAction('verify')">Verify game connection</button><button onclick="doAction('restart',true)">Restart Role Weaver</button></div><h3>Windows dashboard tunnel</h3><pre id="tunnel"></pre><h3>Setup activity</h3><pre id="log">No operation has run.</pre></section>
-</main><script>
+</main><div id="browser" class="browser hidden"><div class="browserbox"><h2>Select a path on Ubuntu</h2><div class="browserhead"><button onclick="browseUp()">Up</button><input id="browserPath"><button onclick="openBrowserPath()">Open</button></div><div id="browserList" class="browserlist"></div><div class="actions"><button id="selectFolder" class="primary" onclick="chooseCurrent()">Select this folder</button><button onclick="closeBrowser()">Cancel</button></div></div></div><script>
 const token=new URLSearchParams(location.search).get('token')||'';let profile=null,installed=false;
 const features={companions:'Player familiar and companion AI',dm_spawn:'DM spawning and encounters',persistent_spawn:'Persistent DM-created NPCs',merchants:'Merchant and shop integration',translation:'World text and dialogue translation',guardrails:'Local Guardrails AI dependency'};
+let browseTarget='',browseKind='folder',browseParent='';
 async function api(path,options={}){options.headers={...(options.headers||{}),'X-Setup-Token':token};let r=await fetch(path,options),d=await r.json();if(!r.ok)throw new Error(d.error||'Request failed');return d}
 function step(name){document.querySelectorAll('.card,.steps button').forEach(x=>x.classList.remove('active'));document.getElementById(name).classList.add('active');document.querySelector(`[data-step="${name}"]`).classList.add('active')}
 document.querySelectorAll('.steps button').forEach(b=>b.onclick=()=>step(b.dataset.step));
 function fill(p){profile=p;installed=!!p.installed;for(let k of ['world_id','redis_prefix','redis_port','dashboard_port'])document.getElementById(k).value=p[k];for(let k of ['runtime','server_home','module','plugins','headers','compiler'])document.getElementById(k).value=p.paths[k]||'';resources.value=(p.resources||[]).join('\n');featureList.innerHTML=Object.entries(features).map(([k,v])=>`<label class="feature"><input type="checkbox" id="f_${k}" ${p.features[k]?'checked':''}>${v}</label>`).join('');serviceButton.textContent=installed?'Update Role Weaver':'Install Role Weaver';installText.textContent=installed?'An existing installation was detected. Configuration, provider keys and player data will be preserved.':'A new managed Role Weaver service will be created for this world.';tunnel.textContent=`ssh -N -L ${p.dashboard_port}:127.0.0.1:${p.dashboard_port} YOUR_USER@YOUR_SERVER_IP\nThen open http://127.0.0.1:${p.dashboard_port}/`;}
 function collect(){let paths={};for(let k of ['runtime','server_home','module','plugins','headers','compiler'])paths[k]=document.getElementById(k).value.trim();let fs={};for(let k in features)fs[k]=document.getElementById('f_'+k)?.checked||false;return {world_id:world_id.value.trim(),redis_prefix:redis_prefix.value.trim(),redis_port:Number(redis_port.value),dashboard_port:Number(dashboard_port.value),paths,features:fs,resources:resources.value.split('\n').map(x=>x.trim()).filter(Boolean)}}
+async function browseFor(target,kind){browseTarget=target;browseKind=kind;let current=target==='resources'?'':document.getElementById(target).value.trim();browser.classList.remove('hidden');await loadBrowser(current||'~')}
+async function loadBrowser(path){try{let d=await api('/api/browse?kind='+encodeURIComponent(browseKind)+'&path='+encodeURIComponent(path));browserPath.value=d.path;browseParent=d.parent;selectFolder.classList.toggle('hidden',browseKind!=='folder');browserList.replaceChildren();for(let e of d.entries){let b=document.createElement('button');b.className='browseritem';let icon=document.createElement('b');icon.textContent=e.directory?'Folder':'File';let name=document.createElement('span');name.textContent=e.name;b.append(icon,name);if(e.directory){b.ondblclick=()=>loadBrowser(e.path);b.onclick=()=>{browserPath.value=e.path}}else if(e.selectable){b.onclick=()=>choosePath(e.path)}browserList.appendChild(b)}}catch(e){alert(e.message)}}
+function openBrowserPath(){loadBrowser(browserPath.value.trim())}function browseUp(){loadBrowser(browseParent)}
+function chooseCurrent(){choosePath(browserPath.value.trim())}function choosePath(path){if(browseTarget==='resources'){let rows=resources.value.split('\n').map(x=>x.trim()).filter(Boolean);if(!rows.includes(path))rows.push(path);resources.value=rows.join('\n')}else document.getElementById(browseTarget).value=path;closeBrowser()}
+function closeBrowser(){browser.classList.add('hidden')}
 async function init(){try{let d=await api('/api/state');worlds.innerHTML='<option value="">New installation</option>'+d.worlds.map(x=>`<option>${x.world_id}</option>`).join('');fill(d.initial);poll()}catch(e){alert(e.message)}}
 async function loadWorld(){if(!worlds.value)return newWorld();let d=await api('/api/profile?world='+encodeURIComponent(worlds.value));fill(d.profile);step('server')}
 async function newWorld(){let d=await api('/api/new');fill(d.profile);step('server')}
@@ -283,6 +340,8 @@ class Handler(BaseHTTPRequestHandler):
         self.wfile.write(raw)
 
     def authorized(self, parsed):
+        if self.server.trusted_local:
+            return True
         query = parse_qs(parsed.query)
         return secrets.compare_digest(
             self.headers.get("X-Setup-Token", "") or query.get("token", [""])[0],
@@ -297,7 +356,25 @@ class Handler(BaseHTTPRequestHandler):
 
     def do_GET(self):
         parsed = urlparse(self.path)
+        if parsed.path == "/favicon.ico":
+            self.send_response(HTTPStatus.NO_CONTENT)
+            self.end_headers()
+            return
         if not self.authorized(parsed):
+            if parsed.path == "/":
+                raw = (
+                    "<!doctype html><title>Role Weaver Setup</title>"
+                    "<h1>Setup access token required</h1>"
+                    "<p>Open the complete private URL printed by <code>bash setup.sh gui</code>, "
+                    "including <code>/?token=...</code>.</p>"
+                    "<p>For a private single-user SSH tunnel, you may instead restart with "
+                    "<code>bash setup.sh gui --trusted-local</code>.</p>"
+                ).encode()
+                self.send_response(HTTPStatus.FORBIDDEN)
+                self.security_headers("text/html; charset=utf-8")
+                self.send_header("Content-Length", str(len(raw)))
+                self.end_headers()
+                return self.wfile.write(raw)
             return self.json_response(
                 {"error": "Invalid or missing setup token"}, HTTPStatus.FORBIDDEN
             )
@@ -319,6 +396,14 @@ class Handler(BaseHTTPRequestHandler):
             if parsed.path == "/api/new":
                 return self.json_response(
                     {"profile": public_profile(initial_profile())}
+                )
+            if parsed.path == "/api/browse":
+                query = parse_qs(parsed.query)
+                return self.json_response(
+                    browse_directory(
+                        query.get("path", [""])[0],
+                        query.get("kind", ["folder"])[0],
+                    )
                 )
             if parsed.path == "/api/profile":
                 world = parse_qs(parsed.query).get("world", [""])[0]
@@ -371,6 +456,11 @@ def main(argv=None):
         description="Local browser installer for Role Weaver"
     )
     parser.add_argument("--port", type=int, default=8750, help="loopback setup port")
+    parser.add_argument(
+        "--trusted-local",
+        action="store_true",
+        help="allow direct access through a private SSH tunnel without a token",
+    )
     args = parser.parse_args(argv)
     if sys.platform != "linux":
         print("Run this installer on the Linux NWN server.")
@@ -384,11 +474,20 @@ def main(argv=None):
     token = secrets.token_urlsafe(24)
     server = ThreadingHTTPServer(("127.0.0.1", args.port), Handler)
     server.token = token
+    server.trusted_local = args.trusted_local
     print("\nRole Weaver graphical setup is running on this server only.")
     print("From another computer, open an SSH tunnel:")
     print(f"  ssh -N -L {args.port}:127.0.0.1:{args.port} YOUR_USER@YOUR_SERVER_IP")
     print("Then open:")
-    print(f"  http://127.0.0.1:{args.port}/?token={token}")
+    print(
+        f"  http://127.0.0.1:{args.port}/"
+        if args.trusted_local
+        else f"  http://127.0.0.1:{args.port}/?token={token}"
+    )
+    if args.trusted_local:
+        print(
+            "Trusted-local mode: anyone on this Linux host can use setup while it runs."
+        )
     print("\nPress Ctrl+C to close setup. Installed services continue running.")
     try:
         server.serve_forever()

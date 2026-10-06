@@ -16,6 +16,16 @@ The graphical installer prints an SSH tunnel command and a private browser URL.
 Run the tunnel on your Windows computer, open the URL, and follow the six setup
 pages. The setup page listens only on the Linux server's loopback interface.
 
+On a private, single-user server you can avoid copying the temporary access token:
+
+```bash
+bash setup.sh gui --trusted-local
+```
+
+After opening the printed SSH tunnel, browse directly to `http://127.0.0.1:8750/`.
+Anyone with local access to that Linux host can use setup while this mode is running,
+so close it with Ctrl+C when finished. Use the normal token mode on shared hosts.
+
 If you prefer the terminal workflow, run `bash setup.sh` and choose
 **1 — Set up / resume an existing server**. Both interfaces use the same saved
 profiles, checks, bridge builder, service installer and rollback system.
@@ -33,6 +43,9 @@ Check each suggestion, particularly if you run several worlds. Select:
 - Your NWN runtime, server home/userdirectory, module, NWNX plugin and matching header folders.
 - An installed `nwnsc` compiler, or `-` to compile the import in Aurora instead.
 - Features you want to prepare, plus unused dashboard and local Redis ports.
+
+Each server path has a **Browse** button. It opens the Ubuntu filesystem, not the
+Windows computer, and filters module and compiler selections appropriately.
 
 Setup saves these choices outside the download, in
 `~/.config/roleweaver/installations/my_world.json`. It can reuse them from a later
