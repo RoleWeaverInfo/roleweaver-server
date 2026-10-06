@@ -10,6 +10,20 @@ The terminal workflow remains available through `bash setup.sh`. Choose **1** fo
 continuous existing-server setup or **2** for the separate Demo. Both interfaces
 use the same profiles and installation backend.
 
+## Windows remote installer
+
+The optional Windows application uses the installed Windows OpenSSH client. It
+streams a selected Server Add-on archive through one authenticated SSH connection,
+starts the Linux GUI, maintains its loopback tunnel and opens the browser. The
+archive is not copied into a permanent upload folder. Its temporary extraction is
+removed when the connection closes; installed services and saved profiles remain.
+
+SSH passwords and key passphrases are held in process memory only. Normal
+`known_hosts` verification remains active: an unseen host can be accepted once,
+while a changed host key is rejected. The application never asks for a Linux root
+password and does not expose the setup port publicly. Advanced administrators can
+continue to run the Linux and terminal installers directly.
+
 ## One saved profile per world
 
 Existing-server choices and progress are saved in

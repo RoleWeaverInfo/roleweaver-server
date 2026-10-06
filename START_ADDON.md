@@ -4,6 +4,11 @@ Use the **Server Add-on** package on the Linux account that owns your NWN/NWNX
 server. Your module, HAKs, plugins and launcher stay in their current folders.
 The Demo is a separate package.
 
+Windows administrators may use the separate **Role Weaver Remote Installer**.
+Select this Server Add-on `.tar.gz` in that application; it uploads the archive,
+opens the SSH tunnel and launches the same guided Linux setup automatically. See
+`windows-installer/README.txt` in the source repository for its requirements.
+
 ## 1. Open the extracted package folder
 
 Open a terminal in the extracted folder and run, **without sudo**:
