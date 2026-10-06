@@ -15,12 +15,13 @@ Use
 ---
 1. Run "Role Weaver Remote Installer.exe".
 2. Enter the Linux host, SSH port and username.
-3. Select the Server Add-on .tar.gz archive.
-4. Optionally select an SSH private key. Enter a password or key passphrase only
+3. Optionally select an SSH private key. Enter a password or key passphrase only
    when required.
-5. Select Connect and open setup.
-6. Complete the guided setup in the browser. Keep the Windows application open.
-7. Close the connection when finished.
+4. Select Test SSH login. Continue after the log reports that login succeeded.
+5. Select the Server Add-on .tar.gz archive.
+6. Select Connect and open setup.
+7. Complete the guided setup in the browser. Keep the Windows application open.
+8. Close the connection when finished.
 
 The archive is streamed through the authenticated SSH connection and extracted
 under ~/.cache/roleweaver-remote-installer for the lifetime of the connection.
@@ -37,3 +38,14 @@ to Linux loopback and are reached through SSH. Never expose their ports publicly
 If Windows OpenSSH is missing, open Settings > Optional Features and install
 OpenSSH Client. For advanced/manual setup, extract the Linux package on the server
 and run: bash setup.sh gui
+
+Troubleshooting
+---------------
+Connection and validation messages appear in the lower panel. The same messages
+are saved to:
+
+%LOCALAPPDATA%\RoleWeaver\RemoteInstaller\installer.log
+
+The log does not contain the entered password or key passphrase. Use Test SSH
+login first to distinguish an SSH authentication problem from an archive upload,
+local port or guided-setup problem.

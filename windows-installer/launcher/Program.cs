@@ -38,15 +38,33 @@ namespace RoleWeaver.RemoteInstaller
         private readonly TextBox identity = new TextBox();
         private readonly TextBox secret = new TextBox();
         private readonly NumericUpDown setupPort = new NumericUpDown();
+        private readonly Button test = new Button();
         private readonly Button start = new Button();
         private readonly Button stop = new Button();
         private readonly TextBox log = new TextBox();
         private readonly Label state = new Label();
+        private readonly string diagnosticPath;
         private Process ssh;
         private bool browserOpened;
 
         public InstallerForm()
         {
+            string diagnosticDirectory = Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+                "RoleWeaver",
+                "RemoteInstaller"
+            );
+            diagnosticPath = Path.Combine(diagnosticDirectory, "installer.log");
+            try
+            {
+                Directory.CreateDirectory(diagnosticDirectory);
+                File.WriteAllText(
+                    diagnosticPath,
+                    "Role Weaver Remote Installer diagnostics - " + DateTime.Now.ToString("O") + Environment.NewLine
+                );
+            }
+            catch { }
+
             Text = "Role Weaver Server Add-on - Remote Setup";
             Width = 850;
             Height = 720;
@@ -124,6 +142,10 @@ namespace RoleWeaver.RemoteInstaller
                 Padding = new Padding(24, 5, 24, 5),
                 FlowDirection = FlowDirection.LeftToRight
             };
+            test.Text = "Test SSH login";
+            test.AutoSize = true;
+            test.Padding = new Padding(10, 5, 10, 5);
+            test.Click += async delegate { await TestConnection(); };
             start.Text = "Connect and open setup";
             start.AutoSize = true;
             start.Padding = new Padding(10, 5, 10, 5);
@@ -138,6 +160,7 @@ namespace RoleWeaver.RemoteInstaller
             state.Text = "Ready";
             state.AutoSize = true;
             state.Padding = new Padding(12, 11, 0, 0);
+            buttons.Controls.Add(test);
             buttons.Controls.Add(start);
             buttons.Controls.Add(stop);
             buttons.Controls.Add(state);
@@ -156,6 +179,9 @@ namespace RoleWeaver.RemoteInstaller
             Controls.SetChildIndex(buttons, 2);
             Controls.SetChildIndex(form, 1);
             Controls.SetChildIndex(heading, 0);
+
+            Append("Ready. Test SSH login before uploading the Server Add-on.");
+            Append("Diagnostic log: " + diagnosticPath);
 
             FormClosing += delegate { StopSetup(); };
         }
@@ -201,40 +227,20 @@ namespace RoleWeaver.RemoteInstaller
             try
             {
                 ValidateInputs();
-                string sshExe = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Windows), "System32", "OpenSSH", "ssh.exe");
-                if (!File.Exists(sshExe))
-                    throw new InvalidOperationException("Windows OpenSSH Client is not installed. Add it from Windows Optional Features, then try again.");
+                string sshExe = FindSsh();
 
                 int localPort = Decimal.ToInt32(setupPort.Value);
                 string session = Guid.NewGuid().ToString("N");
                 string remote = RemoteCommand(localPort, session);
-                string targetHost = host.Text.Trim();
-                if (targetHost.Contains(":") && !targetHost.StartsWith("[")) targetHost = "[" + targetHost + "]";
-                string target = username.Text.Trim() + "@" + targetHost;
+                string target = Target();
 
                 string[] arguments = BuildArguments(localPort, target, remote);
-                ProcessStartInfo info = new ProcessStartInfo
-                {
-                    FileName = sshExe,
-                    Arguments = String.Join(" ", arguments.Select(QuoteArgument).ToArray()),
-                    UseShellExecute = false,
-                    CreateNoWindow = true,
-                    RedirectStandardInput = true,
-                    RedirectStandardOutput = true,
-                    RedirectStandardError = true
-                };
-                if (!String.IsNullOrEmpty(secret.Text))
-                {
-                    info.EnvironmentVariables["SSH_ASKPASS"] = Application.ExecutablePath;
-                    info.EnvironmentVariables["SSH_ASKPASS_REQUIRE"] = "force";
-                    info.EnvironmentVariables["DISPLAY"] = "roleweaver-installer";
-                    info.EnvironmentVariables["RW_INSTALLER_ASKPASS"] = "1";
-                    info.EnvironmentVariables["RW_INSTALLER_SECRET"] = secret.Text;
-                }
+                ProcessStartInfo info = SshInfo(sshExe, arguments, true);
 
                 log.Clear();
                 Append("Connecting to " + target + "…");
                 state.Text = "Connecting";
+                test.Enabled = false;
                 start.Enabled = false;
                 stop.Enabled = true;
                 browserOpened = false;
@@ -265,16 +271,127 @@ namespace RoleWeaver.RemoteInstaller
             }
             catch (Exception ex)
             {
+                Append("Cannot start setup: " + ex.Message);
                 MessageBox.Show(this, ex.Message, "Cannot start setup", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 
+        private async Task TestConnection()
+        {
+            try
+            {
+                ValidateConnectionInputs();
+                string sshExe = FindSsh();
+                string target = Target();
+                System.Collections.Generic.List<string> arguments = CommonArguments();
+                arguments.Add(target);
+                arguments.Add("printf 'ROLEWEAVER_SSH_OK\\n'");
+
+                Append("Testing SSH login to " + target + "…");
+                state.Text = "Testing SSH";
+                test.Enabled = false;
+                start.Enabled = false;
+
+                using (Process process = new Process())
+                {
+                    process.StartInfo = SshInfo(sshExe, arguments.ToArray(), false);
+                    process.Start();
+                    Task<string> outputTask = process.StandardOutput.ReadToEndAsync();
+                    Task<string> errorTask = process.StandardError.ReadToEndAsync();
+                    await Task.Run(delegate { process.WaitForExit(); });
+                    string output = await outputTask;
+                    string error = await errorTask;
+
+                    foreach (string line in Lines(output)) Append("SSH: " + line);
+                    foreach (string line in Lines(error)) Append("SSH: " + line);
+                    if (process.ExitCode == 0 && output.Contains("ROLEWEAVER_SSH_OK"))
+                    {
+                        Append("SSH login succeeded. You can now select the archive and connect.");
+                        state.Text = "SSH login succeeded";
+                    }
+                    else
+                    {
+                        Append("SSH login failed (exit " + process.ExitCode + "). Check the server address, username, key and password.");
+                        state.Text = "SSH login failed";
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Append("SSH test failed: " + ex.Message);
+                state.Text = "SSH login failed";
+                MessageBox.Show(this, ex.Message, "SSH test failed", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+            finally
+            {
+                test.Enabled = true;
+                start.Enabled = true;
+            }
+        }
+
+        private static string[] Lines(string value)
+        {
+            return value.Split(new[] { "\r\n", "\n" }, StringSplitOptions.RemoveEmptyEntries);
+        }
+
+        private static string FindSsh()
+        {
+            string sshExe = Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.Windows),
+                "System32",
+                "OpenSSH",
+                "ssh.exe"
+            );
+            if (!File.Exists(sshExe))
+                throw new InvalidOperationException("Windows OpenSSH Client is not installed. Add it from Windows Optional Features, then try again.");
+            return sshExe;
+        }
+
+        private string Target()
+        {
+            string targetHost = host.Text.Trim();
+            if (targetHost.Contains(":") && !targetHost.StartsWith("[")) targetHost = "[" + targetHost + "]";
+            return username.Text.Trim() + "@" + targetHost;
+        }
+
+        private ProcessStartInfo SshInfo(string sshExe, string[] arguments, bool redirectInput)
+        {
+            ProcessStartInfo info = new ProcessStartInfo
+            {
+                FileName = sshExe,
+                Arguments = String.Join(" ", arguments.Select(QuoteArgument).ToArray()),
+                UseShellExecute = false,
+                CreateNoWindow = true,
+                RedirectStandardInput = redirectInput,
+                RedirectStandardOutput = true,
+                RedirectStandardError = true
+            };
+            if (!String.IsNullOrEmpty(secret.Text))
+            {
+                info.EnvironmentVariables["SSH_ASKPASS"] = Application.ExecutablePath;
+                info.EnvironmentVariables["SSH_ASKPASS_REQUIRE"] = "force";
+                info.EnvironmentVariables["DISPLAY"] = "roleweaver-installer";
+                info.EnvironmentVariables["RW_INSTALLER_ASKPASS"] = "1";
+                info.EnvironmentVariables["RW_INSTALLER_SECRET"] = secret.Text;
+            }
+            return info;
+        }
+
         private string[] BuildArguments(int localPort, string target, string remote)
+        {
+            System.Collections.Generic.List<string> args = CommonArguments();
+            args.Add("-L"); args.Add(localPort + ":127.0.0.1:" + localPort);
+            args.Add("-o"); args.Add("ExitOnForwardFailure=yes");
+            args.Add(target);
+            args.Add(remote);
+            return args.ToArray();
+        }
+
+        private System.Collections.Generic.List<string> CommonArguments()
         {
             System.Collections.Generic.List<string> args = new System.Collections.Generic.List<string>();
             args.Add("-T");
             args.Add("-p"); args.Add(Decimal.ToInt32(sshPort.Value).ToString());
-            args.Add("-L"); args.Add(localPort + ":127.0.0.1:" + localPort);
             args.Add("-o"); args.Add("StrictHostKeyChecking=accept-new");
             args.Add("-o"); args.Add("ConnectTimeout=15");
             args.Add("-o"); args.Add("ServerAliveInterval=15");
@@ -292,9 +409,7 @@ namespace RoleWeaver.RemoteInstaller
                 args.Add("-o"); args.Add("BatchMode=no");
                 args.Add("-o"); args.Add("NumberOfPasswordPrompts=1");
             }
-            args.Add(target);
-            args.Add(remote);
-            return args.ToArray();
+            return args;
         }
 
         private static string RemoteCommand(int port, string session)
@@ -312,12 +427,17 @@ namespace RoleWeaver.RemoteInstaller
 
         private void ValidateInputs()
         {
+            ValidateConnectionInputs();
+            if (!File.Exists(archive.Text) || !archive.Text.EndsWith(".tar.gz", StringComparison.OrdinalIgnoreCase))
+                throw new InvalidOperationException("Select the RoleWeaver Server Add-on .tar.gz archive.");
+        }
+
+        private void ValidateConnectionInputs()
+        {
             if (!Regex.IsMatch(host.Text.Trim(), @"^[A-Za-z0-9.:[\]_-]+$"))
                 throw new InvalidOperationException("Enter a hostname or IP address without spaces.");
             if (!Regex.IsMatch(username.Text.Trim(), @"^[A-Za-z0-9._-]+$"))
                 throw new InvalidOperationException("Enter a valid Linux username.");
-            if (!File.Exists(archive.Text) || !archive.Text.EndsWith(".tar.gz", StringComparison.OrdinalIgnoreCase))
-                throw new InvalidOperationException("Select the RoleWeaver Server Add-on .tar.gz archive.");
             if (!String.IsNullOrWhiteSpace(identity.Text) && !File.Exists(identity.Text))
                 throw new InvalidOperationException("The selected SSH private key was not found.");
         }
@@ -346,6 +466,14 @@ namespace RoleWeaver.RemoteInstaller
         private void Append(string message)
         {
             log.AppendText(message + Environment.NewLine);
+            try
+            {
+                File.AppendAllText(
+                    diagnosticPath,
+                    "[" + DateTime.Now.ToString("O") + "] " + message + Environment.NewLine
+                );
+            }
+            catch { }
         }
 
         private void Finished()
@@ -357,6 +485,7 @@ namespace RoleWeaver.RemoteInstaller
                 try { code = ssh.ExitCode; } catch { }
                 Append("Connection closed (exit " + code + ").");
                 state.Text = code == 0 ? "Closed" : "Connection failed";
+                test.Enabled = true;
                 start.Enabled = true;
                 stop.Enabled = false;
                 ssh = null;

@@ -20,11 +20,13 @@ class WindowsRemoteInstallerTests(unittest.TestCase):
 
     def test_password_is_only_passed_to_askpass_memory(self):
         self.assertIn("RW_INSTALLER_SECRET", self.source)
-        self.assertNotIn("WriteAllText", self.source)
+        self.assertNotIn("WriteAllText(diagnosticPath, secret", self.source)
+        self.assertNotIn("Append(secret.Text", self.source)
         self.assertNotIn("SaveFileDialog", self.source)
 
     def test_remote_setup_uses_tunnel_and_opens_tokenized_url(self):
         self.assertIn('args.Add("-L")', self.source)
+        self.assertIn("ExitOnForwardFailure=yes", self.source)
         self.assertIn("gui --port", self.source)
         self.assertNotIn("gui --trusted-local", self.source)
         self.assertIn("token=[A-Za-z0-9_-]+", self.source)
@@ -38,6 +40,11 @@ class WindowsRemoteInstallerTests(unittest.TestCase):
     def test_window_docking_order_keeps_log_below_controls(self):
         self.assertIn("Controls.SetChildIndex(heading, 0)", self.source)
         self.assertIn("Controls.SetChildIndex(log, 3)", self.source)
+
+    def test_connection_diagnostics_are_visible_and_persisted(self):
+        self.assertIn("Test SSH login", self.source)
+        self.assertIn("installer.log", self.source)
+        self.assertIn("Diagnostic log:", self.source)
 
 
 if __name__ == "__main__":
