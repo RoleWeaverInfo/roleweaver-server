@@ -1,12 +1,13 @@
 from pathlib import Path
 import unittest
 
-
 ROOT = Path(__file__).resolve().parents[1]
 SOURCE = ROOT / "windows-installer/launcher/Program.cs"
 
 
-@unittest.skipUnless(SOURCE.is_file(), "Windows installer source is a separate distribution")
+@unittest.skipUnless(
+    SOURCE.is_file(), "Windows installer source is a separate distribution"
+)
 class WindowsRemoteInstallerTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
