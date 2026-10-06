@@ -9,10 +9,16 @@ The Demo is a separate package.
 Open a terminal in the extracted folder and run, **without sudo**:
 
 ```bash
-bash setup.sh
+bash setup.sh gui
 ```
 
-Choose **1 — Set up / resume an existing server**.
+The graphical installer prints an SSH tunnel command and a private browser URL.
+Run the tunnel on your Windows computer, open the URL, and follow the six setup
+pages. The setup page listens only on the Linux server's loopback interface.
+
+If you prefer the terminal workflow, run `bash setup.sh` and choose
+**1 — Set up / resume an existing server**. Both interfaces use the same saved
+profiles, checks, bridge builder, service installer and rollback system.
 
 If you need to install NWN/NWNX first, follow [New server setup](addon/NEW_SERVER.md).
 On a fresh Ubuntu host you may also need `sudo apt install python3-venv redis-server`.
@@ -20,7 +26,7 @@ Do not change an established server's Redis configuration without checking its o
 
 ## 2. Tell setup which server to use
 
-Setup suggests paths from a running NWN process or common installation folders.
+The graphical and terminal installers suggest paths from a running NWN process or common installation folders.
 Check each suggestion, particularly if you run several worlds. Select:
 
 - A short **world ID**, such as `my_world`. This is not the module filename.

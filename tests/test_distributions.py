@@ -75,6 +75,7 @@ class DistributionTests(unittest.TestCase):
                 self.assertIn("extensions/nwnx_translation/Translation.cpp", entries)
                 self.assertIn("setup.sh", entries)
                 self.assertIn("tools/setup_wizard.py", entries)
+                self.assertIn("tools/setup_gui.py", entries)
                 for helper in (
                     "server_setup",
                     "install_profile",

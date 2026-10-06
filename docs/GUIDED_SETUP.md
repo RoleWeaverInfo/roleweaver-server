@@ -1,8 +1,14 @@
 # Guided installation and maintenance
 
-From the extracted package run `bash setup.sh`, without sudo, as the Linux server
-owner. Choose **1** for continuous existing-server setup or **2** for the separate
-Demo. The setup menu also offers configuration, checks, update, rollback and verification.
+From the extracted package run `bash setup.sh gui`, without sudo, as the Linux
+server owner. It prints a localhost URL and, for remote administration, the exact
+SSH tunnel command to run on Windows. The browser wizard covers server discovery,
+configuration, checks, preparation, install/update and verification. It binds only
+to `127.0.0.1`, uses a new random access token each time and stores no SSH credentials.
+
+The terminal workflow remains available through `bash setup.sh`. Choose **1** for
+continuous existing-server setup or **2** for the separate Demo. Both interfaces
+use the same profiles and installation backend.
 
 ## One saved profile per world
 
@@ -27,6 +33,8 @@ Run these from an extracted package; replace `my_world` with your saved ID.
 
 | Command | Purpose |
 | --- | --- |
+| `bash setup.sh gui` | Start the localhost graphical installer on port 8750. |
+| `bash setup.sh gui --port 8751` | Use another local setup port. |
 | `bash setup.sh setup --world my_world` | Resume checks, bridge preparation, initial install and connection guidance. |
 | `bash setup.sh configure --world my_world` | Edit paths and feature choices. Existing runtime identity/ports are preserved. |
 | `bash setup.sh check --world my_world` | Read-only prerequisites and actionable corrections. |
@@ -45,6 +53,10 @@ Run these from an extracted package; replace `my_world` with your saved ID.
 Setup never stops, starts or replaces NWN itself. Service operations identify the
 world and installation before confirmation. No system packages are installed by
 the helper; a missing prerequisite is explained with a suggested correction.
+
+Close the graphical installer with Ctrl+C in its Linux terminal. Closing setup
+does not stop an installed Role Weaver service. Do not expose its temporary setup
+port through a firewall or public reverse proxy; use the printed SSH tunnel.
 
 ## Integration and compatibility
 
