@@ -419,9 +419,11 @@ namespace RoleWeaver.RemoteInstaller
                 "work=\"$base/session-" + session + "\"; mkdir \"$work\"; " +
                 "cleanup(){ rm -rf -- \"$work\"; }; trap cleanup EXIT HUP INT TERM; " +
                 "tar -xzf - -C \"$work\"; " +
-                "setup=$(find \"$work\" -mindepth 1 -maxdepth 3 -type f -name setup.sh -print -quit); " +
-                "test -n \"$setup\" || { echo 'The selected archive has no setup.sh' >&2; exit 2; }; " +
-                "cd \"$(dirname \"$setup\")\"; " +
+                "root=$(find \"$work\" -mindepth 1 -maxdepth 1 -type d -print -quit); " +
+                "setup=\"$root/setup.sh\"; " +
+                "test -f \"$setup\" || { echo 'The selected archive has no top-level setup.sh' >&2; exit 2; }; " +
+                "test -f \"$root/tools/setup_gui.py\" || { echo 'This Server Add-on archive does not include the graphical setup. Download the current release.' >&2; exit 2; }; " +
+                "cd \"$root\"; " +
                 "PYTHONUNBUFFERED=1 bash ./setup.sh gui --port " + port;
         }
 

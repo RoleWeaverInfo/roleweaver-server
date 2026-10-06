@@ -37,6 +37,12 @@ class WindowsRemoteInstallerTests(unittest.TestCase):
         self.assertIn("$HOME/.cache/roleweaver-remote-installer", self.source)
         self.assertIn('rm -rf -- \\"$work\\"', self.source)
 
+    def test_remote_setup_uses_top_level_launcher(self):
+        self.assertIn("maxdepth 1 -type d", self.source)
+        self.assertIn('setup=\\"$root/setup.sh\\"', self.source)
+        self.assertIn("$root/tools/setup_gui.py", self.source)
+        self.assertNotIn("maxdepth 3 -type f -name setup.sh", self.source)
+
     def test_window_docking_order_keeps_log_below_controls(self):
         self.assertIn("Controls.SetChildIndex(heading, 0)", self.source)
         self.assertIn("Controls.SetChildIndex(log, 3)", self.source)
