@@ -15,6 +15,8 @@ dashboard; players interact through the normal NWN:EE client.
 | [RoleWeaver-Server-Addon-1.0.0.tar.gz](https://github.com/RoleWeaverInfo/roleweaver-server/releases/download/v1.0.0/RoleWeaver-Server-Addon-1.0.0.tar.gz) | Install alongside your existing NWN/NWNX world | [Server add-on setup](START_ADDON.md) |
 
 Each download has its own **START_HERE.md** and **`bash setup.sh`** launcher.
+The Server Add-on also includes a localhost graphical installer: run
+**`bash setup.sh gui`** on Linux and use its printed SSH-tunnel URL from Windows.
 The demo includes Crown Hall, forest robbery and cave hostage encounters, the
 caravan investigation, Royal Guide, merchants and authored character lore.
 Fresh instances contain no previous conversations, memories, player profiles or
