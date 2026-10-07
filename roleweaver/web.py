@@ -20,6 +20,7 @@ from . import __version__
 from . import http_security
 from .dashboard_auth import DashboardAuth
 from .auth_web import handle as auth_request
+from .portable_demo import handle as portable_request
 
 
 def main():
@@ -82,6 +83,8 @@ def main():
                 return self.respond(403, {"error": "Use the local dashboard address"})
             try:
                 if auth_request(self, auth, method):
+                    return
+                if portable_request(self, auth, config_path, method):
                     return
                 if health_request(self, runtime, method) or recovery_request(
                     self, runtime, method

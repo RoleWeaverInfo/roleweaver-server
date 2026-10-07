@@ -1,8 +1,8 @@
 # Rebuilding this prototype
 
-This is a maintainer recipe, not the end-user setup. End users should eventually
-receive a prepared image and the Windows launchers. The current assembled folder
-is a private test installation, not a public distributable image.
+This is a maintainer recipe, not the end-user setup. The portable package contains
+a prepared image and native Windows launcher. Never package a private testing
+disk. Build a new disposable VM from the verified Ubuntu image and clean archives.
 
 ## Inputs
 
@@ -87,3 +87,40 @@ query only proves that the server answers status requests. The provisioner sets
 the new guest's master-server account validation to `if-reachable` for this
 localhost-only demo, so an unavailable authentication service does not prevent
 testing. Do not carry that setting into a public persistent-world installation.
+
+## Seal a new portable image
+
+Use a separate build VM and distinct forwarded ports if the private demo is
+running. The build must never receive real provider keys or player saves.
+
+1. Finish provisioning and check the bundled scripts, dashboard and NWNX bridge.
+2. Copy `guest-firstboot.py`, `install-firstboot.sh` and `seal-guest.py` to the
+   disposable guest's `/home/roleweaver/`. In that guest only, create
+   `/root/roleweaver-disposable-build` containing exactly
+   `fresh-public-image-no-player-data`.
+3. Run `sudo bash install-firstboot.sh`, then `sudo python3 seal-guest.py`.
+   This stops the demo, clears its fresh runtime data/Redis, removes build access
+   and host keys, and disables cloud-init. The first Windows launch supplies a
+   new public key through QEMU's read-only FAT boot drive. No API key is put there.
+4. Run `sudo poweroff`. Wait for QEMU to exit before touching the image.
+5. Flatten the stopped build disk using `qemu-img convert -O qcow2 -c` into a
+   new `base.qcow2`. Verify `qemu-img info --output=json` has no backing filename.
+   Never use the user's private `runtime/demo.qcow2` for this step.
+6. Run `package_windows.py --base <base.qcow2> --kernel <vmlinuz> --qemu <qemu-folder>
+   --output <new-package-folder> --source-revision <commit> --zip` from Windows
+   with Python 3.11+. It refuses to overwrite a folder or use a dependent image.
+   The .NET Framework C# compiler builds the splash image directly into the EXE.
+7. Test a freshly extracted copy on alternate ports: initial seeding, login,
+   provider save/preservation, bridge health, clean shutdown, restart and moving
+   the whole stopped folder. Check that another new copy gets a different key
+   and identity. Do not include the resulting `userdata/` in the distribution.
+
+Public release review also includes third-party notices, corresponding source
+availability and actual player/DM game login. Local launcher/API smoke checks
+cannot substitute for a fresh gameplay test on another Windows installation.
+
+Run `test-model-flow.ps1 -OutputDirectory <temporary-folder>` to exercise the
+actual WinForms event loop against a local test HTTP endpoint. It checks slow
+startup and model-list requests, cancellation, retained input, retry, failed
+provider responses and closing the window during a request. It starts no VM,
+uses no real key and makes no hosted-provider calls.

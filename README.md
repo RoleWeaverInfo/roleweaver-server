@@ -38,7 +38,7 @@ This is not a native Windows server package; players use their usual NWN:EE clie
   outcomes, optional social rolls and bounded automated direction. Live scenes
   last until cleanup or module reset; armed persistent scenes can recover after
   restart. Game scripts validate actions and handle combat.
-- **Player familiars:** opt-in chat, commands, remembered identity, inventory/errands
+- **Player familiars:** player-controlled chat, commands, remembered identity, inventory/errands
   and visits. Editable personality templates and controls are in [Companions](docs/COMPANIONS.md).
 - **Translation:** players choose a language with `/rw language`. Supported world
   text is translated on demand and cached; source changes need a new translation.

@@ -12,6 +12,64 @@ spec.loader.exec_module(demo)
 
 
 class DemoTests(unittest.TestCase):
+    def test_demo_chest_stock_survives_packaging_and_is_not_restamped(self):
+        from tools.add_demo_chest import add_chest, STOCK
+        from tools.gff import read
+        from tools.module_copy import resources
+
+        raw = (ROOT / "demo/world/YourWorld_Fixed.mod").read_bytes()
+        self.assertEqual(add_chest(raw), raw)
+        entries = {(name, kind): data for name, kind, data in resources(raw)}
+        _, hall = read(entries["throne_room", 2023])
+        chests = [
+            obj
+            for obj in hall[1]["Placeable List"][1]
+            if obj[1]["Tag"][1] == b"rq_testchest"
+        ]
+        self.assertEqual(len(chests), 1)
+        chest = chests[0][1]
+        self.assertEqual(chest["HasInventory"][1], 1)
+        self.assertEqual(chest["Locked"][1], 0)
+        self.assertEqual(chest["OnOpen"][1], b"")
+        self.assertEqual(chest["OnUsed"][1], b"")
+        self.assertEqual(
+            tuple(item[1]["InventoryRes"][1].decode() for item in chest["ItemList"][1]),
+            STOCK,
+        )
+
+    def test_captain_patrol_and_checkins_survive_fresh_start_and_reopen(self):
+        from roleweaver.recovery_runtime import RecoveryRuntime
+
+        value = demo.content(ROOT / "demo/content.json")
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            demo.seed_database(root / "roleweaver.sqlite3", value, "demo_patrol_test")
+            for _ in range(2):
+                runtime = RecoveryRuntime(
+                    root,
+                    {"provider": "offline", "world_id": "demo_patrol_test"},
+                    start_workers=False,
+                )
+                try:
+                    app = runtime.app
+                    captain = app.store.get("rq_guard")
+                    self.assertEqual(captain["mode"], "auto")
+                    policy = app.action_config["npcs"]["rq_guard"]
+                    self.assertTrue(policy["enabled"])
+                    self.assertTrue(policy["patrol"]["enabled"])
+                    self.assertGreaterEqual(len(policy["patrol"]["route"]), 2)
+                    self.assertEqual(
+                        policy["patrol"]["checkins"]["welcome_table"], "tavern_owner"
+                    )
+                    for stop in policy["patrol"]["route"]:
+                        self.assertIn(stop, policy["destinations"])
+                        self.assertEqual(
+                            app.action_config["destinations"][stop]["world"],
+                            "demo_patrol_test",
+                        )
+                finally:
+                    runtime.close()
+
     def test_seeded_demo_starts_recovery_runtime_and_keeps_player_identity(self):
         from roleweaver.recovery_runtime import RecoveryRuntime
 

@@ -1,0 +1,124 @@
+ROLE WEAVER — WINDOWS DEMO 1.0.0
+
+FIRST START
+
+1. Extract the ENTIRE ZIP into a writable folder, such as Documents.
+   Do not run it from inside the ZIP or from Program Files.
+   Allow at least 8 GB of free disk space for the package and future saves.
+   This package is for 64-bit Windows 10/11. The VM uses 2 GB of memory.
+
+2. Double-click Role Weaver Demo.exe. No administrator access is needed.
+   The launcher shows the Role Weaver splash and asks for your AI provider.
+   Choose OpenAI, Gemini, LM Studio, or Configure later.
+   Enter your API key and click Load models. Startup may take a few minutes the
+   first time; the progress bar, current step and elapsed time show it is working.
+   Load models stays disabled until you enter a key (or have a saved key), except
+   for LM Studio. While loading, click Cancel to return to your entries. This
+   cancels the lookup and leaves the demo server running; it does not save a key.
+   Choose a text/chat model from the Model name dropdown, then select
+   Save settings. You can also type an exact model ID; saving checks it against
+   the provider's available models. LM Studio needs its local server running.
+   API keys are masked and saved inside your private demo VM, not in a Windows
+   configuration file. Hosted providers need Internet access and may charge fees.
+   Configure later starts offline: AI dialogue/translation need a provider later.
+
+3. Wait for startup. Software emulation can take several minutes.
+   This package includes its own Linux server and QEMU runtime. You do not need
+   to install Python, Linux, WSL, Docker, VMware, or a hypervisor.
+
+4. Select Open dashboard. Default address: http://127.0.0.1:8747/
+   Dashboard password: roleweaver
+
+5. Open your own Neverwinter Nights: Enhanced Edition game on Windows.
+   Choose Multiplayer, then Direct Connect: 127.0.0.1:5127
+   PLAYER PASSWORD: leave empty.
+   DM PASSWORD: roleweaver (launch the game in DM mode to connect as a DM).
+   The game may take another moment to finish loading after the dashboard opens.
+   NWN Diamond is not compatible. The game client is not included in this package.
+
+6. Speak to the Royal Guide in the throne room to explore the demo.
+   Try NPC conversations, the merchant, forest robbery and cave hostage scenes.
+   Captain Beran starts in Auto mode with his patrol and NPC check-ins enabled.
+   Translation and companion AI are enabled in new demos. In Talk, type
+   /rw language to choose a language. Summon a familiar normally; its AI starts
+   enabled. /rw companion settings opens its controls, including the AI on/off
+   switch. Local listening is optional and starts off.
+   The Royal Supplies Chest beside the throne holds a short sword, dagger,
+   two healing potions and bandages (Healer's Kit +1). Try asking your familiar
+   to inspect it and fetch an item, then use the companion inventory to exchange it.
+
+NEXT TIME
+
+Double-click Role Weaver Demo.exe. Your provider, profiles, memories, translations
+and saves are retained. Configure AI lets you change the provider/model/key.
+A blank key field keeps an existing key for that provider. Use the dashboard's
+LLM Service panel for connection tests, model discovery and advanced settings.
+
+CHANGING PASSWORDS
+
+After the demo starts, select Change passwords in the launcher. Enter the current
+dashboard password, then enter and repeat the new password you want to change.
+The dashboard and DM passwords are separate; each has its own Save button.
+Changing the dashboard password signs other dashboard sessions out immediately.
+Changing the DM password takes effect the next time you Stop demo and start it
+again. Saving it alone does not disconnect players. The player password stays empty.
+Dashboard passwords allow 8–256 characters; DM passwords use 8–32 ASCII characters
+without spaces. Passwords are saved inside your demo, not in Windows settings.
+
+Both dashboard and DM passwords initially default to roleweaver. The server is
+reachable only from this Windows computer. No manual SSH tunnel is required.
+The launcher never opens a public firewall port or changes an existing NWN install.
+
+STOPPING, MOVING AND BACKING UP
+
+Select Stop demo and wait until shutdown finishes. Closing the launcher window
+alone leaves the demo running; open the launcher again to stop it.
+
+After stopping, you can move or copy the WHOLE folder. Keep runtime/base.qcow2
+with userdata/demo.qcow2: the latter stores your changes relative to the base.
+The userdata folder also contains your private Linux access key. Do not upload
+your used folder as a public package. Share the original clean ZIP instead.
+For a complete backup, copy the whole stopped folder. Dashboard backups protect
+world data but do not include your provider keys or the entire Linux machine.
+
+LM STUDIO
+
+Start the LM Studio local server and load a JSON-capable model on Windows first.
+Select LM Studio to show its server-address field. Use http://10.0.2.2:1234/v1,
+click Load models and choose your loaded model from the dropdown.
+10.0.2.2 is how this Linux VM reaches the Windows host. Entering localhost or
+127.0.0.1 here is automatically converted to that host address.
+Some LM Studio configurations require allowing connections beyond localhost;
+check the connection using LLM Service in the dashboard. Restrict any firewall
+permission to your own trusted computer/network. API keys are optional for a
+local server unless you enabled authentication there.
+
+USING YOUR OWN MODULES AND HAK FILES
+
+The content/modules, content/hak and content/tlk folders are staging folders.
+Files placed there are NOT loaded automatically; this avoids replacing the demo
+unexpectedly. Read content/READ_ME.txt for transfer and module-switch steps.
+The complete editable Role Weaver source and Linux utilities remain inside the
+VM at /home/roleweaver/demo. Existing-server installation documentation is there
+as well. Back up your stopped demo before changing its world.
+
+TROUBLESHOOTING
+
+Port already in use: stop the other copy of the demo. Alternatively open Advanced
+settings BEFORE starting and choose different ports. Use the addresses displayed
+by that launcher. Changing them does not change the standard ports inside Linux.
+
+No AI response: check the selected model/key and connection test in LLM Service.
+An offline demo has no external model configured. The launcher saves settings;
+it does not validate the provider's billing, quota, availability or JSON support.
+
+Slow start: software emulation is slower than a normal Linux server. Open
+userdata/logs/boot.log and qemu.log if startup fails. Retry after a few minutes.
+Do not delete a running VM's disk or terminate QEMU while it is saving.
+
+Windows may show an unsigned-app warning: this test launcher is not code signed.
+Obtain packages only from the project's release page and verify the checksum.
+
+Source and support: https://github.com/RoleWeaverInfo/roleweaver-server
+Report Windows version, package version, symptoms and relevant sanitized logs.
+Never attach API keys, userdata/admin-key, or your private VM disk to an issue.

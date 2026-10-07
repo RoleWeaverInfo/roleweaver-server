@@ -129,7 +129,26 @@ class PatrolService(CheckinService):
                     runtime["status"] = "Walking to patrol stop"
                 return
             runtime.pop("request", None)
+            if job["status"] == "rejected by game":
+                # A negative acknowledgement proves this request did not start.
+                # Startup restoration or a changing game epoch can invalidate a
+                # single request. Retry from fresh state after the normal dwell;
+                # never retry uncertain delivery or an explicit DM stop.
+                failures = runtime.get("rejections", 0) + 1
+                runtime["rejections"] = failures
+                if failures >= 3:
+                    runtime.update(
+                        halted=True,
+                        status="Repeated movement rejection; save patrol to retry",
+                    )
+                else:
+                    runtime.update(
+                        next=now + duty["dwell_seconds"],
+                        status="Movement rejected; waiting before retry",
+                    )
+                return
             if job["status"] in ("completed", "timed out"):
+                runtime.pop("rejections", None)
                 # A game-confirmed timeout ended movement; it is safe to continue.
                 # Missing acknowledgements still halt above.
                 stop = duty["route"][runtime["index"]]

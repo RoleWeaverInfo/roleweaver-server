@@ -387,6 +387,10 @@ def prepare(runtime, args):
         allow_dm_spawn=True,
         allow_persistent_spawn=True,
         companions_enabled=True,
+        companion_inventory={
+            **config.get("companion_inventory", {}),
+            "containers": ["rq_testchest"],
+        },
         guardrails_ai=args.guardrails,
     )
     write_json(runtime / "config.json", config)

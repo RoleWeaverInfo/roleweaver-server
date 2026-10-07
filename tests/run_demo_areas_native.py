@@ -114,7 +114,7 @@ def run(args):
     passed = sum(line.endswith(" PASS") for line in checks)
     if (
         "RW_AREA_TEST FINISHED" not in checks
-        or passed != 12
+        or passed != 15
         or any(line.endswith(" FAIL") for line in checks)
     ):
         raise SystemExit("Native area test failed or did not finish; inspect its logs")

@@ -8,3 +8,6 @@
 /BUILD-MANIFEST.json
 /VALIDATION.json
 /PYTHON-DEPENDENCIES.txt
+/userdata/
+/launcher/*.exe
+/launcher/*.pdb

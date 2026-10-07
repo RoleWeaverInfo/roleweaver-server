@@ -70,6 +70,50 @@ class PatrolTests(ActionsTests):
         self.assertTrue(self.app.patrol_runtime["mira"]["halted"])
         self.assertEqual(before, len(self.app.redis.commands))
 
+    def test_confirmed_rejection_retries_after_dwell_and_success_clears_count(self):
+        self.prepare()
+        self.app.patrol_tick("mira", self.state)
+        self.app.action_jobs["mira"]["status"] = "rejected by game"
+        before = len(self.app.redis.commands)
+        self.app.patrol_tick("mira", self.state)
+        runtime = self.app.patrol_runtime["mira"]
+        self.assertEqual(runtime["rejections"], 1)
+        self.assertFalse(runtime.get("halted"))
+        self.app.patrol_tick("mira", self.state)
+        self.assertEqual(before, len(self.app.redis.commands))
+        runtime["next"] = self.app.action_last["mira"] = 0
+        self.app.patrol_tick("mira", self.state)
+        self.assertGreater(len(self.app.redis.commands), before)
+        self.assertEqual(self.app.redis.last()["kind"], "controlled_action")
+        self.assertEqual(self.app.action_jobs["mira"]["status"], "pending")
+        self.app.action_jobs["mira"]["status"] = "completed"
+        self.app.patrol_tick("mira", self.state)
+        self.assertNotIn("rejections", runtime)
+
+    def test_repeated_rejection_is_bounded_and_dm_stop_cancels_retry(self):
+        self.prepare()
+        runtime = self.app.patrol_runtime["mira"]
+        for _ in range(3):
+            runtime["next"] = self.app.action_last["mira"] = 0
+            self.app.patrol_tick("mira", self.state)
+            self.app.action_jobs["mira"]["status"] = "rejected by game"
+            self.app.patrol_tick("mira", self.state)
+        self.assertTrue(runtime["halted"])
+        before = len(self.app.redis.commands)
+        runtime["next"] = self.app.action_last["mira"] = 0
+        self.app.patrol_tick("mira", self.state)
+        self.assertEqual(before, len(self.app.redis.commands))
+        self.prepare()
+        self.app.patrol_tick("mira", self.state)
+        self.app.action_jobs["mira"]["status"] = "rejected by game"
+        self.app.patrol_tick("mira", self.state)
+        self.app.stop_action("mira")
+        before = len(self.app.redis.commands)
+        self.app.patrol_runtime["mira"]["next"] = 0
+        self.app.action_last["mira"] = 0
+        self.app.patrol_tick("mira", self.state)
+        self.assertEqual(before, len(self.app.redis.commands))
+
     def test_linked_stop_uses_live_contact_position(self):
         self.prepare()
         self.state.update(area="inn", x=0, y=0, z=0)

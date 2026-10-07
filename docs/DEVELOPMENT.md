@@ -155,7 +155,7 @@ their ambient chat and the owner's private memories are not shared. See
 [the familiar guide](COMPANIONS.md#send-your-familiar-to-ask-someone) for examples,
 server permissions and the isolated `companion_visits_native.nss` fixture.
 
-See [Familiar prototype](COMPANIONS.md) for the opt-in chat workflow, owner-bound
+See [Familiar prototype](COMPANIONS.md) for the player-controlled chat workflow, owner-bound
 protocol, stock associate adapter and PW extension points. This layer has no
 world-NPC placement or respawn behavior. `rw_address.nss` shares conservative
 name-address parsing between familiar and world-NPC chat. `rw_talk_inc.nss`
@@ -193,7 +193,7 @@ preferences (since format 13); older formats import defaults. `rw_cp_prefs` main
 session/service-generation-bound native cache. The owner-only `rw_cp_menu` and
 `rw_cp_menu_evt` UI waits for service acknowledgement before using permissions.
 Player restrictions are applied both to offered actions and at native execution;
-satchel recovery remains independent of AI opt-in and normal inventory permission.
+satchel recovery remains independent of the player AI switch and normal inventory permission.
 
 Preference schema 2 adds optional local listening, defaulting off when migrating
 schema 1. The service returns schema 1 to older game menus and accepts old saved

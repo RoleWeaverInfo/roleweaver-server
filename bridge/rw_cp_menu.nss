@@ -54,6 +54,7 @@ json RWCPMenuSetting(string key)
 int RWCPMenu(object owner)
 {
     if(!GetIsPC(owner) || GetIsDM(owner) || GetIsDMPossessed(owner) || GetIsPossessedFamiliar(owner))return FALSE;
+    RWCPInitialize(owner);
     int old=NuiFindWindow(owner,"rwcompanionsettings");DeleteLocalInt(owner,"rw_cp_menu_token");if(old)NuiDestroy(owner,old);
     json col=JsonArray(),row=JsonArray();
     col=JsonArrayInsert(col,NuiWidth(NuiHeight(NuiText(NuiBind("status"),FALSE,0),48.0),612.0));
@@ -67,7 +68,7 @@ int RWCPMenu(object owner)
     row=JsonArray();row=JsonArrayInsert(row,RWCPMenuButton("Open inventory","inventory_open",300.0,"can_inventory"));row=JsonArrayInsert(row,RWCPMenuButton("Recover satchel items","recover"));col=JsonArrayInsert(col,NuiRow(row));
     row=JsonArray();row=JsonArrayInsert(row,RWCPMenuButton("End conversation","end"));row=JsonArrayInsert(row,RWCPMenuButton("Cancel current errand","cancel"));col=JsonArrayInsert(col,NuiRow(row));
     col=JsonArrayInsert(col,RWCPMenuButton("Reset these preferences","reset",300.0,"can_preferences"));
-    col=JsonArrayInsert(col,NuiWidth(NuiHeight(NuiText(JsonString("Click a preference to change it; changes save immediately for this character and familiar type. Follow-ups let you talk without repeating its name. Item errands need satchel exchanges and movement enabled. If movement is off, approach your familiar to exchange items. Recovery remains available. Server restrictions and normal familiar controls still apply. Tone changes delivery, not the character's history. AI must be enabled again after login."),FALSE,0),120.0),612.0));
+    col=JsonArrayInsert(col,NuiWidth(NuiHeight(NuiText(JsonString("Click a preference to change it; changes save immediately for this character and familiar type. Follow-ups let you talk without repeating its name. Item errands need satchel exchanges and movement enabled. If movement is off, approach your familiar to exchange items. Recovery remains available. Server restrictions and normal familiar controls still apply. Tone changes delivery, not the character's history. AI starts enabled each login when the server allows it; you can disable it above."),FALSE,0),120.0),612.0));
     col=JsonArrayInsert(col,NuiWidth(NuiHeight(NuiText(NuiBind("notice"),FALSE,0),44.0),612.0));
     col=JsonArrayInsert(col,NuiWidth(NuiHeight(NuiText(JsonString("Local listening remembers up to 8 nearby public lines for 2 minutes, for your next conversation. No private chat, automatic replies or extra AI requests. Turn it off to clear the short history."),FALSE,0),62.0),612.0));
     int token=NuiCreate(owner,NuiWindow(NuiCol(col),JsonString("Role Weaver - Companion settings"),NuiRect(-1.0,-1.0,660.0,700.0),JSON_FALSE,JSON_FALSE,JSON_TRUE,JSON_FALSE,JSON_TRUE),"rwcompanionsettings","rw_cp_menu_evt");

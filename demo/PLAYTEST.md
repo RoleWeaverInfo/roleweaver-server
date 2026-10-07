@@ -49,13 +49,20 @@ Administrator model-evaluation notes are separate from this gameplay walkthrough
 Use a wizard or sorcerer who can summon a familiar. Companion AI is enabled by
 default in new demos; older instances keep their saved setting in the dashboard's
 **Companions** panel. Summon normally, then use
-`/rw companion on` and `/rw companion settings` in Talk.
+`/rw companion settings` in Talk. Companion AI starts enabled for each login;
+you can switch it off there. Local listening starts off.
 
 Address it by name, introduce yourself, then continue nearby conversation. Ask it
 what it can see, to follow/stay, or to visit a nearby AI NPC and ask a question.
 Use `/rw companion inventory` to see its satchel and eligible exchanges. Actions
 depend on the player's settings and server permissions; inventories and combat
 remain governed by the game. Dismiss and resummon the same type to check continuity.
+
+The **Royal Supplies Chest** beside the throne contains a short sword, a dagger,
+two Potions of Cure Light Wounds, and bandages (a Healer's Kit +1). Ask your
+familiar to inspect the chest, then fetch an item. Use the companion inventory
+window to take it or give it back. This chest is approved for familiar errands
+in new demos. Its contents reset when the module restarts, with no live refill.
 
 The DM can edit **Familiar starting templates** before a new profile's first AI
 chat. Existing companions keep their own profiles and memories. See

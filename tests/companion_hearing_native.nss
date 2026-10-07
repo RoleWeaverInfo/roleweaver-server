@@ -14,7 +14,31 @@ void main()
     object speaker=CreateObject(OBJECT_TYPE_CREATURE,"rw_base",at);
     SetLocalInt(owner,"fixture_pc",TRUE);SetLocalObject(m,"fixture_owner",owner);
     SetLocalObject(owner,"fixture_familiar",familiar);SetLocalObject(familiar,"fixture_master",owner);
-    SetLocalInt(owner,"rw_cp_on",TRUE);SetLocalString(owner,"rw_cp_login_session","hearing-test");
+    // Native default initialization must preserve an explicit off choice, even
+    // through resummoning, menu refreshes and a server policy toggle.
+    RWCPInitialize(owner);
+    Check(GetLocalInt(owner,"rw_cp_on") && GetLocalString(owner,"rw_cp_login_session")=="hearing-test","companion AI defaults on for a new player login");
+    RWCPSetEnabled(owner,FALSE);RWCPInitialize(owner);
+    Check(!GetLocalInt(owner,"rw_cp_on"),"repeated initialization preserves player off");
+    SetLocalObject(owner,"fixture_familiar",OBJECT_INVALID);RWCPInitialize(owner);
+    SetLocalObject(owner,"fixture_familiar",familiar);RWCPInitialize(owner);
+    Check(!GetLocalInt(owner,"rw_cp_on"),"resummoning does not override player off");
+    SetLocalInt(m,"rw_cp_enabled",FALSE);RWCPInitialize(owner);
+    SetLocalInt(m,"rw_cp_enabled",TRUE);RWCPInitialize(owner);
+    Check(!GetLocalInt(owner,"rw_cp_on"),"server switch does not override player off");
+    DeleteLocalInt(m,RWCPLoginKey(owner));RWCPInitialize(owner);
+    Check(GetLocalInt(owner,"rw_cp_on"),"new login restores enabled default despite stale character locals");
+    RWCPInitialize(speaker);
+    Check(!GetLocalInt(speaker,"rw_cp_on"),"nonplayer cannot acquire default AI controls");
+    SetLocalInt(speaker,"fixture_pc",TRUE);SetLocalInt(speaker,"fixture_dm",TRUE);RWCPInitialize(speaker);
+    Check(!GetLocalInt(speaker,"rw_cp_on"),"DM excluded from player default");
+    SetLocalInt(speaker,"fixture_dm",FALSE);SetLocalInt(speaker,"fixture_possessed",TRUE);RWCPInitialize(speaker);
+    Check(!GetLocalInt(speaker,"rw_cp_on"),"possessed character excluded from player default");
+    SetLocalInt(speaker,"fixture_possessed",FALSE);SetLocalInt(m,"rw_cp_enabled",FALSE);RWCPInitialize(speaker);
+    Check(!GetLocalInt(speaker,"rw_cp_on") && !RWCPReady(owner,familiar),"server disable blocks default and active AI");
+    SetLocalInt(m,"rw_cp_enabled",TRUE);RWCPInitialize(speaker);
+    Check(GetLocalInt(speaker,"rw_cp_on"),"default starts when service later enables companions");
+    SetLocalInt(speaker,"fixture_pc",FALSE);
     SetLocalInt(owner,"rw_cpp_loaded",TRUE);SetLocalString(owner,"rw_cpp_identity",RWCPSettingsIdentity(owner));
     SetLocalString(owner,"rw_cpp_session","hearing-test");SetLocalString(owner,"rw_cpp_generation","test");
     json prefs=RWCPDefaultPrefs();

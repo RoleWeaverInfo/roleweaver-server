@@ -1,4 +1,39 @@
-# Windows QEMU demo proof of concept
+# Windows QEMU demo
+
+## Portable Windows launcher
+
+The new portable package opens **Role Weaver Demo.exe**, displays the original
+Role Weaver splash, and offers first-run setup for OpenAI, Gemini, LM Studio or
+configuration later. Both dashboard and DM passwords default to **roleweaver**.
+The editable model dropdown loads available IDs from the selected provider;
+the LM Studio address appears only for LM Studio. Keys are masked and saved
+only after saving settings. Model loading shows its startup/request stage,
+elapsed time and a Cancel button; cancelling preserves the current form entries.
+Missing cloud-provider keys disable the lookup button with instructions nearby.
+Keys are stored only inside the local VM. **Change passwords** changes the dashboard password
+immediately or saves a new DM password for the next server start. Both changes
+require the current dashboard password. Captain Beran's authored demo defaults
+enable his patrol and NPC check-ins in Auto mode.
+
+See [START_HERE.txt](START_HERE.txt) for end-user instructions. The C# launcher
+source is in `launcher/`. Build it with `build-launcher.ps1`; assemble the clean
+runtime with `package_windows.py`. Python is required only by the package builder.
+
+The package uses a sealed, standalone `runtime/base.qcow2` and creates a private
+`userdata/demo.qcow2` overlay on first start. Each installation generates its own
+Linux access key and world identity. Keep both disks together when moving the
+folder. `guest-firstboot.py` initializes a fresh installation once, preserving
+existing saves on subsequent starts. API keys are never placed in the boot drive.
+
+The packaged launcher uses the same default ports as the prototype below, with
+an Advanced settings screen for conflicts. It binds them only to Windows
+loopback. Closing the launcher leaves the VM running; **Stop demo** requests a
+clean Linux shutdown. It never force-kills another QEMU instance.
+
+The older PowerShell launcher below is retained for prototype development. Its
+disk layout differs from the portable package; do not mix their runtime folders.
+
+## Original development prototype
 
 This prototype runs the Linux Role Weaver Demo 1.0.0 inside QEMU on Windows,
 using **TCG software emulation**. It does not require WSL2, Hyper-V, Docker,
@@ -19,8 +54,8 @@ and a prepared guest disk. This is separate from the published Linux releases.
    Translation is enabled by default in new demos. Once a provider is configured,
    players can select a language and turn translation on with `/rw language` in
    Talk. Translations are generated on demand and cached, not prepared in advance.
-   Companion AI is also enabled by default. Summon a familiar normally, then use
-   `/rw companion on` and `/rw companion settings` in Talk.
+   Companion AI is also enabled by default for each player login. Summon a familiar
+   normally; use `/rw companion settings` in Talk to change its controls or turn AI off.
    In the updated companion settings, **Local listening** is optional and starts
    off. Enable it before entering the cave, then ask your familiar what it thinks
    after the nearby trolls and hostage speak. It remembers up to eight public

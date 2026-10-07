@@ -15,6 +15,7 @@ void main()
         // Save only outstanding inventory changes while the player still
         // exists. Dismissal/possession/associate changes do not change cargo.
         RWCPSFlush(owner);
+        DeleteLocalInt(GetModule(),RWCPLoginKey(owner));
         DeleteLocalInt(owner,"rw_cp_on");DeleteLocalString(owner,"rw_cp_login_session");DeleteLocalInt(owner,"rw_cp_save_pending");DeleteLocalInt(owner,"rw_cpp_loaded");DeleteLocalString(owner,"rw_cpp_session");DeleteLocalString(owner,"rw_cpp_pending");
     }
 }

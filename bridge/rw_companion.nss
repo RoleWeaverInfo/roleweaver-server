@@ -54,7 +54,9 @@ json RWCPObserve(json e,object familiar,string instruction="")
 }
 void RWCPTick(object owner)
 {
-    if(GetLocalInt(owner,"rw_cpp_requested") || GetLocalInt(owner,"rw_cp_on"))RWCPRequestPrefs(owner);
+    RWCPInitialize(owner);
+    // Default-on does not load preferences for every player without a familiar.
+    if(GetLocalInt(owner,"rw_cpp_requested") || (GetLocalInt(owner,"rw_cp_on") && GetIsObjectValid(RWCPFind(owner))))RWCPRequestPrefs(owner);
     if(!GetLocalInt(owner,"rw_cp_on") || GetLocalString(owner,"rw_cp_login_session")!=GetLocalString(GetModule(),"rw_session"))return;
     object familiar=RWCPFind(owner);
     if(GetIsObjectValid(familiar))RWCPHearRecent(familiar);
@@ -68,6 +70,9 @@ void RWCPTick(object owner)
         SetLocalObject(owner,"rw_cp_object",familiar);
         SetLocalInt(owner,"rw_cp_ready",ready);
         SetLocalInt(owner,"rw_cp_last_order",GetLastAssociateCommand(familiar));
+        // Automatic enabling prepares the satchel only after an owned familiar
+        // and its saved permissions are ready, just like /rw companion on.
+        if(ready && RWCPIEnabled() && RWCPPreference(owner,"inventory"))RWCPIPack(owner,TRUE);
     }
     RWCPCurrentTalk(owner,familiar);
     if(GetIsObjectValid(familiar)){RWCPITaskTick(owner,familiar);RWCPVTick(familiar);}
@@ -125,6 +130,7 @@ int RWCPOtherAddress(object owner,object familiar,string text)
 // Only the owner can address their familiar. Clicking it keeps the stock menu.
 int RWCPChat(object owner,string text)
 {
+    RWCPInitialize(owner);
     string lower=RWTrimAddress(text);
     int command=RWCPHideChat(text);
     object familiar=RWCPFind(owner);
@@ -153,7 +159,7 @@ int RWCPChat(object owner,string text)
     if(command && lower=="cancel")
     {RWCPVCancel(familiar,"Visit cancelled by the owner.",TRUE);RWCPICancel(familiar,"Errand cancelled by the owner.",TRUE);RWCPEndTalk(owner);RWCPInvalidate(owner);SendMessageToPC(owner,"Companion errand cancelled. Collected belongings remain in your satchel.");return TRUE;}
     if(command && lower=="off")
-    {RWCPVCancel(familiar,"Companion AI disabled.",TRUE);RWCPICancel(familiar,"Familiar inventory task disabled.",TRUE);SetLocalInt(owner,"rw_cp_on",FALSE);RWCPHearClear(familiar);RWCPEndTalk(owner);RWCPInvalidate(owner);SendMessageToPC(owner,"Role Weaver companion disabled. Your familiar satchel stays in your inventory.");return TRUE;}
+    {RWCPVCancel(familiar,"Companion AI disabled.",TRUE);RWCPICancel(familiar,"Familiar inventory task disabled.",TRUE);RWCPSetEnabled(owner,FALSE);RWCPHearClear(familiar);RWCPEndTalk(owner);RWCPInvalidate(owner);SendMessageToPC(owner,"Role Weaver companion disabled for this login. Your familiar satchel stays in your inventory.");return TRUE;}
     if(command && lower=="recover")
     {
         object pack=RWCPIPack(owner);
@@ -161,7 +167,7 @@ int RWCPChat(object owner,string text)
         return TRUE;
     }
     if(command && (lower=="" || lower=="help"))
-    {SendMessageToPC(owner,"Use /rw companion settings for your controls. Summon a familiar, then /rw companion on. Address it by name, then continue Talk. Try follow me, stay here, or /rw companion inventory. /rw companion recover retrieves satchel items without a familiar. /rw end finishes chat; /rw companion off disables AI.");return TRUE;}
+    {SendMessageToPC(owner,"Use /rw companion settings for your controls. Companion AI starts enabled when the server allows it. Summon a familiar, address it by name, then continue Talk. Try follow me, stay here, or /rw companion inventory. /rw companion recover retrieves satchel items without a familiar. /rw end finishes chat; /rw companion off disables AI for this login, and /rw companion on enables it again.");return TRUE;}
     if(!GetLocalInt(GetModule(),"rw_cp_enabled"))
     {SendMessageToPC(owner,"Role Weaver companions are disabled by the server owner or the service has not connected.");return TRUE;}
     if(command && lower=="on")
@@ -169,7 +175,7 @@ int RWCPChat(object owner,string text)
         RWCPRequestPrefs(owner);
         if(!GetIsObjectValid(familiar) || GetMaster(familiar)!=owner)
         {SendMessageToPC(owner,"Summon your familiar first.");return TRUE;}
-        SetLocalInt(owner,"rw_cp_on",TRUE);SetLocalString(owner,"rw_cp_login_session",GetLocalString(GetModule(),"rw_session"));RWCPInvalidate(owner);RWCPTick(owner);
+        RWCPSetEnabled(owner,TRUE);RWCPInvalidate(owner);RWCPTick(owner);
         if(RWCPIEnabled() && RWCPPreference(owner,"inventory") && !GetIsObjectValid(RWCPIPack(owner,TRUE)))SendMessageToPC(owner,"The familiar satchel could not be prepared. Check inventory space or ask the DM about duplicate satchels.");
         SendMessageToPC(owner,"Role Weaver familiar enabled. Address it once by name, then continue nearby Talk. Use /rw end to finish. Follow me and stay here work without waiting for AI.");return TRUE;
     }
@@ -212,7 +218,8 @@ void RWCPReply(json cmd)
         if(RWCPAcceptPrefs(cmd))
         {
             object player=StringToObject(RWS(cmd,"player"));
-            if(GetLocalInt(player,"rw_cp_on") && RWCPIEnabled() && RWCPPreference(player,"inventory"))RWCPIPack(player,TRUE);
+            object pet=RWCPFind(player);
+            if(GetLocalInt(player,"rw_cp_on") && GetIsObjectValid(pet) && GetMaster(pet)==player && RWCPIEnabled() && RWCPPreference(player,"inventory"))RWCPIPack(player,TRUE);
             RWCPMenuRefresh(player,"Preferences loaded and saved on the server. Address your familiar when ready.");
         }
         return;

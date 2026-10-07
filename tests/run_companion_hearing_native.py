@@ -1,6 +1,6 @@
-"""Exercise familiar hearing in a private disposable NWN/NWNX world.
+"""Exercise familiar defaults and hearing in a private disposable NWN/NWNX world.
 
-Only player and association lookup use synthetic creatures. No real client,
+Only player eligibility and association lookup use synthetic creatures. No real client,
 account, live service, Redis queue or production module is used. NWN executes
 the real buffer, privacy, appearance, audibility and public speech paths.
 """
@@ -43,6 +43,13 @@ def run(args):
         base.replace(
             "return GetAssociate(ASSOCIATE_TYPE_FAMILIAR,owner);",
             'return GetLocalObject(owner,"fixture_familiar");',
+        )
+        .replace("GetIsPC(owner)", 'GetLocalInt(owner,"fixture_pc")')
+        .replace("GetIsDM(owner)", 'GetLocalInt(owner,"fixture_dm")')
+        .replace("GetIsDMPossessed(owner)", 'GetLocalInt(owner,"fixture_possessed")')
+        .replace(
+            "GetIsPossessedFamiliar(owner)",
+            'GetLocalInt(owner,"fixture_familiar_possessed")',
         )
     )
     shutil.copy2(

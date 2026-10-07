@@ -35,7 +35,7 @@ supported actions. Game scripts recheck ownership, current permissions, object
 identity, range, session/command freshness and relevant combat or possession state
 before acting. Player payment offers require confirmation and balance validation;
 dialogue alone cannot transfer gold. Companions require server permission and
-player opt-in, and another player's companion cannot be controlled through chat.
+the player's in-game AI switch (enabled by default each login when the server allows it), and another player's companion cannot be controlled through chat.
 
 Prompt-injection screening and lore isolation complement these checks. They do
 not guarantee correct or in-character model output. Do not put credentials or

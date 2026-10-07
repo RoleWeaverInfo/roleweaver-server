@@ -44,6 +44,26 @@ void DoorLink(string tag, string targetTag, string areaTag)
 
 void Probe()
 {
+    object chest = GetObjectByTag("rq_testchest");
+    Check(GetIsObjectValid(chest) && GetObjectType(chest)==OBJECT_TYPE_PLACEABLE
+        && GetHasInventory(chest) && GetUseableFlag(chest) && !GetLocked(chest)
+        && !GetIsTrapped(chest) && GetDistanceBetween(chest,GetObjectByTag("rq_throne"))<5.0,
+        "supplies_chest_by_throne");
+    int sword=0,dagger=0,potions=0,bandages=0,total=0,usable=TRUE;
+    object item=GetFirstItemInInventory(chest);
+    while(GetIsObjectValid(item))
+    {
+        int count=GetItemStackSize(item);string ref=GetResRef(item);total+=count;
+        if(ref=="nw_wswss001")sword+=count;
+        else if(ref=="nw_wswdg001")dagger+=count;
+        else if(ref=="nw_it_mpotion001")potions+=count;
+        else if(ref=="nw_it_medkit001")bandages+=count;
+        if(!GetIdentified(item) || !GetDroppableFlag(item) || GetPlotFlag(item))usable=FALSE;
+        item=GetNextItemInInventory(chest);
+    }
+    Check(sword==1 && dagger==1 && potions==2 && bandages==1 && total==5 && usable,
+        "supplies_chest_exact_usable_stock");
+    Walk("rw_arr_hall_e", "rq_testchest", "supplies_chest_reachable");
     object forest = GetArea(GetWaypointByTag("rw_arr_forest"));
     object cave = GetArea(GetWaypointByTag("rw_arr_cave"));
     Check(GetIsObjectValid(forest) && !GetIsAreaInterior(forest)

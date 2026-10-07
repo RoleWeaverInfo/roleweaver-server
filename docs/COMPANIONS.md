@@ -1,6 +1,6 @@
 # Familiar prototype
 
-This is an opt-in development prototype for **standard wizard/sorcerer familiars**.
+This is a player-controlled development prototype for **standard wizard/sorcerer familiars**.
 It adds chat and remembered personality to the creature the game already summoned.
 It does not spawn a replacement, change its faction or stats, remove its normal
 dialogue menu, or replace heartbeat and combat scripts. Animal companions and
@@ -17,7 +17,7 @@ spell summons are future adapters, not supported by this first version.
    just the new entry scripts. Keep the world's existing hooks and handlers.
 3. Restart the Role Weaver service and restart NWN to load the compiled bridge.
 4. Open **Companions** in the dashboard and click **Enable companion AI**.
-   Wait for **Confirmed by the game**. Players then opt in using the command below.
+   Wait for **Confirmed by the game**. Companion AI then starts enabled for players. They can switch it off in game.
 
 The installation setting `"companions_enabled": true` in `config.json` remains
 the default until the dashboard saves a choice. Afterwards the saved dashboard
@@ -33,7 +33,9 @@ players continue to use `/rw companion settings` in game.
 - **Enable / Disable companion AI** controls the whole server. Changing it cancels
   pending Role Weaver replies and errands when the game receives the new setting.
   It does not dismiss familiars, remove satchel items, erase memories or change
-  saved player preferences. Enabling the server feature does not opt players in.
+  saved player preferences. New player logins default to AI enabled when the server
+  allows it. A player who switches AI off stays off for the rest of that login,
+  even if the server feature is toggled.
 - The confirmation line distinguishes a saved setting from one the game has
   applied. An offline game applies it after reconnecting. Older bridge scripts
   need an update to display confirmation; do not assume a save proves application.
@@ -97,7 +99,7 @@ unavailable familiar may be switched off by its player, possessed or in combat.
 Use the **Talk chat channel**, not the debug console or a tell.
 
 1. Summon a familiar normally and stand near it.
-2. Type `/rw companion on`.
+2. Companion AI starts enabled when the server allows it. Use `/rw companion settings` to check or change it.
 3. Address your familiar in ordinary Talk, such as `Whiskers: Hello!` (use its name).
 4. Continue with ordinary nearby Talk: `How are you?` or `What can you see?`.
    You do not need to repeat its name. `Hello Whiskers` and an unambiguous short
@@ -131,8 +133,8 @@ and blocked line of sight prevent AI replies.
 
 The profile is keyed to the server world, the existing character identity scheme,
 and familiar type, not its temporary object ID or current level blueprint. It
-survives dismissal and resummoning. Opt-in lasts for the current player login;
-after reconnecting, type `/rw companion on` again. Edit profiles in **Companions**.
+survives dismissal and resummoning. The AI on/off switch applies to the current login;
+after reconnecting, AI starts enabled when the server allows it. Edit profiles in **Companions**.
 They retain a `cp_` stable ID and also appear in the existing profile/history tools
 for reviewing conversations and curated memories. They appear unconnected in the
 ordinary world-NPC status display: do not use Spawn at DM to create them as world NPCs.
@@ -145,7 +147,7 @@ The familiar settings window provides these player controls:
 
 | Control | Effect |
 | --- | --- |
-| AI on/off | Enable or disable AI for this login. Opening the menu does not enable it. |
+| AI on/off | Starts enabled each login when the server allows it. Disable it for this login; reopening the menu or resummoning keeps that choice. |
 | Reply length | Brief, natural or detailed replies, with a corresponding maximum length. |
 | Tone | Character default, warm, playful, reserved or serious. This changes delivery without replacing the DM's character profile, memories or lore. |
 | Follow-up conversation | Allow nearby Talk without repeating the familiar's name after addressing it. |
@@ -174,7 +176,10 @@ Older portable backups use default preferences. The character identity follows
 the existing public-CD-key and character-name scheme, so renaming a character
 changes its identity. Preference records use a hashed ID, and the raw identity
 is not sent to the model. Resetting preferences does not erase memories or items.
-AI opt-in is separate: enable it again after each login.
+The AI on/off switch is separate: it defaults to enabled each login when the
+server allows it. Use `/rw companion off` or the settings window to disable AI
+for that login; `/rw companion on` enables it again. Local listening still
+defaults to off.
 
 ## Follow-up conversation and awareness
 
@@ -572,8 +577,8 @@ For player-control playtesting:
 3. Turn follow-ups off, then movement and item permissions off in turn. Confirm
    disallowed commands are unavailable, including a delayed AI reply after a
    setting changes. Cancel an active errand and recover any collected items.
-4. Reconnect and resummon. Preferences should remain saved, while AI starts off
-   until you opt in. Repeat after a service restart or a database restore.
+4. Reconnect and resummon. Preferences should remain saved, while AI starts enabled
+   when the server allows it. Switch AI off and resummon during the same login; it must stay off. Repeat after a service restart or a database restore.
 5. Use a second character to check independent preferences and owner-only access.
 
 For conversation-visit playtesting:

@@ -1,0 +1,25 @@
+ROLE WEAVER WINDOWS DEMO — THIRD-PARTY COMPONENTS
+
+Role Weaver source/license: https://github.com/RoleWeaverInfo/roleweaver-server
+The included launcher-source folder contains the Windows launcher source.
+
+QEMU and its Windows runtime dependencies are distributed with their upstream
+licenses. See runtime/qemu/COPYING, COPYING.LIB and the files under share.
+QEMU source: https://www.qemu.org/download/#source
+Windows build information: https://qemu.weilnetz.de/w64/
+This build uses the 2026-08-11 Windows build. Preserve its notices when repackaging.
+
+The guest uses Ubuntu Minimal 24.04 amd64. Installed package copyright/license
+files are available INSIDE the guest at /usr/share/doc/*/copyright. Python package
+licenses and metadata are under /home/roleweaver/demo/.venv/lib/python3.12/site-packages.
+Ubuntu source packages: https://archive.ubuntu.com/ubuntu/pool/
+
+NWN:EE dedicated-server files retain their original ownership and terms. No NWN
+game client, player CD key, or game account is included. Players need their own
+compatible NWN:EE client. Dedicated server: https://nwn.beamdog.net/downloads/
+NWNX:EE source/licenses: https://github.com/nwnxee/unified
+NWScript compiler: https://github.com/nwneetools/nwnsc
+Role Weaver's native plugin source is in the bundled demo/native directory.
+
+This local test package has not been code signed. Public redistribution should
+retain all component notices and matching source/license information.

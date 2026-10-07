@@ -10,6 +10,23 @@ object RWCPFind(object owner)
 string RWCPOwnerKey(object owner) {return GetPCPublicCDKey(owner)+":"+GetName(owner);}
 string RWCPSettingsIdentity(object owner)
 {return RWWorld()+"|"+RWCPOwnerKey(owner)+"|familiar:"+IntToString(GetFamiliarCreatureType(owner));}
+// A module-local marker cannot be restored from an exported character. Apply
+// the default once per login, never on every heartbeat or familiar resummon.
+string RWCPLoginKey(object owner) {return "rw_cp_login_"+ObjectToString(owner);}
+void RWCPSetEnabled(object owner,int enabled)
+{
+    SetLocalInt(GetModule(),RWCPLoginKey(owner),TRUE);
+    SetLocalInt(owner,"rw_cp_on",enabled);
+    SetLocalString(owner,"rw_cp_login_session",GetLocalString(GetModule(),"rw_session"));
+}
+void RWCPInitialize(object owner)
+{
+    object m=GetModule();
+    if(!GetIsPC(owner) || GetIsDM(owner) || GetIsDMPossessed(owner) || GetIsPossessedFamiliar(owner)
+        || !GetLocalInt(m,"rw_cp_enabled") || GetLocalString(m,"rw_session")==""
+        || GetLocalInt(m,RWCPLoginKey(owner)))return;
+    RWCPSetEnabled(owner,TRUE);
+}
 int RWCPPreferencesReady(object owner)
 {
     return GetLocalInt(owner,"rw_cpp_loaded")

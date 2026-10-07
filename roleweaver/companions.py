@@ -1,4 +1,4 @@
-"""Opt-in familiar dialogue, separate from world-NPC placement and action queues.
+"""Player-controlled familiar dialogue, separate from world-NPC placement and action queues.
 
 The bridge owns summoning, consent and authority. Durable profiles/transcripts use
 the normal backed-up store; transient bindings never create placements. A future
