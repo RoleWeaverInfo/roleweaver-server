@@ -26,4 +26,4 @@ restart recovery, failed providers, and a fresh installation by following the wr
 
 Run `node tests/test_drafts.cjs` and `node tests/test_companion_templates.cjs`
 for browser draft recovery. Release checks also verify documentation links, clean
-seed data, distribution boundaries and checksums; see [the review record](releases/1.0.0-review.md).
+seed data, distribution boundaries and checksums; see [the current review record](releases/1.0.1-review.md).

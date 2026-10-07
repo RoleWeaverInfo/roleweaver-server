@@ -3,6 +3,7 @@ import unittest
 
 ROOT = Path(__file__).resolve().parents[1]
 SOURCE = ROOT / "windows-installer/launcher/Program.cs"
+PACKAGER = ROOT / "windows-installer/package.ps1"
 
 
 @unittest.skipUnless(
@@ -12,6 +13,7 @@ class WindowsRemoteInstallerTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.source = SOURCE.read_text()
+        cls.packager = PACKAGER.read_text()
 
     def test_preserves_ssh_host_key_verification(self):
         self.assertIn("StrictHostKeyChecking=accept-new", self.source)
@@ -56,6 +58,11 @@ class WindowsRemoteInstallerTests(unittest.TestCase):
         self.assertIn("RoleWeaver-Server-Addon-*.tar.gz", self.source)
         self.assertIn("Application.StartupPath", self.source)
         self.assertIn("Using Server Add-on archive:", self.source)
+
+    def test_packager_uses_application_version_and_bundles_checksum(self):
+        self.assertIn("roleweaver\\__init__.py", self.packager)
+        self.assertIn("$packagedAddon + '.sha256'", self.packager)
+        self.assertNotIn("Remote-Installer-1.0.0.zip", self.packager)
 
 
 if __name__ == "__main__":

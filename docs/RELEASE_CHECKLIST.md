@@ -1,7 +1,7 @@
 # Release checklist
 
-Release: **1.0.0**, application and distribution. This is a normal release.
-Use the [review record](releases/1.0.0-review.md) for dated verification evidence.
+Release: **1.0.1**, application and Server Add-on distribution. This is a normal patch release.
+Use the [review record](releases/1.0.1-review.md) for dated verification evidence.
 
 ## Package preparation completed
 
@@ -16,6 +16,8 @@ Use the [review record](releases/1.0.0-review.md) for dated verification evidenc
 - [x] Reproducible archives, manifests, aligned versions and checksum sidecars.
 - [x] Archive checks for clean seed, links, hashes, scripts and setup entry points.
 - [x] NWScript compilation from extracted packages with installed dependencies.
+- [x] Separate Windows Remote Installer ZIP bundles the exact verified Linux add-on.
+- [x] Automated release jobs reject mismatched versions, manifests and bundled archives.
 
 ## Follow-up validation and review
 
@@ -33,7 +35,7 @@ These checks remain open; publishing version 1.0 does not mark them passed.
 
 ## Publication procedure
 
-Commit the reviewed source, tag it `v1.0.0`, and build both archives from that
+Commit the reviewed source, tag it `v1.0.1`, and build both packages from that
 exact source. Upload archives and checksums to a normal GitHub release, make it
 latest, and verify the public downloads. Do not mark it as a prerelease.
 Forum and Vault announcements are separate actions controlled by the owner.

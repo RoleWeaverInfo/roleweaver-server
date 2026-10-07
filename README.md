@@ -7,12 +7,14 @@ dashboard; players interact through the normal NWN:EE client.
 
 ## Choose a download
 
-**Version 1.0.0** — [Release, downloads and checksums](https://github.com/RoleWeaverInfo/roleweaver-server/releases/tag/v1.0.0).
+**Version 1.0.1** — the coordinated Server Add-on and Windows remote-installer update.
+The existing editable demo remains available from the 1.0.0 release.
 
 | Package | Purpose | Instructions |
 | --- | --- | --- |
-| [RoleWeaver-Demo-1.0.0.tar.gz](https://github.com/RoleWeaverInfo/roleweaver-server/releases/download/v1.0.0/RoleWeaver-Demo-1.0.0.tar.gz) | Explore the editable demo before integrating your server | [Demo setup](START_DEMO.md) |
-| [RoleWeaver-Server-Addon-1.0.0.tar.gz](https://github.com/RoleWeaverInfo/roleweaver-server/releases/download/v1.0.0/RoleWeaver-Server-Addon-1.0.0.tar.gz) | Install alongside your existing NWN/NWNX world | [Server add-on setup](START_ADDON.md) |
+| [RoleWeaver-Server-Addon-1.0.1.tar.gz](https://github.com/RoleWeaverInfo/roleweaver-server/releases/download/v1.0.1/RoleWeaver-Server-Addon-1.0.1.tar.gz) | Install directly on an existing Linux NWN/NWNX host | [Server add-on setup](START_ADDON.md) |
+| [RoleWeaver-Remote-Installer-1.0.1.zip](https://github.com/RoleWeaverInfo/roleweaver-server/releases/download/v1.0.1/RoleWeaver-Remote-Installer-1.0.1.zip) | Configure the Linux host remotely from Windows; includes the matching add-on archive | `README.txt` inside the ZIP |
+| [RoleWeaver-Demo-1.0.0.tar.gz](https://github.com/RoleWeaverInfo/roleweaver-server/releases/download/v1.0.0/RoleWeaver-Demo-1.0.0.tar.gz) | Explore the editable Linux demo | [Demo setup](START_DEMO.md) |
 
 Each download has its own **START_HERE.md** and **`bash setup.sh`** launcher.
 The Server Add-on also includes a localhost graphical installer: run
@@ -56,7 +58,7 @@ configured provider or local model. Costs, availability and model behavior vary.
 
 ## Documentation and feedback
 
-- [Documentation index](docs/README.md), [release notes](docs/releases/1.0.0.md)
+- [Documentation index](docs/README.md), [release notes](docs/releases/1.0.1.md)
 - [Demo walkthrough](demo/PLAYTEST.md), [editing the demo](demo/CUSTOMIZE.md)
 - [Guided setup and upgrades](docs/GUIDED_SETUP.md)
 - [Developer setup](docs/DEVELOPMENT.md), [architecture](docs/ARCHITECTURE.md), [contributing](CONTRIBUTING.md)
@@ -69,6 +71,6 @@ Use filtered support reports; do not post databases, keys, raw logs or private
 conversations. Separate optional model-evaluation notes are for administrators;
 they are not part of the in-game walkthrough.
 
-Application and distribution version: **1.0.0**. Source is under the
+Application and current Server Add-on version: **1.0.1**. Source is under the
 [MIT license](LICENSE); [asset/third-party notes](THIRD_PARTY_NOTICES.md) apply
 separately. Historical documentation remains available through Git history and tags.

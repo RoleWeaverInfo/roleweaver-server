@@ -32,7 +32,8 @@
 
 ## Release and development reference
 
-- [Release notes](releases/1.0.0.md), [review record](releases/1.0.0-review.md)
+- [Release notes](releases/1.0.1.md), [review record](releases/1.0.1-review.md)
+- [Version 1.0.0 notes](releases/1.0.0.md)
 - [Packaging](DISTRIBUTIONS.md), [checklist](RELEASE_CHECKLIST.md), [roadmap](ROADMAP.md)
 - [Developer setup](DEVELOPMENT.md), [architecture](ARCHITECTURE.md), [contributing](../CONTRIBUTING.md)
 - [Bridge protocol](GAME_BRIDGE.md), [tests](TESTING.md)

@@ -13,7 +13,21 @@ import tarfile
 from urllib.parse import unquote, urlsplit
 
 ROOT = Path(__file__).resolve().parents[1]
-VERSION = "1.0.0"
+
+
+def runtime_version():
+    """Read the version without importing the application or its dependencies."""
+    tree = ast.parse((ROOT / "roleweaver/__init__.py").read_text(encoding="utf-8"))
+    for node in tree.body:
+        if isinstance(node, ast.Assign) and any(
+            isinstance(target, ast.Name) and target.id == "__version__"
+            for target in node.targets
+        ):
+            return ast.literal_eval(node.value)
+    raise ValueError("Application runtime version is missing")
+
+
+VERSION = runtime_version()
 NAMES = {
     "demo": f"RoleWeaver-Demo-{VERSION}",
     "addon": f"RoleWeaver-Server-Addon-{VERSION}",
@@ -210,18 +224,6 @@ def validate_document_links(contents):
                 missing.append(f"{name}: {target}")
     if missing:
         raise ValueError("Broken packaged documentation links:\n" + "\n".join(missing))
-
-
-def runtime_version():
-    """Read the version without importing the application or its dependencies."""
-    tree = ast.parse((ROOT / "roleweaver/__init__.py").read_text(encoding="utf-8"))
-    for node in tree.body:
-        if isinstance(node, ast.Assign) and any(
-            isinstance(target, ast.Name) and target.id == "__version__"
-            for target in node.targets
-        ):
-            return ast.literal_eval(node.value)
-    raise ValueError("Application runtime version is missing")
 
 
 def package(output, kind="demo"):

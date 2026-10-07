@@ -1,0 +1,102 @@
+name: Build release packages
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: read
+
+jobs:
+  linux-addon:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install -r requirements-dev.txt
+      - name: Check tag matches application version
+        if: startsWith(github.ref, 'refs/tags/')
+        env:
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: >-
+          python -c "import os, roleweaver;
+          expected='v'+roleweaver.__version__;
+          actual=os.environ['RELEASE_TAG'];
+          assert actual == expected, f'tag {actual} does not match {expected}'"
+      - run: python -m black --check roleweaver tools tests demo
+      - run: python -m unittest discover -s tests
+      - name: Build Linux Server Add-on
+        run: python tools/package_release.py --kind addon --output-dir dist
+      - name: Verify Linux Server Add-on
+        run: python tools/verify_release.py --addon dist/RoleWeaver-Server-Addon-*.tar.gz
+      - uses: actions/upload-artifact@v4
+        with:
+          name: linux-addon
+          path: |
+            dist/RoleWeaver-Server-Addon-*.tar.gz
+            dist/RoleWeaver-Server-Addon-*.tar.gz.sha256
+          if-no-files-found: error
+          retention-days: 30
+
+  windows-installer:
+    needs: linux-addon
+    runs-on: windows-2022
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/download-artifact@v4
+        with:
+          name: linux-addon
+          path: release-input
+      - run: python -m unittest tests.test_windows_remote_installer
+      - name: Build bundled Windows Remote Installer
+        shell: pwsh
+        run: |
+          $addon = Get-ChildItem release-input -Filter 'RoleWeaver-Server-Addon-*.tar.gz' | Select-Object -First 1
+          if (-not $addon) { throw 'Linux Server Add-on artifact is missing.' }
+          ./windows-installer/package.ps1 -OutputDirectory dist -AddonArchive $addon.FullName
+      - name: Verify coordinated packages
+        shell: pwsh
+        run: |
+          $addon = Get-ChildItem release-input -Filter 'RoleWeaver-Server-Addon-*.tar.gz' | Select-Object -First 1
+          $installer = Get-ChildItem dist -Filter 'RoleWeaver-Remote-Installer-*.zip' | Select-Object -First 1
+          python tools/verify_release.py --addon $addon.FullName --installer $installer.FullName
+      - uses: actions/upload-artifact@v4
+        with:
+          name: windows-remote-installer
+          path: |
+            dist/RoleWeaver-Remote-Installer-*.zip
+            dist/RoleWeaver-Remote-Installer-*.zip.sha256
+          if-no-files-found: error
+          retention-days: 30
+
+  draft-release:
+    if: startsWith(github.ref, 'refs/tags/')
+    needs: [linux-addon, windows-installer]
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: '*'
+          path: release-assets
+          merge-multiple: true
+      - name: Create or update draft release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: |
+          if state=$(gh release view "$RELEASE_TAG" --json isDraft --jq .isDraft 2>/dev/null); then
+            test "$state" = true || { echo "Refusing to replace a published release." >&2; exit 1; }
+            gh release upload "$RELEASE_TAG" release-assets/* --clobber
+          else
+            gh release create "$RELEASE_TAG" release-assets/* --draft --verify-tag \
+              --title "Role Weaver Server ${RELEASE_TAG#v}" --generate-notes
+          fi

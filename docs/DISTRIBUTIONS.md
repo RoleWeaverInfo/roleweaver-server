@@ -1,20 +1,20 @@
-# Version 1.0.0 distributions
+# Version 1.0.1 distributions
 
 | Download | Audience |
 | --- | --- |
-| RoleWeaver-Demo-1.0.0.tar.gz | Players/testers using the supplied separate world |
-| RoleWeaver-Server-Addon-1.0.0.tar.gz | Owners integrating an existing NWN/NWNX world |
+| RoleWeaver-Server-Addon-1.0.1.tar.gz | Owners installing directly on an existing Linux NWN/NWNX host |
+| RoleWeaver-Remote-Installer-1.0.1.zip | Windows administrators connecting to a remote Linux host; includes the matching add-on |
+| RoleWeaver-Demo-1.0.0.tar.gz | Existing editable Linux demo, unchanged in this patch release |
 
-Each archive has its own **START_HERE.md**, **README.md**, **RELEASE_NOTES.md** and
-**RELEASE.json** (distribution and runtime 1.0.0, stable channel). Run `bash setup.sh` from
-the extracted folder. The demo includes its launcher and optional playtests; the
-add-on reads the selected module to generate path-specific integration instructions,
-while leaving it in place and never starting NWN.
+The Linux archive has **START_HERE.md**, **README.md**, **RELEASE_NOTES.md** and
+**RELEASE.json** (distribution and runtime 1.0.1, stable channel). Run `bash setup.sh`
+from the extracted folder. The add-on reads the selected module to generate
+path-specific integration instructions while leaving it in place and never starting
+NWN. The Windows ZIP has its own README and bundles that exact Linux archive.
 
-Both include the edited **YourWorld_Fixed.mod**: `demo/world/` in the demo and
-`addon/example-world/` in the add-on. The throne room, forest, cave, placed objects and investigation hooks are retained.
-Demo setup recompiles current bridge resources for its own namespace.
-The add-on example uses `my_world` / `roleweaver:my_world`. It is an optional
+The add-on includes the edited **YourWorld_Fixed.mod** in `addon/example-world/`.
+The throne room, forest, cave, placed objects and investigation hooks are retained.
+The example uses `my_world` / `roleweaver:my_world`. It is an optional
 example, not an automatic replacement for an established world. Custom world IDs
 need matching compiled bridge settings. See its content.json for authoring data.
 
@@ -24,10 +24,11 @@ Use a matching Linux x86-64 8193.37-17 installation for that adapter.
 
 ## Build and inspect
 
-From the source repository, with Python 3.12:
+From the source repository, with Python 3.12 and Windows PowerShell for the installer:
 
 ```bash
-python3 tools/package_release.py --kind all
+python3 tools/package_release.py --kind addon
+powershell -File windows-installer/package.ps1 -AddonArchive dist/RoleWeaver-Server-Addon-1.0.1.tar.gz
 ```
 
 The archives and their `.sha256` sidecars are generated in **dist/** (ignored by
@@ -55,8 +56,8 @@ development server's databases.
 Verify the downloaded files on Linux before extracting:
 
 ```bash
-sha256sum -c RoleWeaver-Demo-1.0.0.tar.gz.sha256
-sha256sum -c RoleWeaver-Server-Addon-1.0.0.tar.gz.sha256
+sha256sum -c RoleWeaver-Server-Addon-1.0.1.tar.gz.sha256
+sha256sum -c RoleWeaver-Remote-Installer-1.0.1.zip.sha256
 ```
 
 Run only the line for the download you selected. Keep archives and sidecars in
@@ -65,10 +66,10 @@ project's release rather than treating the hash alone as proof of origin.
 
 ## Publication is separate
 
-Review [release notes](releases/1.0.0.md), the
+Review [release notes](releases/1.0.1.md), the
 [checklist](RELEASE_CHECKLIST.md) and [asset notes](../THIRD_PARTY_NOTICES.md).
 Commit the reviewed source and generated example module before tagging
-`v1.0.0`. Rebuild from that source, verify the archives, and upload both
+`v1.0.1`. Rebuild from that source, verify the archives, and upload both
 archives with their sidecars to a normal GitHub release, marked latest and **not**
 a prerelease. Verify the public downloads against the locally built checksums.
 Forum and Neverwinter Vault announcements are separate from GitHub publication.
