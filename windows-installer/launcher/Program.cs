@@ -115,6 +115,11 @@ namespace RoleWeaver.RemoteInstaller
             username.Text = "roleweaver";
             secret.UseSystemPasswordChar = true;
             setupPort.Minimum = 1024; setupPort.Maximum = 65535; setupPort.Value = 8750;
+            string bundledArchive = Directory.GetFiles(
+                Application.StartupPath,
+                "RoleWeaver-Server-Addon-*.tar.gz"
+            ).OrderByDescending(File.GetLastWriteTimeUtc).FirstOrDefault();
+            if (!String.IsNullOrEmpty(bundledArchive)) archive.Text = bundledArchive;
 
             AddRow(form, 0, "Linux server address", host, null);
             AddRow(form, 1, "SSH port", sshPort, null);
@@ -228,6 +233,7 @@ namespace RoleWeaver.RemoteInstaller
             {
                 ValidateInputs();
                 string sshExe = FindSsh();
+                Append("Using Server Add-on archive: " + Path.GetFullPath(archive.Text));
 
                 int localPort = Decimal.ToInt32(setupPort.Value);
                 string session = Guid.NewGuid().ToString("N");

@@ -8,7 +8,8 @@ Requirements
 ------------
 - Windows 10 or 11 with the optional OpenSSH Client installed.
 - SSH access to the Linux account that owns the NWN server.
-- A downloaded RoleWeaver-Server-Addon-*.tar.gz release.
+- A current RoleWeaver-Server-Addon-*.tar.gz release. It is included and
+  selected automatically when supplied in the same folder as the installer.
 - Python 3 on Linux. The guided setup reports other missing prerequisites.
 
 Use
@@ -18,7 +19,8 @@ Use
 3. Optionally select an SSH private key. Enter a password or key passphrase only
    when required.
 4. Select Test SSH login. Continue after the log reports that login succeeded.
-5. Select the Server Add-on .tar.gz archive.
+5. Confirm the bundled Server Add-on .tar.gz archive is selected. If none was
+   included, select a current archive manually.
 6. Select Connect and open setup.
 7. Complete the guided setup in the browser. Keep the Windows application open.
 8. Close the connection when finished.

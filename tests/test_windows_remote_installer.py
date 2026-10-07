@@ -52,6 +52,11 @@ class WindowsRemoteInstallerTests(unittest.TestCase):
         self.assertIn("installer.log", self.source)
         self.assertIn("Diagnostic log:", self.source)
 
+    def test_bundled_addon_archive_is_selected_automatically(self):
+        self.assertIn("RoleWeaver-Server-Addon-*.tar.gz", self.source)
+        self.assertIn("Application.StartupPath", self.source)
+        self.assertIn("Using Server Add-on archive:", self.source)
+
 
 if __name__ == "__main__":
     unittest.main()
